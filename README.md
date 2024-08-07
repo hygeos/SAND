@@ -1,0 +1,1 @@
+# SAnDD - Satellite Acquisition and Data Downloader

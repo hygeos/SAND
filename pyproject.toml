@@ -6,7 +6,7 @@ authors = ["Nathan Capon <nathan.capon@hygeos.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.10,<4"
 eumdac = "^2.2.3"
 shapely = "^2.0.5"
 core = {git = "ssh://git@github.com/hygeos/core.git", develop = true}
