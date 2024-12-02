@@ -1,15 +1,18 @@
 [tool.poetry]
 name = "sandd"
-version = "1.0.0"
+version = "0.1.0"
 description = "SANDD - Satellite Acquisition and Data Downloader"
-authors = ["Nathan Capon <nathan.capon@hygeos.com>"]
+authors = ["HYGEOS"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10"
+numpy = "<2"
+requests = "*"
 eumdac = "*"
 shapely = "*"
-core = {git = "ssh://git@github.com/hygeos/core.git"}
+pyotp = "*"
+core = {git = "https://github.com/hygeos/core.git"}
 
 
 [build-system]

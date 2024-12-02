@@ -1,1 +1,93 @@
-# SAnDD - Satellite Acquisition and Data Downloader
+<!-- PROJECT LOGO -->
+<br />
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="img/SAND_dark_theme.svg" width="300">
+<source media="(prefers-color-scheme: light)" srcset="img/SAND_light_theme.svg" width="300">
+<img alt="SANDD project logo">
+</picture>
+
+# Satellite Acquisition and Data downloader
+
+[**Quickstart**](#get-started)
+| [**Install guide**](#installation)
+
+<!-- ABOUT THE PROJECT -->
+## What is SAND ?
+
+**SAND** is a python module that simplifies the downloading of satellite data supplied by various providers. 
+It also acts as a proxy for executing the API requests and is designed to use a minimum of dependency to facilitate its incorporation into production lines. 
+
+## Registration to providers
+
+Depending on the provider or resource you want to download, you will need to add your credentials in the *.netrc* file in the home folder. To help you create your different accounts, please find below a table summarising the different registration links.
+
+
+| Provider | Registration | TOTP | 
+| --- | --- | --- | 
+| CDS | [dataspace.copernicus.eu](https://identity.dataspace.copernicus.eu) |  | 
+| CNES | [theia.cnes.fr](https://sso.theia-land.fr) |   |
+| Creodias | [datahub.creodias.eu](https://creodias.eu/) | ✅ | 
+| EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   | 
+| NASA | [nasa.gov](https://ers.cr.usgs.gov/) |   | 
+| USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   | 
+
+
+## Configuration 
+
+Here's how to fill in your credentials in the *.netrc* file.
+
+```text
+machine [Registration link]
+    login [email address]
+    password [password]
+```
+
+## Installation
+
+The package can be installed with the command:
+```sh
+pip install git+https://github.com/hygeos/SANDD.git
+```
+
+## Get Started
+
+The following example illustrate the code needed to download LANDSAT-7 acquisitions using our module.
+
+```python
+from sand.usgs import DownloadUSGS
+
+# Login to USGS API
+dl = DownloadUSGS('LANDSAT-7', level=1)
+
+# Search for appropriated acquistions
+name_cache = './cache.json'
+ls = cache_json(name_cache)(dl.query)(
+    dtstart = datetime(2000, 12, 10),
+    dtend = datetime(2005, 12, 10),
+    geo = Point(119.514442, -8.411750)
+)
+
+# Download Landsat granule
+outdir = '.'
+dl.download(ls[0], outdir, uncompress=True)
+```
+
+## Providers
+
+<center>
+<p float="left">
+  <img src="img/logo/copernicus_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
+  <img src="img/logo/creodias_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
+  <img src="img/logo/eumetsat_logo.svg" height="150" align="center" />
+</p>
+<p float="left">
+  <img src="img/logo/nasa_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
+  <img src="img/logo/theia_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
+  <img src="img/logo/usgs_logo.svg" height="150" align="center" />
+</p>
+</center>
+
+## Extending HARP
+
+**SAND** is modular and conceived to be extended when required. 
+New providers can be added by creating a new class and inheriting `BaseDownload`.
