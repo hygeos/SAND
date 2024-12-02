@@ -9,13 +9,13 @@ from datetime import datetime, time, date
 
 from core.ftp import get_auth
 from core.fileutils import filegen
-from sandd.base import request_get
+from sandd.base import request_get, BaseDownload
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
 
 
-class DownloadUSGS:
+class DownloadUSGS(BaseDownload):
     
     name = 'DownloadUSGS'
     
@@ -58,9 +58,7 @@ class DownloadUSGS:
                 cds.download(p, <dirname>, uncompress=True)
         """
         assert collection in DownloadUSGS.collections
-        self.collection = collection
-        self.level = level
-        self._login()
+        super().__init__(collection, level)
         
 
     def _login(self):
@@ -100,7 +98,7 @@ class DownloadUSGS:
         other_attrs: Optional[list] = None,
     ):
         """
-        Product query on the Copernicus Data Space
+        Product query on the USGS
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
@@ -187,12 +185,9 @@ class DownloadUSGS:
             dir (Path | str): _description_
             uncompress (bool, optional): _description_. Defaults to True.
         """
-        if uncompress:
-            target = Path(dir)/(product['name'])
-            uncompress_ext = '.zip'
-        else:
-            target = Path(dir)/(product['name']+'.zip')
-            uncompress_ext = None
+        
+        target = Path(dir)/(product['name'])
+        uncompress_ext = None
         
         # Find product in dataset
         dataset = self._get_dataset_name()
