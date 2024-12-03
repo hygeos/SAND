@@ -1,7 +1,7 @@
 import pytest
 
 from tests.generic import eval_login, eval_query, eval_download
-from sandd.usgs import DownloadUSGS
+from sand.usgs import DownloadUSGS
 from datetime import datetime
 from shapely import Point
 

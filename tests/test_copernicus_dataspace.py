@@ -1,7 +1,7 @@
 import pytest
 
 from tests.generic import eval_login, eval_query, eval_download
-from sandd.copernicus_dataspace import DownloadCDS
+from sand.copernicus_dataspace import DownloadCDS
 from datetime import datetime
 from shapely import Point
 

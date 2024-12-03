@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from datetime import datetime, time, date
 
 from core.fileutils import filegen
-from sandd.base import request_get, BaseDownload, get_ssl_context
+from sand.base import request_get, BaseDownload, get_ssl_context
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 

@@ -1,4 +1,4 @@
-from sandd.download import DownloadSatellite
+from sand.download import DownloadSatellite
 from os.path import exists
 import shutil
 

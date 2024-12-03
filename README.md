@@ -6,7 +6,7 @@
 <img alt="SANDD project logo">
 </picture>
 
-# Satellite Acquisition and Data downloader
+# Satellite Acquisition Normative Downloader
 
 [**Quickstart**](#get-started)
 | [**Install guide**](#installation)
@@ -34,13 +34,18 @@ Depending on the provider or resource you want to download, you will need to add
 
 ## Configuration 
 
-Here's how to fill in your credentials in the *.netrc* file.
+Once you have registered, simply enter your credentials in the *.netrc* file with the following format:
 
 ```text
 machine [Registration link]
     login [email address]
     password [password]
 ```
+
+Note that the login field is not necessarily the e-mail address but can be a character string provided by the registration site. 
+
+
+In addition, some providers such as Creodias require double authentication to download the data. Please enter your TOTP key in the file to finalise the configuration of these providers.
 
 ## Installation
 
@@ -87,7 +92,7 @@ dl.download(ls[0], outdir, uncompress=True)
 </p>
 </center>
 
-## Extending HARP
+## Extending SAND
 
 **SAND** is modular and conceived to be extended when required. 
 New providers can be added by creating a new class and inheriting `BaseDownload`.

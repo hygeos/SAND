@@ -1,47 +1,48 @@
 import fnmatch
 import requests
-import pyotp
-import json
 import re
+import json
+import os
 
-from requests.utils import requote_uri
-from urllib.request import Request, urlopen
 from datetime import datetime, date, time
 from pathlib import Path
 from typing import Optional
 from tqdm import tqdm
 
-from sandd.base import request_get, BaseDownload, get_ssl_context
+from sand.base import request_get
 from core.ftp import get_auth
 from core.fileutils import filegen
 
 
-class DownloadCreodias(BaseDownload):
+# [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
+class DownloadTHEIA:
     
-    name = 'DownloadCreodias'
+    name = 'DownloadTHEIA'
     
     collections = [
-        'SENTINEL-1',
-        'SENTINEL-2',
-        'SENTINEL-3',
-        'SENTINEL-5P',
-        'SENTINEL-6',
-        'LANDSAT-5',
-        'LANDSAT-7',
-        'LANDSAT-8',
-        'ENVISAT',
+        'LANDSAT5',
+        'LANDSAT7', 
+        'LANDSAT8', 
+        'SPOT1', 
+        'SPOT2', 
+        'SPOT3', 
+        'SPOT4', 
+        'SPOT5',
+        'SENTINEL2A', 
+        'SENTINEL2B', 
+        'VENUS', 
+        'VENUSVM05',
     ]
     
     def __init__(self, collection: str, level: int = 1):
         """
-        Python interface to the Copernicus Data Space Ecosystem with CREODIAS (https://creodias.eu/)
-        CREODIAS : Copernicus Earth Observation Data and Information Access Services
+        Python interface to the CNES Theia Data Center (https://theia.cnes.fr/)
 
         Args:
             collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
 
         Example:
-            cds = DownloadCreodias('SENTINEL-2')
+            cds = DownloadCNES('SENTINEL-2')
             # retrieve the list of products
             # using a json cache file to avoid reconnection
             ls = cache_json('query-S2.json')(cds.query)(
@@ -53,42 +54,32 @@ class DownloadCreodias(BaseDownload):
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadCreodias.collections
-        super().__init__(collection, level)
+        assert collection in DownloadTHEIA.collections
+        self.collection = collection
+        self.level = level
+        self._login()
 
     def _login(self):
         """
         Login to copernicus dataspace with credentials storted in .netrc
         """
-        auth = get_auth("datahub.creodias.eu")
+        auth = get_auth("theia.cnes.fr")     
         
-        # Configure TOTP authentification
-        totp = get_auth("creodias.totp")['password']
-        self.totp = pyotp.TOTP(totp)        
-        
-        totp = self.totp.now()
         data = {
-            'totp'      : totp,
-            "client_id" : "CLOUDFERRO_PUBLIC",
-            "username"  : auth['user'],
-            "password"  : auth['password'],
-            "grant_type": "password",
+            "ident" : auth['user'],
+            "pass"  : auth['password'],
             }
-                
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        }
         
         try:
-            url = "https://identity.cloudferro.com/auth/realms/Creodias-new/protocol/openid-connect/token"
-            r = requests.post(url, data=data, headers=headers)
+            url = 'https://theia.cnes.fr/atdistrib/services/authenticate/'
+            r = requests.post(url, data=data)
             r.raise_for_status()
         except Exception:
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
-        self.tokens = r.json()["access_token"]
-        print('Log to API (https://creodias.eu/)')
+        self.tokens = r.text
+        print('Log to API (https://theia.cnes.fr/)')
 
     def query(
         self,
@@ -96,15 +87,12 @@ class DownloadCreodias(BaseDownload):
         dtend: Optional[date|datetime]=None,
         geo=None,
         cloudcover_thres: Optional[int]=None,
-        name_contains: Optional[list] = None,
-        name_startswith: Optional[str] = None,
-        name_endswith: Optional[str] = None,
-        name_glob: Optional[str] = None,
-        use_most_recent: bool = True,
+        tile_number: str = None,
+        venus_site: str = None,
         other_attrs: Optional[list] = None,
     ):
         """
-        Product query on the CREODIAS Datahub
+        Product query on the Theia Data Center
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
@@ -117,6 +105,8 @@ class DownloadCreodias(BaseDownload):
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
             use_most_recent (bool): keep only the most recent processing baseline version
+            tile_number (str): Tile number (ex: T31TCJ), Sentinel2 only
+            venus_site (str): Venµs Site name, Venµs only
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -125,88 +115,47 @@ class DownloadCreodias(BaseDownload):
             Example:
                 cache_json('cache_result.json')(cds.query)(...)
         """
-        # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         if isinstance(dtstart, date):
             dtstart = datetime.combine(dtstart, time(0))
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
+            
         query_lines = [
-            f"""https://datahub.creodias.eu/odata/v1/Products?$filter=Collection/Name eq '{self.collection}'"""
+            f"https://theia.cnes.fr/atdistrib/resto2/api/collections/{self.collection}/search.json?"
         ]
 
         if dtstart:
-            query_lines.append(f'ContentDate/Start gt {dtstart.isoformat()}Z')
+            query_lines.append(f'startDate={dtstart.strftime('%Y-%m-%d')}')
         if dtend:
-            query_lines.append(f'ContentDate/Start lt {dtend.isoformat()}Z')
-
+            query_lines.append(f'completionDate={dtend.strftime('%Y-%m-%d')}')
+        
+        assert sum(v is not None for v in [geo, tile_number, venus_site]) != 0, \
+        "Please fill in at least geo or tile number or venus site"
+        assert sum(v is not None for v in [geo, tile_number, venus_site]) == 1
         if geo:
-            query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{geo}')")
-
-        if name_glob:
-            assert name_startswith is None
-            assert name_endswith is None
-            assert name_contains is None
-            substrings = re.split(r'\*|\?', name_glob)
-            if substrings[0]:
-                name_startswith = substrings[0]
-            if substrings[-1] and (len(substrings) > 1):
-                name_endswith = substrings[-1]
-            if (len(substrings) > 2):
-                name_contains = [x for x in substrings[1:-1] if x]
-
-        if name_startswith:
-            query_lines.append(f"startswith(Name, '{name_startswith}')")
-
-        if name_contains:
-            assert isinstance(name_contains, list)
-            for cont in name_contains:
-                query_lines.append(f"contains(Name, '{cont}')")
-
-        if name_endswith:
-            query_lines.append(f"endswith(Name, '{name_endswith}')")
+            query_lines.append(f"q={geo}")
+        if tile_number:
+            query_lines.append(f"location={tile_number}")
+        if venus_site:
+            query_lines.append(f"location={venus_site}")
 
         if cloudcover_thres:
-            query_lines.append(
-                "Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' "
-                f"and att/OData.CSC.DoubleAttribute/Value le {cloudcover_thres})")
+            query_lines.append(f"maxcloud={cloudcover_thres}")
 
-        top = 1000  # maximum value of number of retrieved values
-        req = (' and '.join(query_lines))+f'&$top={top}'
-        
-        ssl_ctx = get_ssl_context()
-        USER_AGENT = {'User-Agent': 'eodag/3.0.1'}
-        urllib_req = Request(requote_uri(req), headers=USER_AGENT)
-        urllib_response = urlopen(urllib_req, timeout=5, context=ssl_ctx)
-        response = json.load(urllib_response)
+        top = 500  # maximum value of number of retrieved values
+        req = ('&'.join(query_lines))+f'&maxRecords={top}'
+        json = requests.get(req).json()
 
         # test if maximum number of returns is reached
-        if len(response["value"]) >= top:
+        if len(json["features"]) >= top:
             raise ValueError('The request led to the maximum number '
-                             f'of results ({len(response["value"])})')
+                             f'of results ({len(json["features"])})')
         
-        if use_most_recent and (self.collection == 'SENTINEL-2'):
-            # remove duplicate products, take only the most recent one
-            mp = {}  # maps a single_id to a list of lines
-            for line in response["value"]:
-                # build a common identifier for multiple versions
-                s = line['Name'].split('_')
-                ident = '_'.join([s[i] for i in [0, 1, 2, 4, 5]])
-                if ident in mp:
-                    mp[ident].append(line)
-                else:
-                    mp[ident] = [line]
-            # for each identifier, sort the corresponding lines by "Name"
-            # and select the last one
-            json_value = [sorted(lines, key=lambda line: line['Name'])[-1]
-                             for lines in mp.values()]
-        else:
-            json_value = response['value']
+        json_value = json['features']
 
-        return [{"id": d["Id"], "name": d["Name"],
+        return [{"id": d["id"], "name": d["properties"]["productIdentifier"],
                  **{k: d[k] for k in (other_attrs or [])}}
-                for d in json_value
-                if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
-                ]
+                for d in json_value]
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space
@@ -216,9 +165,19 @@ class DownloadCreodias(BaseDownload):
             dir (Path | str): _description_
             uncompress (bool, optional): _description_. Defaults to True.
         """
-        
-        url = (f"https://zipper.creodias.eu/download/{product['id']}")
-        return self.download_base(url, product, dir, uncompress)
+        if uncompress:
+            target = Path(dir)/(product['name'])
+            uncompress_ext = '.zip'
+        else:
+            target = Path(dir)/(product['name']+'.zip')
+            uncompress_ext = None
+
+        url = ("https://theia.cnes.fr/atdistrib/resto2/collections/"
+               f"{self.collection}/{product['id']}/download/?issuerId=theia'")
+
+        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
+
+        return target
 
     def quicklook(self, product: dict, dir: Path|str):
         """
@@ -271,4 +230,3 @@ class DownloadCreodias(BaseDownload):
         Returns the product metadata including attributes and assets
         """
         return NotImplemented
-

@@ -1,37 +1,47 @@
-from datetime import datetime, date, time
 import fnmatch
-from pathlib import Path
-import re
-from typing import Optional
-
 import requests
+import pyotp
+import json
+import re
+
+from requests.utils import requote_uri
+from urllib.request import Request, urlopen
+from datetime import datetime, date, time
+from pathlib import Path
+from typing import Optional
 from tqdm import tqdm
 
-from sandd.base import request_get
+from sand.base import request_get, BaseDownload, get_ssl_context
 from core.ftp import get_auth
 from core.fileutils import filegen
 
 
-class DownloadCDS:
+class DownloadCreodias(BaseDownload):
     
-    name = 'DownloadCDS'
+    name = 'DownloadCreodias'
     
     collections = [
         'SENTINEL-1',
         'SENTINEL-2',
         'SENTINEL-3',
         'SENTINEL-5P',
+        'SENTINEL-6',
+        'LANDSAT-5',
+        'LANDSAT-7',
+        'LANDSAT-8',
+        'ENVISAT',
     ]
     
     def __init__(self, collection: str, level: int = 1):
         """
-        Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
+        Python interface to the Copernicus Data Space Ecosystem with CREODIAS (https://creodias.eu/)
+        CREODIAS : Copernicus Earth Observation Data and Information Access Services
 
         Args:
             collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
 
         Example:
-            cds = DownloadCDS('SENTINEL-2')
+            cds = DownloadCreodias('SENTINEL-2')
             # retrieve the list of products
             # using a json cache file to avoid reconnection
             ls = cache_json('query-S2.json')(cds.query)(
@@ -43,33 +53,42 @@ class DownloadCDS:
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadCDS.collections
-        self.collection = collection
-        self.level = level
-        self._login()
+        assert collection in DownloadCreodias.collections
+        super().__init__(collection, level)
 
     def _login(self):
         """
         Login to copernicus dataspace with credentials storted in .netrc
         """
-        auth = get_auth("dataspace.copernicus.eu")
-
+        auth = get_auth("datahub.creodias.eu")
+        
+        # Configure TOTP authentification
+        totp = get_auth("creodias.totp")['password']
+        self.totp = pyotp.TOTP(totp)        
+        
+        totp = self.totp.now()
         data = {
-            "client_id": "cdse-public",
-            "username": auth['user'],
-            "password": auth['password'],
+            'totp'      : totp,
+            "client_id" : "CLOUDFERRO_PUBLIC",
+            "username"  : auth['user'],
+            "password"  : auth['password'],
             "grant_type": "password",
             }
+                
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        
         try:
-            url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-            r = requests.post(url, data=data)
+            url = "https://identity.cloudferro.com/auth/realms/Creodias-new/protocol/openid-connect/token"
+            r = requests.post(url, data=data, headers=headers)
             r.raise_for_status()
         except Exception:
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.json()["access_token"]
-        print('Log to API (https://identity.dataspace.copernicus.eu/)')
+        print('Log to API (https://creodias.eu/)')
 
     def query(
         self,
@@ -85,7 +104,7 @@ class DownloadCDS:
         other_attrs: Optional[list] = None,
     ):
         """
-        Product query on the Copernicus Data Space
+        Product query on the CREODIAS Datahub
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
@@ -112,8 +131,7 @@ class DownloadCDS:
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
         query_lines = [
-            f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name 
-                eq '{self.collection}' """
+            f"""https://datahub.creodias.eu/odata/v1/Products?$filter=Collection/Name eq '{self.collection}'"""
         ]
 
         if dtstart:
@@ -154,17 +172,22 @@ class DownloadCDS:
 
         top = 1000  # maximum value of number of retrieved values
         req = (' and '.join(query_lines))+f'&$top={top}'
-        json = requests.get(req).json()
+        
+        ssl_ctx = get_ssl_context()
+        USER_AGENT = {'User-Agent': 'eodag/3.0.1'}
+        urllib_req = Request(requote_uri(req), headers=USER_AGENT)
+        urllib_response = urlopen(urllib_req, timeout=5, context=ssl_ctx)
+        response = json.load(urllib_response)
 
         # test if maximum number of returns is reached
-        if len(json["value"]) >= top:
+        if len(response["value"]) >= top:
             raise ValueError('The request led to the maximum number '
-                             f'of results ({len(json["value"])})')
+                             f'of results ({len(response["value"])})')
         
         if use_most_recent and (self.collection == 'SENTINEL-2'):
             # remove duplicate products, take only the most recent one
             mp = {}  # maps a single_id to a list of lines
-            for line in json["value"]:
+            for line in response["value"]:
                 # build a common identifier for multiple versions
                 s = line['Name'].split('_')
                 ident = '_'.join([s[i] for i in [0, 1, 2, 4, 5]])
@@ -177,7 +200,7 @@ class DownloadCDS:
             json_value = [sorted(lines, key=lambda line: line['Name'])[-1]
                              for lines in mp.values()]
         else:
-            json_value = json['value']
+            json_value = response['value']
 
         return [{"id": d["Id"], "name": d["Name"],
                  **{k: d[k] for k in (other_attrs or [])}}
@@ -193,34 +216,15 @@ class DownloadCDS:
             dir (Path | str): _description_
             uncompress (bool, optional): _description_. Defaults to True.
         """
-        if uncompress:
-            target = Path(dir)/(product['name'])
-            uncompress_ext = '.zip'
-        else:
-            target = Path(dir)/(product['name']+'.zip')
-            uncompress_ext = None
-
-        url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
-               f"Products({product['id']})/$value")
-
-        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
-
-        return target
+        
+        url = (f"https://zipper.creodias.eu/download/{product['id']}")
+        return self.download_base(url, product, dir, uncompress)
 
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
         """
-        target = Path(dir)/(product['name'] + '.jpeg')
-
-        if not target.exists():
-            assets = self.metadata(product)['Assets']
-            if not assets:
-                raise FileNotFoundError(f'Skipping quicklook {target.name}')
-            url = assets[0]['DownloadLink']
-            filegen(0)(self._download)(target, url)
-
-        return target
+        return NotImplemented
 
     def _download(
         self,
@@ -266,31 +270,5 @@ class DownloadCDS:
         """
         Returns the product metadata including attributes and assets
         """
-        req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
-               f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")
-        json = requests.get(req).json()
+        return NotImplemented
 
-        assert len(json['value']) == 1
-        return json['value'][0]
-
-
-def Sentinel2_level2_pattern(level1: str) -> str:
-    """returns level2 glob pattern from level1 product name"""
-    # https://sentiwiki.copernicus.eu/web/s2-products
-    # the following filename:
-    # S2A_MSIL1C_20170105T013442_N0204_R031_T53NMJ_20170105T013443.SAFE
-    # Identifies a Level-1C product acquired by Sentinel-2A on the 5th of January, 2017
-    # at 1:34:42 AM. It was acquired over Tile 53NMJ during Relative Orbit 031,
-    # and processed with Processing Baseline 02.04.
-    ls = level1.split("_")
-    return "_".join(
-        [
-            ls[0],  # sensor
-            "MSIL2A",
-            ls[2],  # acquisition time
-            "*",    # processing baseline
-            ls[4],  # relative orbit
-            ls[5],  # tile
-            "*",    # processing time
-        ]
-    )

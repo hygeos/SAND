@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "sandd"
-version = "0.1.0"
-description = "SANDD - Satellite Acquisition and Data Downloader"
+name = "sand"
+version = "0.2.0"
+description = "SAND - Satellite Acquisition Normative Downloader"
 authors = ["HYGEOS"]
 readme = "README.md"
 

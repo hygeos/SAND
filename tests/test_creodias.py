@@ -1,7 +1,7 @@
 import pytest
 
 from tests.generic import eval_login, eval_query, eval_download
-from sandd.creodias import DownloadCreodias
+from sand.creodias import DownloadCreodias
 from datetime import datetime
 from shapely import Point
 

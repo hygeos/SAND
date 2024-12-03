@@ -9,7 +9,7 @@ from shapely import to_wkt
 from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
-from sandd.base import UnauthorizedError
+from sand.base import UnauthorizedError
 from core.uncompress import uncompress as func_uncompress
 from core.ftp import get_auth
 from core.fileutils import filegen

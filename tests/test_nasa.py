@@ -1,7 +1,7 @@
 import pytest
 
 from tests.generic import eval_login, eval_query, eval_download
-from sandd.nasa import DownloadNASA
+from sand.nasa import DownloadNASA
 from datetime import datetime
 from shapely import Point
 

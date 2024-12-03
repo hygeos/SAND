@@ -9,7 +9,7 @@ from datetime import datetime, time, date
 
 from core.ftp import get_auth
 from core.fileutils import filegen
-from sandd.base import request_get, BaseDownload
+from sand.base import request_get, BaseDownload
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
