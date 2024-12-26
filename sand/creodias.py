@@ -9,8 +9,11 @@ from urllib.request import Request, urlopen
 from datetime import datetime, date, time
 from pathlib import Path
 from typing import Optional
+from time import sleep
 from tqdm import tqdm
 
+from sand.base import request_get, BaseDownload
+from sand.results import Query
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
@@ -67,7 +70,7 @@ class DownloadCreodias(BaseDownload):
         
         # Configure TOTP authentification
         totp = get_auth("creodias.totp")['password']
-        self.totp = pyotp.TOTP(totp)        
+        self.totp = pyotp.TOTP(totp)   
         
         totp = self.totp.now()
         data = {
@@ -82,11 +85,21 @@ class DownloadCreodias(BaseDownload):
             'Content-Type': 'application/x-www-form-urlencoded',
         }
         
-        try:
-            url = "https://identity.cloudferro.com/auth/realms/Creodias-new/protocol/openid-connect/token"
-            r = requests.post(url, data=data, headers=headers)
-            r.raise_for_status()
-        except Exception:
+        # Try to login during 1 min to bypass TOTP limitation
+        for i in range(12):
+            try:
+                url = "https://identity.cloudferro.com/auth/realms/Creodias-new/protocol/openid-connect/token"
+                r = requests.post(url, data=data, headers=headers, timeout=100)
+                r.raise_for_status()
+            except Exception:
+                if i == 0:
+                    log.log(log.lvl.WARNING, 'TOTP code has already been used. Waiting for a new one ...')
+                sleep(5)
+                data['totp'] = self.totp.now()
+                continue
+            break
+                
+        if r.status_code != 200:
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
