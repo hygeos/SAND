@@ -9,11 +9,13 @@ from shapely import to_wkt
 from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
+from sand.base import UnauthorizedError, BaseDownload
 from sand.results import Query, Collection
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.table import select_one, select, read_csv
+from core.uncompress import uncompress as func_uncompress
 
 
 class DownloadEumDAC(BaseDownload):

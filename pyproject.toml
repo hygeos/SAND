@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sand"
-version = "0.2.0"
+version = "0.2.1"
 description = "SAND - Satellite Acquisition Normative Downloader"
 authors = ["HYGEOS"]
 readme = "README.md"
@@ -14,6 +14,11 @@ shapely = "*"
 pyotp = "*"
 core = {git = "https://github.com/hygeos/core.git"}
 
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-html = "*"
+pytest-xdist = "*"
+ipykernel = "*"
 
 [build-system]
 requires = ["poetry-core"]

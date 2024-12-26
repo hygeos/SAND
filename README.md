@@ -24,11 +24,11 @@ Depending on the provider or resource you want to download, you will need to add
 
 | Provider | Registration | TOTP | 
 | --- | --- | --- | 
-| CDS | [dataspace.copernicus.eu](https://identity.dataspace.copernicus.eu) |  | 
+| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) |  | 
 | CNES | [theia.cnes.fr](https://sso.theia-land.fr) |   |
 | Creodias | [datahub.creodias.eu](https://creodias.eu/) | ✅ | 
 | EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   | 
-| NASA | [nasa.gov](https://ers.cr.usgs.gov/) |   | 
+| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) |   | 
 | USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   | 
 
 
@@ -42,7 +42,7 @@ machine [Registration link]
     password [password]
 ```
 
-Note that the login field is not necessarily the e-mail address but can be a character string provided by the registration site. 
+Note that the login field is not necessarily the e-mail address but can be a character string provided by the registration site (cf. EumDAC). 
 
 
 In addition, some providers such as Creodias require double authentication to download the data. Please enter your TOTP key in the file to finalise the configuration of these providers.
@@ -51,7 +51,7 @@ In addition, some providers such as Creodias require double authentication to do
 
 The package can be installed with the command:
 ```sh
-pip install git+https://github.com/hygeos/SANDD.git
+pip install git+https://github.com/hygeos/SAND.git
 ```
 
 ## Get Started
