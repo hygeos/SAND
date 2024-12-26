@@ -1,14 +1,13 @@
-import fnmatch
 import requests
-import re
 import json
-import os
 
+from urllib.request import urlopen, Request
 from datetime import datetime, date, time
 from pathlib import Path
 from typing import Optional
 from tqdm import tqdm
 
+from sand.base import request_get, BaseDownload
 from sand.results import Query
 from core import log
 from core.ftp import get_auth
@@ -123,9 +122,9 @@ class DownloadTHEIA(BaseDownload):
         ]
 
         if dtstart:
-            query_lines.append(f'startDate={dtstart.strftime('%Y-%m-%d')}')
+            query_lines.append(f"startDate={dtstart.strftime('%Y-%m-%d')}")
         if dtend:
-            query_lines.append(f'completionDate={dtend.strftime('%Y-%m-%d')}')
+            query_lines.append(f"completionDate={dtend.strftime('%Y-%m-%d')}")
         
         assert sum(v is not None for v in [geo, tile_number, venus_site]) != 0, \
         "Please fill in at least geo or tile number or venus site"
@@ -142,17 +141,19 @@ class DownloadTHEIA(BaseDownload):
 
         top = 500  # maximum value of number of retrieved values
         req = ('&'.join(query_lines))+f'&maxRecords={top}'
-        json = requests.get(req).json()
+        urllib_req = Request(req)
+        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+        response = json.load(urllib_response)
 
         # test if maximum number of returns is reached
-        if len(json["features"]) >= top:
+        if len(response["features"]) >= top:
             raise ValueError('The request led to the maximum number '
-                             f'of results ({len(json["features"])})')
+                             f'of results ({len(response["features"])})')
         
-        json_value = json['features']
+        json_value = response['features']
 
-        return [{"id": d["id"], "name": d["properties"]["productIdentifier"],
-                 **{k: d[k] for k in (other_attrs or [])}}
+        out =  [{"id": d["id"], "name": d["properties"]["productIdentifier"],
+                 **{k: d['properties'][k] for k in (other_attrs or ['quicklook','startDate', 'links','services'])}}
                 for d in json_value]
         
         return Query(out)
@@ -172,8 +173,7 @@ class DownloadTHEIA(BaseDownload):
             target = Path(dir)/(product['name']+'.zip')
             uncompress_ext = None
 
-        url = ("https://theia.cnes.fr/atdistrib/resto2/collections/"
-               f"{self.collection}/{product['id']}/download/?issuerId=theia'")
+        url = product['services']['download']['url']
 
         filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
 
@@ -202,35 +202,26 @@ class DownloadTHEIA(BaseDownload):
         pbar = tqdm(total=0, unit_scale=True, unit="B",
                     unit_divisor=1024, leave=False)
 
-        # Initialize session for download
-        session = requests.Session()
-        session.headers.update({'Authorization': f'Bearer {self.tokens}'})
-
         # Try to request server
+        url += '/?issuerId=theia'
         pbar.set_description(f'Requesting server: {target.name}')
-        response = session.get(url, allow_redirects=False)
-        niter = 0
-        while response.status_code in (301, 302, 303, 307) and niter < 15:
-            if response.status_code//100 == 5:
-                raise ValueError(f'Got response code : {response.status_code}')
-            if 'Location' not in response.headers:
-                raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
-            response = session.get(url, allow_redirects=False)
-            niter += 1
+        headers = {'Authorization': f'Bearer {self.tokens}'}
+        urllib_req = Request(url, headers=headers)
+        response = urlopen(urllib_req, timeout=15, context=self.ssl_ctx)
 
         # Download file
-        filesize = int(response.headers["Content-Length"])
-        response = request_get(session, url, verify=False, allow_redirects=True)
+        filesize = response.length
         pbar = tqdm(total=filesize, unit_scale=True, unit="B",
                     unit_divisor=1024, leave=True)
         pbar.set_description(f"Downloading {target.name}")
         with open(target, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(1024)
-
+            while True:
+                chunk = response.read(1024)
+                if not chunk:  # End of response
+                    break
+                f.write(chunk)
+                pbar.update(1024)
+                    
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets
