@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Optional
 from tqdm import tqdm
 
-from sand.base import request_get
+from sand.results import Query
+from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.table import select_one, select, read_csv, read_xml_from_text
@@ -76,7 +77,7 @@ class DownloadTHEIA(BaseDownload):
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.text
-        print('Log to API (https://theia.cnes.fr/)')
+        log.info('Log to API (https://theia.cnes.fr/)')
 
     def query(
         self,
@@ -153,6 +154,8 @@ class DownloadTHEIA(BaseDownload):
         return [{"id": d["id"], "name": d["properties"]["productIdentifier"],
                  **{k: d[k] for k in (other_attrs or [])}}
                 for d in json_value]
+        
+        return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space

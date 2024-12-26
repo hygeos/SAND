@@ -7,10 +7,12 @@ from typing import Optional
 from shapely import Point, Polygon
 from datetime import datetime, time, date
 
+from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.table import select, select_one, read_csv
 from sand.base import request_get, BaseDownload
+from sand.results import Query
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
@@ -84,7 +86,7 @@ class DownloadUSGS(BaseDownload):
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
-        print(f'Log to API (https://m2m.cr.usgs.gov/)')
+        log.info(f'Log to API (https://m2m.cr.usgs.gov/)')
         
 
     def query(
@@ -175,7 +177,8 @@ class DownloadUSGS(BaseDownload):
         return [{"id": d["entityId"], "name": d["displayId"],
                  **{k: d[k] for k in (other_attrs or [])}}
                 for d in response['data']['results']]
-    
+        
+        return Query(out)
     
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space

@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
 from sand.results import Query, Collection
+from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.table import select_one, select, read_csv
@@ -74,7 +75,7 @@ class DownloadEumDAC(BaseDownload):
             raise UnauthorizedError("Invalid Credentials")  
         
         self.datastore = eumdac.DataStore(self.tokens)        
-        print(f'Log to API (https://data.eumetsat.int/)')
+        log.info(f'Log to API (https://data.eumetsat.int/)')
 
     def _check_collection(self):
         datastore = eumdac.DataStore(self.tokens)
@@ -136,7 +137,7 @@ class DownloadEumDAC(BaseDownload):
             raise ValueError('The request led to the maximum number '
                              f'of results ({len(product)})')
         
-        return [str(d) for d in product]
+        return Query(out)
 
     def download(self, product_id: str, dir: Path, uncompress: bool=False) -> Path:
         """

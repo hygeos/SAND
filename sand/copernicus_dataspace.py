@@ -7,9 +7,11 @@ from typing import Optional
 import requests
 from tqdm import tqdm
 
-from sand.base import request_get
+from sand.results import Query, Collection
+from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
+from core.table import select_one, read_csv
 
 
 class DownloadCDSE(BaseDownload):
@@ -82,6 +84,8 @@ class DownloadCDSE(BaseDownload):
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.json()["access_token"]
+        log.info('Log to API (https://dataspace.copernicus.eu/)')
+
     def _check_collection(self) -> dict:
         """
         Every available collection on the API server
@@ -207,6 +211,8 @@ class DownloadCDSE(BaseDownload):
                 for d in json_value
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
                 ]
+    
+        return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space

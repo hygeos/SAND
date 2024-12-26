@@ -10,9 +10,10 @@ from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 from datetime import datetime, time, date
 
+from core import log
 from core.table import *
 from core.fileutils import filegen
-from sand.base import request_get, BaseDownload, get_ssl_context
+from sand.results import Query
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
@@ -63,7 +64,7 @@ class DownloadNASA(BaseDownload):
         """
         Login to NASA with credentials storted in .netrc
         """
-        print(f'Log to API (https://cmr.earthdata.nasa.gov/)')
+        log.info(f'Log to API (https://cmr.earthdata.nasa.gov/)')
         
 
     def query(

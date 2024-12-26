@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 from tqdm import tqdm
 
-from sand.base import request_get, BaseDownload, get_ssl_context
+from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.table import select_one, read_csv
@@ -90,8 +90,9 @@ class DownloadCreodias(BaseDownload):
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
+
         self.tokens = r.json()["access_token"]
-        print('Log to API (https://creodias.eu/)')
+        log.info('Log to API (https://creodias.eu/)')
 
     def query(
         self,
@@ -210,6 +211,8 @@ class DownloadCreodias(BaseDownload):
                 for d in json_value
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
                 ]
+        
+        return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space

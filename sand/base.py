@@ -1,9 +1,7 @@
 import ssl
-import pandas as pd
 
 from time import sleep
 from pathlib import Path
-from pprint import PrettyPrinter
 
 from sand.results import Collection
 from core.fileutils import filegen
