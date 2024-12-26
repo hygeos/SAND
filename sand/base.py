@@ -133,30 +133,3 @@ class RedirectionError(Exception):
 class ServerError(Exception):
     """The server failed to fulfil a request."""
     pass
-
-# class Results_Query(PrettyPrinter):
-    
-#     def __init__(self, json_value: dict) -> None:
-#         self.data = json_value
-#         self._transform()
-    
-#     def _transform(self):
-#         res = []
-#         for d in self.data:
-#             sub = pd.DataFrame.from_dict({k: [v] for k,v in d.items()})
-#             res.append(sub)
-#         self.data = pd.concat(res, ignore_index=True)
-        
-#     def _pretty(self):
-#         display(self.data)
-        
-#     def __len__(self):
-#         return len(self.data)
-    
-#     def __repr__(self) -> str: 
-#         return str(self)
-    
-#     def __str__(self) -> str:
-#         return f'{len(self.data)} results has been found'
-
-#     PrettyPrinter._dispactch[Results_Query.__repr__] = _pretty
