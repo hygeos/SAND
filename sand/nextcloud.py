@@ -8,7 +8,7 @@ from os import system
 sharelink_eoread = 'https://docs.hygeos.com/s/Fy2bYLpaxGncgPM/'
 
 
-# @interface()
+@interface()
 def download_nextcloud(product_name: str, 
                        output_dir: Path | str, 
                        input_dir: Path | str = ''):
