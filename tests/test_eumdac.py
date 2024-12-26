@@ -1,12 +1,12 @@
 import pytest
 
-from tests.generic import eval_login, eval_query, eval_download
+from tests.generic import *
 from sand.eumdac import DownloadEumDAC
 from datetime import datetime
 from shapely import Point
 
 
-@pytest.fixture(params=['MSG-SEVIRI'])
+@pytest.fixture(params=['SEVIRI-MSG'])
 def collec(request):
     return request.param
     
@@ -15,17 +15,27 @@ def level(request):
     return request.param
 
 
-def test_EumDAC_login(collec, level):
+def test_login(collec, level):
     eval_login(DownloadEumDAC, collec, level)
 
-def test_EumDAC_query(collec, level):
-    eval_query(DownloadEumDAC, collec, level,
-               dtstart = datetime(2022, 1, 1),
-               dtend = datetime(2022, 1, 10),
-               geo = Point(10, 12))
+def test_collection():
+    eval_collection(DownloadEumDAC)
 
-def test_EumDAC_download(collec, level):
+def test_download(collec, level):
     eval_download(DownloadEumDAC, collec, level,
                   dtstart = datetime(2024, 1, 1),
                   dtend = datetime(2024, 1, 10),
                   geo = Point(10, 12))
+
+def test_metadata(collec, level):
+    eval_metadata(DownloadEumDAC, collec, level,
+                  dtstart = datetime(2024, 1, 1),
+                  dtend = datetime(2024, 1, 10),
+                  geo = Point(10, 12))
+    
+def test_quicklook(collec, level):
+    eval_quicklook(DownloadEumDAC, collec, level,
+                   dtstart = datetime(2024, 1, 1),
+                   dtend = datetime(2024, 1, 10),
+                   geo = Point(10, 12))
+    

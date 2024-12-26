@@ -1,6 +1,6 @@
 import pytest
 
-from tests.generic import eval_login, eval_query, eval_download
+from tests.generic import *
 from sand.theia import DownloadTHEIA
 from datetime import datetime
 from shapely import Point
@@ -16,18 +16,29 @@ def level(request):
     
 
 
-def test_CNES_login(collec, level):
+def test_login(collec, level):
     eval_login(DownloadTHEIA, collec, level)
 
-def test_CNES_query(collec, level):
-    eval_query(DownloadTHEIA, collec, level,
-               dtstart = datetime(2020, 1, 1),
-               dtend = datetime(2020, 6, 1),
-               venus_site='NARYN')
+def test_collection():
+    eval_collection(DownloadTHEIA)
 
-def test_CNES_download(collec, level):
+def test_download(collec, level):
     eval_download(DownloadTHEIA, collec, level,
                   dtstart = datetime(2020, 1, 1),
                   dtend = datetime(2020, 6, 1),
                   venus_site='NARYN')
+
+def test_metadata(collec, level):
+    with pytest.raises(AssertionError):
+        eval_metadata(DownloadTHEIA, collec, level,
+                    dtstart = datetime(2020, 1, 1),
+                    dtend = datetime(2020, 6, 1),
+                    venus_site='NARYN')
+    
+def test_quicklook(request, collec, level):
+    eval_quicklook(request, DownloadTHEIA, collec, level,
+                  dtstart = datetime(2020, 1, 1),
+                  dtend = datetime(2020, 6, 1),
+                  venus_site='NARYN')
+    
     

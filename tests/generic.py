@@ -1,24 +1,46 @@
 from tempfile import TemporaryDirectory
-from core.cache import cache_json
+from core.cache import cache_dataframe
+from .conftest import savefig 
 from pathlib import Path
+from PIL import Image
 
+import matplotlib.pyplot as plt
 
 def eval_login(downloader, collec, level):
     downloader(collec, level)
-
-def eval_query(downloader, collec, level, **kwargs):
-    dl = downloader(collec, level)
     
-    with TemporaryDirectory() as tmpdir:
-        name_cache = Path(tmpdir)/f'test_{dl.name}_cache.json'
-        ls = cache_json(name_cache)(dl.query)(**kwargs)
-        assert len(ls) != 0, 'No product found'
+def eval_collection(downloader):
+    collec = downloader().get_available_collection()
+    print(collec.data)   
 
 def eval_download(downloader, collec, level, **kwargs):
     dl = downloader(collec, level)
     
     with TemporaryDirectory() as tmpdir:
-        name_cache = Path(tmpdir)/f'test_{dl.name}_cache.json'
-        ls = cache_json(name_cache)(dl.query)(**kwargs)
-        dl.download(ls[0], tmpdir, uncompress=True)
+        name_cache = Path(tmpdir)/f'test_{dl.name}_cache.pickle'
+        ls = cache_dataframe(name_cache)(dl.query)(**kwargs)
+        dl.download(ls.iloc[0], tmpdir, uncompress=True)
         assert len(list(Path(tmpdir).iterdir())) == 2
+    
+def eval_metadata(downloader, collec, level, **kwargs):
+    dl = downloader(collec, level)
+    
+    with TemporaryDirectory() as tmpdir:
+        name_cache = Path(tmpdir)/f'test_{dl.name}_cache.pickle'
+        ls = cache_dataframe(name_cache)(dl.query)(**kwargs)
+        meta = dl.metadata(ls.iloc[0])
+        assert isinstance(meta, dict)
+        print(meta)
+    
+def eval_quicklook(request, downloader, collec, level, **kwargs):
+    dl = downloader(collec, level)
+    
+    with TemporaryDirectory() as tmpdir:
+        name_cache = Path(tmpdir)/f'test_{dl.name}_cache.pickle'
+        ls = cache_dataframe(name_cache)(dl.query)(**kwargs)
+        quick = dl.quicklook(ls.iloc[0], tmpdir)
+        assert Path(quick).exists()
+        
+        img = Image.open(quick)
+        plt.imshow(img)
+        savefig(request)

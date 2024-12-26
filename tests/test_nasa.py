@@ -1,9 +1,9 @@
 import pytest
 
-from tests.generic import eval_login, eval_query, eval_download
+from tests.generic import *
 from sand.nasa import DownloadNASA
 from datetime import datetime
-from shapely import Point
+from shapely import Polygon
 
 
 @pytest.fixture(params=['ECOSTRESS'])
@@ -16,20 +16,44 @@ def level(request):
     
 
 
-def test_CNES_login(collec, level):
+def test_login(collec, level):
     eval_login(DownloadNASA, collec, level)
 
-def test_CNES_query(collec, level):
-    eval_query(DownloadNASA, collec, level,
-               dtstart = datetime(2020, 1, 1),
-               dtend = datetime(2020, 6, 1),
-               geo = Point(119.514442, -8.411750)
-               )
+def test_collection():
+    eval_collection(DownloadNASA)
 
-def test_CNES_download(collec, level):
+def test_download(collec, level):
     eval_download(DownloadNASA, collec, level,
-                  dtstart = datetime(2020, 1, 1),
-                  dtend = datetime(2020, 6, 1),
-                  geo = Point(119.514442, -8.411750)
+                  dtstart = datetime(2023, 10, 20),
+                  dtend = datetime(2023, 11, 14),
+                  geo = Polygon(((34.210026,-120.295181),
+                                 (34.210026,-119.526215),
+                                 (35.225021,-119.526215),
+                                 (35.225021,-120.295181),
+                                 (34.210026,-120.295181)))
                   )
+
+def test_metadata(collec, level):
+    eval_metadata(DownloadNASA, collec, level,
+                  dtstart = datetime(2023, 10, 20),
+                  dtend = datetime(2023, 11, 14),
+                  geo = Polygon(((34.210026,-120.295181),
+                                 (34.210026,-119.526215),
+                                 (35.225021,-119.526215),
+                                 (35.225021,-120.295181),
+                                 (34.210026,-120.295181)))
+                  )
+    
+
+def test_quicklook(request, collec, level):
+    eval_quicklook(request, DownloadNASA, collec, level,
+                  dtstart = datetime(2023, 10, 20),
+                  dtend = datetime(2023, 11, 14),
+                  geo = Polygon(((34.210026,-120.295181),
+                                 (34.210026,-119.526215),
+                                 (35.225021,-119.526215),
+                                 (35.225021,-120.295181),
+                                 (34.210026,-120.295181)))
+                  )
+    
     
