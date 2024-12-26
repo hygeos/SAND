@@ -1,12 +1,16 @@
+from urllib.request import urlopen, Request
 from datetime import datetime, date, time
-import fnmatch
+from requests.utils import requote_uri
 from pathlib import Path
-import re
 from typing import Optional
-
-import requests
 from tqdm import tqdm
 
+import re
+import json
+import fnmatch
+import requests
+
+from sand.base import request_get, BaseDownload
 from sand.results import Query, Collection
 from core import log
 from core.ftp import get_auth
@@ -181,17 +185,19 @@ class DownloadCDSE(BaseDownload):
 
         top = 1000  # maximum value of number of retrieved values
         req = (' and '.join(query_lines))+f'&$top={top}'
-        json = requests.get(req).json()
+        urllib_req = Request(requote_uri(req))
+        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+        response = json.load(urllib_response)
 
         # test if maximum number of returns is reached
-        if len(json["value"]) >= top:
+        if len(response["value"]) >= top:
             raise ValueError('The request led to the maximum number '
-                             f'of results ({len(json["value"])})')
+                             f'of results ({len(response["value"])})')
         
         if use_most_recent and (self.collection == 'SENTINEL-2'):
             # remove duplicate products, take only the most recent one
             mp = {}  # maps a single_id to a list of lines
-            for line in json["value"]:
+            for line in response["value"]:
                 # build a common identifier for multiple versions
                 s = line['Name'].split('_')
                 ident = '_'.join([s[i] for i in [0, 1, 2, 4, 5]])
@@ -204,9 +210,9 @@ class DownloadCDSE(BaseDownload):
             json_value = [sorted(lines, key=lambda line: line['Name'])[-1]
                              for lines in mp.values()]
         else:
-            json_value = json['value']
+            json_value = response['value']
 
-        return [{"id": d["Id"], "name": d["Name"],
+        out = [{"id": d["Id"], "name": d["Name"],
                  **{k: d[k] for k in (other_attrs or [])}}
                 for d in json_value
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
@@ -291,7 +297,7 @@ class DownloadCDSE(BaseDownload):
                     f.write(chunk)
                     pbar.update(1024)
 
-    def metadata(self, product: dict):
+    def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
         """

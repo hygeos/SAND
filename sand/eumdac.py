@@ -123,8 +123,7 @@ class DownloadEumDAC(BaseDownload):
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
         
-        self.eumdac_collection = self._get_dataset_name()
-        self.selected_collection = self.datastore.get_collection(self.eumdac_collection)
+        self.selected_collection = self.datastore.get_collection(self.collection)
         product = list(self.selected_collection.search(
             geo = to_wkt(geo),
             dtstart = dtstart,
@@ -137,40 +136,48 @@ class DownloadEumDAC(BaseDownload):
             raise ValueError('The request led to the maximum number '
                              f'of results ({len(product)})')
         
+        out = [{"id": str(d), 
+                "name": d.acronym, 
+                "collection": d.collection, 
+                "time": d.processingTime,
+                "dl_url": d.metadata['properties']['links']['data'],
+                "meta_url": d.metadata['properties']['links']['alternates'],
+                } 
+                for d in product]
         return Query(out)
 
-    def download(self, product_id: str, dir: Path, uncompress: bool=False) -> Path:
+    def download(self, product: str, dir: Path, uncompress: bool=False) -> Path:
         """
         Download a product to directory
 
         product_id: 'S3A_OL_1_ERR____20231214T232432_20231215T000840_20231216T015921_2648_106_358______MAR_O_NT_002.SEN3'
         """
-        product = self.datastore.get_product(
-            product_id=product_id,
-            collection_id=self.eumdac_collection,
+        data = self.datastore.get_product(
+            product_id=product['id'],
+            collection_id=self.collection,
         )
 
         @filegen()
         def _download(target: Path):
             with TemporaryDirectory() as tmpdir:
-                target_compressed = Path(tmpdir)/(product_id + '.zip')
-                with product.open() as fsrc, open(target_compressed, mode='wb') as fdst:
-                    pbar = tqdm(total=product.size*1e3, unit_scale=True, unit="B",
+                target_compressed = Path(tmpdir)/(product['id'] + '.zip')
+                with data.open() as fsrc, open(target_compressed, mode='wb') as fdst:
+                    pbar = tqdm(total=data.size*1e3, unit_scale=True, unit="B",
                                 initial=0, unit_divisor=1024, leave=False)
-                    pbar.set_description(f"Downloading {product_id}")
+                    pbar.set_description(f"Downloading {product['id']}")
                     while True:
                         chunk = fsrc.read(1024)
                         if not chunk:
                             break
                         fdst.write(chunk)
                         pbar.update(len(chunk))
-                print(f'Download of product {product} finished.')
+                log.info(f"Download of product {product['id']} finished.")
                 if uncompress:
                     func_uncompress(target_compressed, target.parent)
                 else:
                     shutil.move(target_compressed, target.parent)
 
-        target = Path(dir)/(product_id if uncompress else (product_id + '.zip'))
+        target = Path(dir)/(product['id'] if uncompress else (product['id'] + '.zip'))
 
         _download(target)
 

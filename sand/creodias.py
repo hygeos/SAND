@@ -177,10 +177,9 @@ class DownloadCreodias(BaseDownload):
         top = 1000  # maximum value of number of retrieved values
         req = (' and '.join(query_lines))+f'&$top={top}'
         
-        ssl_ctx = get_ssl_context()
         USER_AGENT = {'User-Agent': 'eodag/3.0.1'}
         urllib_req = Request(requote_uri(req), headers=USER_AGENT)
-        urllib_response = urlopen(urllib_req, timeout=5, context=ssl_ctx)
+        urllib_response = urlopen(urllib_req, timeout=100, context=self.ssl_ctx)
         response = json.load(urllib_response)
 
         # test if maximum number of returns is reached
@@ -206,7 +205,7 @@ class DownloadCreodias(BaseDownload):
         else:
             json_value = response['value']
 
-        return [{"id": d["Id"], "name": d["Name"],
+        out = [{"id": d["Id"], "name": d["Name"],
                  **{k: d[k] for k in (other_attrs or [])}}
                 for d in json_value
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))

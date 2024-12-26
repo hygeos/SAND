@@ -172,10 +172,10 @@ class DownloadUSGS(BaseDownload):
         top = 1000
         if response["data"]['recordsReturned'] >= top:
             raise ValueError('The request led to the maximum number '
-                    f'of results ({response["data"]['recordsReturned']})')
+                    f'of results ({response["data"]["recordsReturned"]})')
 
-        return [{"id": d["entityId"], "name": d["displayId"],
-                 **{k: d[k] for k in (other_attrs or [])}}
+        out = [{"id": d["entityId"], "name": d["displayId"],
+                 **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
                 for d in response['data']['results']]
         
         return Query(out)
