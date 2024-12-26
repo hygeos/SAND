@@ -12,29 +12,43 @@ from core.ftp import get_auth
 from core.fileutils import filegen
 
 
-class DownloadCDS:
+class DownloadCDSE(BaseDownload):
     
-    name = 'DownloadCDS'
+    name = 'DownloadCDSE'
     
     collections = [
-        'SENTINEL-1',
-        'SENTINEL-2',
-        'SENTINEL-3',
-        'SENTINEL-5P',
+        'CCM',	
+        'COP-DEM',	
+        'ENVISAT',	
+        'GLOBAL-MOSAICS',	
+        'LANDSAT-5-TM',
+        'LANDSAT-7-ET',	
+        'LANDSAT-8-OLI',	
+        'S2GLC',
+        'SENTINEL-1',	
+        'SENTINEL-1-RTC',	
+        'SENTINEL-2-MSI',
+        'SENTINEL-3-OLCI-FR',
+        'SENTINEL-3-OLCI-RR',	
+        'SENTINEL-5P-TROPOMI',	
+        'SENTINEL-6',	
+        'SMOS',
+        'MODIS-TERRA',
+        'MODIS-AQUA',
     ]
     
-    def __init__(self, collection: str, level: int = 1):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
 
         Args:
-            collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
+            collection (str): collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
 
         Example:
-            cds = DownloadCDS('SENTINEL-2')
+            cds = DownloadCDS('SENTINEL-2-MSI')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(cds.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
@@ -43,10 +57,9 @@ class DownloadCDS:
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadCDS.collections
-        self.collection = collection
-        self.level = level
-        self._login()
+        self.available_collection = DownloadCDSE.collections
+        self.table_collection = Path(__file__).parent/'collections'/'cdse.csv'
+        super().__init__(collection, level)
 
     def _login(self):
         """
@@ -69,7 +82,17 @@ class DownloadCDS:
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.json()["access_token"]
-        print('Log to API (https://identity.dataspace.copernicus.eu/)')
+    def _check_collection(self) -> dict:
+        """
+        Every available collection on the API server
+        """
+        req = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Attributes'
+        USER_AGENT = {'User-Agent': 'eodag/3.0.1'}
+        urllib_req = Request(requote_uri(req), headers=USER_AGENT)
+        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+        content = json.load(urllib_response)
+        collec = {k: '' for k in content.keys()}
+        return Collection(collec)
 
     def query(
         self,
@@ -272,6 +295,10 @@ class DownloadCDS:
 
         assert len(json['value']) == 1
         return json['value'][0]
+    
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        return select_one(correspond,('SAND_name','=',collection),'name')  
 
 
 def Sentinel2_level2_pattern(level1: str) -> str:

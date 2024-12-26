@@ -9,22 +9,33 @@ from shapely import to_wkt
 from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
-from sand.base import UnauthorizedError
-from core.uncompress import uncompress as func_uncompress
+from sand.results import Query, Collection
 from core.ftp import get_auth
 from core.fileutils import filegen
+from core.table import select_one, select, read_csv
 
 
-class DownloadEumDAC:
+class DownloadEumDAC(BaseDownload):
     
     name = 'DownloadEumDAC'
     
     collections = [
-        'MSG-SEVIRI',
-        'MTG-FCI',
+        'AMSU',
+        'ASCAT-METOP-FR',
+        'ASCAT-METOP-RES',
+        'FCI-MTG-HR',
+        'FCI-MTG-NR',
+        'IASI', 
+        'MVIRI-MFG',
+        'SENTINEL-3-OLCI-FR',
+        'SENTINEL-3-OLCI-RR',
+        'SENTINEL-3-SRAL',
+        'SENTINEL-5P-TROPOMI',
+        'SEVIRI-MSG',
+        'VIIRS',
     ]
     
-    def __init__(self, collection: str, level: int = 1):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)
 
@@ -44,10 +55,9 @@ class DownloadEumDAC:
             for p in ls:
                 eum.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadEumDAC.collections
-        self.collection = collection
-        self.level = level
-        self._login()
+        self.available_collection = DownloadEumDAC.collections
+        self.table_collection = Path(__file__).parent/'collections'/'eumdac.csv'
+        super().__init__(collection, level)
         
     def _login(self):
         """
@@ -66,6 +76,10 @@ class DownloadEumDAC:
         self.datastore = eumdac.DataStore(self.tokens)        
         print(f'Log to API (https://data.eumetsat.int/)')
 
+    def _check_collection(self):
+        datastore = eumdac.DataStore(self.tokens)
+        data = {c.title: c.abstract for c in datastore.collections}
+        return Collection(data)
 
     def query(
         self,
@@ -161,16 +175,9 @@ class DownloadEumDAC:
 
         return target
     
-    def _get_dataset_name(self):
-        if self.collection == 'MSG-SEVIRI':
-            collec_name = 'EO:EUM:DAT:MSG:HRSEVIRI'
-        if self.collection == 'EUMET-RSS':
-            collec_name = 'EO:EUM:DAT:MSG:MSG15-RSS'
-        if self.collection == 'EUMET-OLCI-FR':
-            collec_name = ['EO:EUM:DAT:0409', 'EO:EUM:DAT:0577']
-        if self.collection == 'EUMET-OLCI-RR':
-            collec_name = ['EO:EUM:DAT:0410', 'EO:EUM:DAT:0578']
-        if self.collection == 'MTG-FCI':
-            collec_name = ''
-        
-        return collec_name
+    def metadata(self, product):
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
+        collecs = select_one(collecs,('SAND_name','=',collection),'collec')  
+        return collecs.split(' ')[0]

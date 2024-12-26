@@ -5,23 +5,52 @@ from time import sleep
 from pathlib import Path
 from pprint import PrettyPrinter
 
+from sand.results import Collection
 from core.fileutils import filegen
-
+from core.table import select_one, read_csv
 
 
 class BaseDownload:
     
-    def __init__(self, collection: str, level: int = 1):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to API Server
         """
-        self.collection = collection
         self.level = level
+        # Check collection validity
+        if collection is None:
+            self.collection = collection
+        else:
+            assert collection in self.available_collection, \
+            f"Collection '{collection}' does not exist,"
+            "please use get_availbale_collection methods"
+            self.collection = self._retrieve_collec_name(collection)
+        
         self._login()
 
     def _login(self):
         """
         Login to API server with credentials storted in .netrc
+        """
+        return NotImplemented
+
+    def get_available_collection(self) -> dict:
+        """
+        Every downloadable collections
+        """
+        current_dir = Path(__file__).parent
+        sensor = read_csv(current_dir/'sensors.csv')
+        collec = {}
+        for c in self.available_collection:
+            try: 
+                collec[c] = select_one(sensor,('Name','=',c),'longname')
+            except AssertionError: 
+                raise ValueError(f'{c} is not a valid collection') 
+        return Collection(collec)
+    
+    def _check_collection(self) -> dict:
+        """
+        Every available collection on the API server
         """
         return NotImplemented
 
@@ -69,8 +98,13 @@ class BaseDownload:
         """
         Returns the product metadata including attributes and assets
         """
-        return NotImplemented
+        return NotImplemented  
     
+    def _retrieve_collec_name(self, collection):
+        """
+        Returns the collection name used by API
+        """
+        return NotImplemented 
     
     
 def request_get(session, url, **kwargs):

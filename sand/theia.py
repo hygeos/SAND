@@ -12,29 +12,27 @@ from tqdm import tqdm
 from sand.base import request_get
 from core.ftp import get_auth
 from core.fileutils import filegen
+from core.table import select_one, select, read_csv, read_xml_from_text
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
-class DownloadTHEIA:
+class DownloadTHEIA(BaseDownload):
     
     name = 'DownloadTHEIA'
     
     collections = [
-        'LANDSAT5',
-        'LANDSAT7', 
-        'LANDSAT8', 
-        'SPOT1', 
-        'SPOT2', 
-        'SPOT3', 
-        'SPOT4', 
-        'SPOT5',
-        'SENTINEL2A', 
-        'SENTINEL2B', 
+        'LANDSAT-5-TM',
+        'LANDSAT-7-ET', 
+        'LANDSAT-8-OLI', 
+        'PLEIADES',
+        'SPOT', 
+        'SWH', 
+        'SENTINEL-2-MSI', 
         'VENUS', 
-        'VENUSVM05',
+        'VENUS-VM5',
     ]
     
-    def __init__(self, collection: str, level: int = 1):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the CNES Theia Data Center (https://theia.cnes.fr/)
 
@@ -54,10 +52,9 @@ class DownloadTHEIA:
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadTHEIA.collections
-        self.collection = collection
-        self.level = level
-        self._login()
+        self.available_collection = DownloadTHEIA.collections
+        self.table_collection = Path(__file__).parent/'collections'/'theia.csv'
+        super().__init__(collection, level)
 
     def _login(self):
         """
@@ -229,4 +226,16 @@ class DownloadTHEIA:
         """
         Returns the product metadata including attributes and assets
         """
-        return NotImplemented
+    
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
+        collecs = select_one(collecs,('SAND_name','=',collection),'collec')  
+        return collecs.split(' ')[0]
+    
+    def _get(self, liste, name, in_key, out_key):
+        for col in liste:
+            if name in col[in_key]:
+                print(col[in_key])
+                return col[out_key]
+        raise FileNotFoundError

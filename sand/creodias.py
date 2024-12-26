@@ -14,6 +14,7 @@ from tqdm import tqdm
 from sand.base import request_get, BaseDownload, get_ssl_context
 from core.ftp import get_auth
 from core.fileutils import filegen
+from core.table import select_one, read_csv
 
 
 class DownloadCreodias(BaseDownload):
@@ -22,29 +23,30 @@ class DownloadCreodias(BaseDownload):
     
     collections = [
         'SENTINEL-1',
-        'SENTINEL-2',
-        'SENTINEL-3',
-        'SENTINEL-5P',
+        'SENTINEL-2-MSI',
+        'SENTINEL-3-OLCI-FR',
+        'SENTINEL-3-OLCI-RR',
+        'SENTINEL-5P-TROPOMI',
         'SENTINEL-6',
-        'LANDSAT-5',
-        'LANDSAT-7',
-        'LANDSAT-8',
+        'LANDSAT-5-TM',
+        'LANDSAT-7-ET',
+        'LANDSAT-8-OLI',
         'ENVISAT',
     ]
     
-    def __init__(self, collection: str, level: int = 1):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the Copernicus Data Space Ecosystem with CREODIAS (https://creodias.eu/)
         CREODIAS : Copernicus Earth Observation Data and Information Access Services
 
         Args:
-            collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
+            collection (str): collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
 
         Example:
-            cds = DownloadCreodias('SENTINEL-2')
+            cds = DownloadCreodias('SENTINEL-2-MSI')
             # retrieve the list of products
             # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(cds.query)(
+            ls = cache_pickle('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
@@ -53,7 +55,8 @@ class DownloadCreodias(BaseDownload):
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadCreodias.collections
+        self.available_collection = DownloadCreodias.collections
+        self.table_collection = Path(__file__).parent/'collections'/'creodias.csv'
         super().__init__(collection, level)
 
     def _login(self):
@@ -270,5 +273,8 @@ class DownloadCreodias(BaseDownload):
         """
         Returns the product metadata including attributes and assets
         """
-        return NotImplemented
+    
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        return select_one(correspond,('SAND_name','=',collection),'name')  
 

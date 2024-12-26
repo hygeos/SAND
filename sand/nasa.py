@@ -10,6 +10,7 @@ from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 from datetime import datetime, time, date
 
+from core.table import *
 from core.fileutils import filegen
 from sand.base import request_get, BaseDownload, get_ssl_context
 
@@ -22,14 +23,18 @@ class DownloadNASA(BaseDownload):
     name = 'DownloadNASA'
     
     collections = [
-        'MODIS-AQUA',
-        'MODIS-TERRA',
         'ECOSTRESS',
+        'EMIT',
+        'MODIS-AQUA-HR',
+        'MODIS-AQUA-LR',
+        'MODIS-TERRA-HR',
+        'MODIS-TERRA-LR',
+        'SENTINEL-6-HR',
+        'SENTINEL-6-LR',
         'VIIRS',
-        'ASTER',
     ]
 
-    def __init__(self, collection: str, level: int):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)
 
@@ -49,7 +54,8 @@ class DownloadNASA(BaseDownload):
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadNASA.collections
+        self.available_collection = DownloadNASA.collections
+        self.table_collection = Path(__file__).parent/'collections'/'nasa.csv'
         super().__init__(collection, level)
         
 
@@ -186,10 +192,16 @@ class DownloadNASA(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
+
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
+        collecs = select_one(collecs,('SAND_name','=',collection),'collec')
+        return collecs.split(' ')
     
-    def _get_collection_id(self):
-        if self.collection == 'MODIS-AQUA': return NotImplemented
-        if self.collection == 'MODIS-TERRA': return NotImplemented
-        if self.collection == 'ECOSTRESS': return 'C2595678497-LPCLOUD'
-        if self.collection == 'VIIRS': return 'C2545310947-LPCLOUD'
-        if self.collection == 'ASTER': return 'C2595678497-LPCLOUD'
+    def _get(self, liste, name, in_key, out_key):
+        for col in liste:
+            if in_key not in col: continue
+            if name in col[in_key]:
+                return col[out_key]
+        raise FileNotFoundError

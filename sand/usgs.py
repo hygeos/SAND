@@ -9,6 +9,7 @@ from datetime import datetime, time, date
 
 from core.ftp import get_auth
 from core.fileutils import filegen
+from core.table import select, select_one, read_csv
 from sand.base import request_get, BaseDownload
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
@@ -20,10 +21,10 @@ class DownloadUSGS(BaseDownload):
     name = 'DownloadUSGS'
     
     collections = [
-        'LANDSAT-5',
-        'LANDSAT-7',
-        'LANDSAT-8',
-        'LANDSAT-9',
+        'LANDSAT-5-TM',
+        'LANDSAT-7-ET',
+        'LANDSAT-8-OLI',
+        'LANDSAT-9-OLI',
     ]
     
     DATA_PRODUCTS = {
@@ -37,7 +38,7 @@ class DownloadUSGS(BaseDownload):
         "landsat_ot_c2_l2": ["5e83d14f30ea90a9", "5e83d14fec7cae84", "632210d4770592cf"]
     }
 
-    def __init__(self, collection: str, level: int):
+    def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the USGS API (https://data.usgs.gov/)
 
@@ -57,7 +58,8 @@ class DownloadUSGS(BaseDownload):
             for p in ls:
                 cds.download(p, <dirname>, uncompress=True)
         """
-        assert collection in DownloadUSGS.collections
+        self.available_collection = DownloadUSGS.collections
+        self.table_collection = Path(__file__).parent/'collections'/'usgs.csv'
         super().__init__(collection, level)
         
 
@@ -124,9 +126,7 @@ class DownloadUSGS(BaseDownload):
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
         
-        # Configure scene constraints for request
-        dataset    = self._get_dataset_name()
-        
+        # Configure scene constraints for request        
         spatial_filter = {}
         spatial_filter["filterType"] = "mbr"
         if isinstance(geo, Point):
@@ -155,7 +155,7 @@ class DownloadUSGS(BaseDownload):
                         "seasonalFilter"   : None}
 
         params = {
-            "datasetName": dataset,
+            "datasetName": self.collection,
             "sceneFilter": scene_filter,
             "maxResults": 1000,
             "metadataType": "full",
@@ -190,9 +190,8 @@ class DownloadUSGS(BaseDownload):
         uncompress_ext = None
         
         # Find product in dataset
-        dataset = self._get_dataset_name()
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
-        params = {'entityIds': product['id'], "datasetName": dataset}
+        params = {'entityIds': product['id'], "datasetName": self.collection}
         dl_opt = self.session.get(url, data=json.dumps(params), headers=self.API_key)
         dl_opt = dl_opt.json()['data']
         product = dl_opt[0]
@@ -256,30 +255,13 @@ class DownloadUSGS(BaseDownload):
                     pbar.update(1024)
     
     
-    def _get_possible_datasets(self):
+    def _check_collection(self):
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/dataset-search"
         response = self.session.get(url, data=json.dumps({}), headers=self.API_key)
         return [d['datasetAlias'] for d in response.json()['data']]
-                    
-
-    def _get_dataset_name(self):
-        collec_name = ''
-        if self.collection == 'LANDSAT-5':
-            self.basename_prod = 'LT5'
-            collec_name += 'landsat_tm_c2'
-        if self.collection == 'LANDSAT-7':
-            self.basename_prod = 'LE7'
-            collec_name += 'landsat_etm_c2'
-        if self.collection == 'LANDSAT-8':
-            self.basename_prod = 'LC8'
-            collec_name += 'landsat_ot_c2'
-        if self.collection == 'LANDSAT-9':
-            self.basename_prod = 'LC9'
-            collec_name += 'landsat_ot_c2'
-        
-        if self.level == 1:
-            collec_name += '_l1'
-        if self.level == 2:
-            collec_name += '_l2'
-        
-        return collec_name
+    
+    def _retrieve_collec_name(self, collection):
+        correspond = read_csv(self.table_collection)
+        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
+        collecs = select_one(collecs,('SAND_name','=',collection),'collec')
+        return collecs.split(' ')[0]
