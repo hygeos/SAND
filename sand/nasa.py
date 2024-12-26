@@ -13,6 +13,7 @@ from datetime import datetime, time, date
 from core import log
 from core.table import *
 from core.fileutils import filegen
+from sand.base import request_get, BaseDownload
 from sand.results import Query
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
@@ -102,29 +103,48 @@ class DownloadNASA(BaseDownload):
                 cache_json('cache_result.json')(cds.query)(...)
         """
         
-        data = {'provider': 'LPCLOUD'}
-        dataset = self._get_collection_id()
-        headers = {'has_granules': 'True', 'Accept': 'application/json'}
+        data = {}
+        headers = {'Accept': 'application/json'}
         
+        # Configure scene constraints for request        
         if isinstance(dtstart, date):
-            date_range = datetime.combine(dtstart, time(0)).isoformat() + ','
+            date_range = datetime.combine(dtstart, time(0)).isoformat() + 'Z,'
             if isinstance(dtend, date):
-                date_range += datetime.combine(dtend, time(0)).isoformat()
+                date_range += datetime.combine(dtend, time(0)).isoformat() + 'Z'
             else:
-                date_range += datetime.now().isoformat()
+                date_range += datetime.now().isoformat() + 'Z'
             data['temporal'] = date_range
-        
-        # Configure scene constraints for request
-        data['concept_id'] = dataset
         
         if isinstance(geo, Point):
             bbox = f"{geo.x},{geo.y},{geo.x},{geo.y}"
         elif isinstance(geo, Polygon):
             bounds = geo.bounds
-            bbox = f"{bounds[0]},{bounds[1]},{bounds[2]},{bounds[3]}"
+            bbox = f"{bounds[1]},{bounds[0]},{bounds[3]},{bounds[2]}"
         data['bounding_box'] = bbox
         
         # Request API for each dataset
+        out = []
+        for collec in self.collection:
+            data['concept_id'] = collec
+            data['page_size'] = 1000
+            url = 'https://cmr.earthdata.nasa.gov/search/granules'
+            url_encode = url + '?' + urlencode(data)
+            urllib_req = Request(requote_uri(url_encode), headers=headers)
+            urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+            response = json.load(urllib_response)['feed']['entry']   
+            
+            # test if maximum number of returns is reached
+            top = 1000
+            if len(response) >= top:
+                raise ValueError('The request led to the maximum number '
+                        f'of results ({len(response)})')
+            
+            for d in response:
+                out.append({"id": d["id"], "name": d["producer_granule_id"],
+                    **{k: d[k] for k in ['links','collection_concept_id']}})
+        
+        return Query(out)
+
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -137,16 +157,16 @@ class DownloadNASA(BaseDownload):
 
         return target
     
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, uncompress: bool=False) -> Path:
         """Download a product from copernicus data space
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to True.
+            uncompress (bool, optional): _description_. Defaults to False.
         """
-        url = [l['href'] for l in product['links']][0]
-        return self.download_base(url, product, dir, uncompress)
+        url = self._get(product['links'], '.h5', 'title', 'href')
+        return self.download_base(url, product, dir, False)
     
     
     def _download(
@@ -172,7 +192,6 @@ class DownloadNASA(BaseDownload):
                 raise ValueError(f'Got response code : {response.status_code}')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
             response = session.get(url, allow_redirects=False)
             niter += 1
 
