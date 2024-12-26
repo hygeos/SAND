@@ -229,7 +229,16 @@ class DownloadCreodias(BaseDownload):
         """
         Download a quicklook to `dir`
         """
-        return NotImplemented
+        target = Path(dir)/(product['name'] + '.jpeg')
+
+        if not target.exists():
+            assets = self.metadata(product)['Assets']
+            if not assets:
+                raise FileNotFoundError(f'Skipping quicklook {target.name}')
+            url = assets[0]['DownloadLink']
+            filegen(0)(self._download)(target, url)
+
+        return target
 
     def _download(
         self,
@@ -275,6 +284,12 @@ class DownloadCreodias(BaseDownload):
         """
         Returns the product metadata including attributes and assets
         """
+        req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
+               f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")
+        json = requests.get(req).json()
+
+        assert len(json['value']) == 1
+        return json['value'][0]
     
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)

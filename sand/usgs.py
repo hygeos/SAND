@@ -215,6 +215,24 @@ class DownloadUSGS(BaseDownload):
         filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
 
         return target
+
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        
+        target = Path(dir)/(product['name'] + '.png')
+
+        if not target.exists():
+            assets = self.metadata(product)['Landsat Product Identifier L1']
+            if not assets:
+                raise FileNotFoundError(f'Skipping quicklook {target.name}')
+            for b in product['browse']:
+                url = b['browsePath']
+                if 'type=refl' in url: break
+            filegen(0)(self._download)(target, url)
+
+        return target
     
     
     def _download(
@@ -256,7 +274,15 @@ class DownloadUSGS(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
-    
+
+    def metadata(self, product):
+        """
+        Returns the product metadata including attributes and assets
+        """
+        meta = {}
+        for m in product['metadata']:
+            meta[m['fieldName']] = m['value']
+        return meta
     
     def _check_collection(self):
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/dataset-search"

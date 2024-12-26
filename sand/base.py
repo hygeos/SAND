@@ -24,6 +24,8 @@ class BaseDownload:
             "please use get_availbale_collection methods"
             self.collection = self._retrieve_collec_name(collection)
         
+        # Login to API
+        self.ssl_ctx = get_ssl_context()
         self._login()
 
     def _login(self):
@@ -120,18 +122,18 @@ def raise_api_error(response: dict):
     status = response.status_code
 
     if status == 401:
-        raise UnauthorizedError
+        raise UnauthorizedError(response.text)
     if status == 404:
-        raise FileNotFoundError
+        raise FileNotFoundError(response.text)
     if status == 429:
-        raise RateLimitError
+        raise RateLimitError(response.text)
     
     if status//100 == 3:
-        raise RedirectionError
+        raise RedirectionError(response.text)
     if status//100 == 4:
-        raise InvalidParametersError
+        raise InvalidParametersError(response.text)
     if status//100 == 5:
-        raise ServerError
+        raise ServerError(response.text)
     
 def get_ssl_context() -> ssl.SSLContext:
     """

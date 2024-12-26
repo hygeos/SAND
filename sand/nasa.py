@@ -125,23 +125,17 @@ class DownloadNASA(BaseDownload):
         data['bounding_box'] = bbox
         
         # Request API for each dataset
-        ssl_ctx = get_ssl_context()
-        url = 'https://cmr.earthdata.nasa.gov/search/granules'
-        url_encode = url + '?' + urlencode(data)
-        urllib_req = Request(requote_uri(url_encode), headers=headers)
-        urllib_response = urlopen(urllib_req, timeout=5, context=ssl_ctx)
-        response = json.load(urllib_response)['feed']['entry']   
-        
-        # test if maximum number of returns is reached
-        top = 1000
-        if len(response) >= top:
-            raise ValueError('The request led to the maximum number '
-                    f'of results ({len(response)})')
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        target = Path(dir)/(product['name'] + '.jpeg')
+        url = self._get(product['links'], '.png', 'title', 'href')
 
-        return [{"id": d["id"], "name": d["producer_granule_id"],
-                 **{k: d[k] for k in ['links','collection_concept_id']}}
-                for d in response]
-    
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
+
+        return target
     
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
         """Download a product from copernicus data space
@@ -194,6 +188,15 @@ class DownloadNASA(BaseDownload):
                     f.write(chunk)
                     pbar.update(1024)
 
+    def metadata(self, product):
+        """
+        Returns the product metadata including attributes and assets
+        """
+        req = self._get(product['links'], '.xml', 'title', 'href')
+        json = requests.get(req).text
+
+        return json # return read_xml_from_text(json)
+    
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])

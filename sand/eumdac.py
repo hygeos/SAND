@@ -184,6 +184,16 @@ class DownloadEumDAC(BaseDownload):
         return target
     
     def metadata(self, product):
+        """
+        Returns the product metadata including attributes and assets
+        """
+        
+        req = (product['meta_url'][0]['href'])
+        json = requests.get(req)
+
+        assert len(json['value']) == 1
+        return json['value'][0]
+    
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])

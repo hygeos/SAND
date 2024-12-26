@@ -183,7 +183,13 @@ class DownloadTHEIA(BaseDownload):
         """
         Download a quicklook to `dir`
         """
-        return NotImplemented
+        target = Path(dir)/(product['name'] + '.jpeg')
+        url = product['quicklook']
+
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
+
+        return target
 
     def _download(
         self,
@@ -229,6 +235,10 @@ class DownloadTHEIA(BaseDownload):
         """
         Returns the product metadata including attributes and assets
         """
+        req = self._get(product['links'], 'Metadata', 'title', 'href')
+        meta = requests.get(req).text
+
+        return meta
     
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
