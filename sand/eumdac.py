@@ -6,6 +6,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
 from shapely import to_wkt
+from xmltodict import parse
 from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
@@ -191,10 +192,10 @@ class DownloadEumDAC(BaseDownload):
         """
         
         req = (product['meta_url'][0]['href'])
-        json = requests.get(req)
+        meta = requests.get(req).text
 
-        assert len(json['value']) == 1
-        return json['value'][0]
+        assert len(meta) > 0
+        return parse(meta)
     
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)

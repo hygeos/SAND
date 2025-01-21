@@ -12,6 +12,8 @@ requests = "*"
 eumdac = "*"
 shapely = "*"
 pyotp = "*"
+xmltodict = "*"
+
 core = {git = "https://github.com/hygeos/core.git"}
 
 [tool.poetry.group.dev.dependencies]

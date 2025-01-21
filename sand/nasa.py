@@ -4,6 +4,7 @@ import json
 from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
+from xmltodict import parse
 from shapely import Point, Polygon
 from requests.utils import requote_uri
 from urllib.request import urlopen, Request
@@ -212,9 +213,10 @@ class DownloadNASA(BaseDownload):
         Returns the product metadata including attributes and assets
         """
         req = self._get(product['links'], '.xml', 'title', 'href')
-        json = requests.get(req).text
+        meta = requests.get(req).text
 
-        return json # return read_xml_from_text(json)
+        assert len(meta) > 0
+        return parse(meta)
     
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
