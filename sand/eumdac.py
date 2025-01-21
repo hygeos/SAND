@@ -15,7 +15,7 @@ from sand.results import Query, Collection
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_one, select, read_csv
+from core.table import select_cell, select, read_csv
 from core.uncompress import uncompress as func_uncompress
 
 
@@ -200,5 +200,5 @@ class DownloadEumDAC(BaseDownload):
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_one(collecs,('SAND_name','=',collection),'collec')  
+        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')  
         return collecs.split(' ')[0]

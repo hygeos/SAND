@@ -221,7 +221,7 @@ class DownloadNASA(BaseDownload):
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_one(collecs,('SAND_name','=',collection),'collec')
+        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')
         return collecs.split(' ')
     
     def _get(self, liste, name, in_key, out_key):

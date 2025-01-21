@@ -15,7 +15,7 @@ from sand.results import Query, Collection
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_one, read_csv
+from core.table import select_cell, read_csv
 
 
 class DownloadCDSE(BaseDownload):
@@ -310,7 +310,7 @@ class DownloadCDSE(BaseDownload):
     
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
-        return select_one(correspond,('SAND_name','=',collection),'name')  
+        return select_cell(correspond,('SAND_name','=',collection),'name')  
 
 
 def Sentinel2_level2_pattern(level1: str) -> str:

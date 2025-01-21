@@ -5,7 +5,7 @@ from pathlib import Path
 
 from sand.results import Collection
 from core.fileutils import filegen
-from core.table import select_one, read_csv
+from core.table import select_cell, read_csv
 
 
 class BaseDownload:
@@ -43,7 +43,7 @@ class BaseDownload:
         collec = {}
         for c in self.available_collection:
             try: 
-                collec[c] = select_one(sensor,('Name','=',c),'longname')
+                collec[c] = select_cell(sensor,('Name','=',c),'longname')
             except AssertionError: 
                 raise ValueError(f'{c} is not a valid collection') 
         return Collection(collec)

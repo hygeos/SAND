@@ -12,7 +12,7 @@ from sand.results import Query
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_one, select, read_csv, read_xml_from_text
+from core.table import select_cell, select, read_csv, read_xml_from_text
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
@@ -234,7 +234,7 @@ class DownloadTHEIA(BaseDownload):
     def _retrieve_collec_name(self, collection):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_one(collecs,('SAND_name','=',collection),'collec')  
+        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')  
         return collecs.split(' ')[0]
     
     def _get(self, liste, name, in_key, out_key):
