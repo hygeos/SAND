@@ -60,16 +60,20 @@ The following example illustrate the code needed to download LANDSAT-7 acquisiti
 
 ```python
 from sand.usgs import DownloadUSGS
+from core.cache import cache_dataframe
+from datetime import datetime
+from shapely import Point
 
 # Login to USGS API
-dl = DownloadUSGS('LANDSAT-7', level=1)
+dl = DownloadUSGS('LANDSAT-5-TM', level=1)
 
 # Search for appropriated acquistions
-name_cache = './cache.json'
-ls = cache_json(name_cache)(dl.query)(
+name_cache = './cache.pickle'
+ls = cache_dataframe(name_cache)(dl.query)(
     dtstart = datetime(2000, 12, 10),
     dtend = datetime(2005, 12, 10),
-    geo = Point(119.514442, -8.411750)
+    geo = Point(119.514442, -8.411750),
+    name_contains = ['LT05_L1TP_114066_20051115_20201008_02_T1']
 )
 
 # Download Landsat granule

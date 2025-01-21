@@ -225,16 +225,16 @@ class DownloadCDSE(BaseDownload):
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to True.
-        """
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
+        """        
         if uncompress:
             target = Path(dir)/(product['name'])
             uncompress_ext = '.zip'
         else:
             target = Path(dir)/(product['name']+'.zip')
             uncompress_ext = None
-
+        
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
 
