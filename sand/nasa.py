@@ -16,6 +16,7 @@ from core.table import *
 from core.fileutils import filegen
 from sand.base import request_get, BaseDownload
 from sand.results import Query
+from sand.tinyfunc import *
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
@@ -123,9 +124,17 @@ class DownloadNASA(BaseDownload):
             bbox = f"{bounds[1]},{bounds[0]},{bounds[3]},{bounds[2]}"
         data['bounding_box'] = bbox
         
-        # Request API for each dataset
+        # Define check functions
+        checker = []
+        if name_contains: checker.append((check_name_contains, name_contains))
+        if name_startswith: checker.append((check_name_startswith, name_startswith))
+        if name_endswith: checker.append((check_name_endswith, name_endswith))
+        if name_glob: checker.append((check_name_glob, name_glob))
+        
         out = []
         for collec in self.collection:
+            
+            # Query NASA API
             data['concept_id'] = collec
             data['page_size'] = 1000
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
@@ -134,9 +143,12 @@ class DownloadNASA(BaseDownload):
             urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
             response = json.load(urllib_response)['feed']['entry']   
             
+            # Filter products
+            response = [p for p in response if self.check_name(p['title'], checker)]            
+            
             # test if maximum number of returns is reached
             top = 1000
-            if len(response) >= top:
+            if len(response) + len(out) >= top:
                 raise ValueError('The request led to the maximum number '
                         f'of results ({len(response)})')
             

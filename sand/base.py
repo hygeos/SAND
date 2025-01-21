@@ -48,6 +48,9 @@ class BaseDownload:
                 raise ValueError(f'{c} is not a valid collection') 
         return Collection(collec)
     
+    def check_name(self, name, check_funcs):
+        return all(c[0](name, c[1]) for c in check_funcs)
+    
     def _check_collection(self) -> dict:
         """
         Every available collection on the API server

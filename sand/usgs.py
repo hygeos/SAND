@@ -13,6 +13,7 @@ from core.fileutils import filegen
 from core.table import select, select_cell, read_csv
 from sand.base import request_get, BaseDownload
 from sand.results import Query
+from sand.tinyfunc import *
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
@@ -128,6 +129,13 @@ class DownloadUSGS(BaseDownload):
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
         
+        # Define check functions
+        checker = []
+        if name_contains: checker.append((check_name_contains, name_contains))
+        if name_startswith: checker.append((check_name_startswith, name_startswith))
+        if name_endswith: checker.append((check_name_endswith, name_endswith))
+        if name_glob: checker.append((check_name_glob, name_glob))
+        
         # Configure scene constraints for request        
         spatial_filter = {}
         spatial_filter["filterType"] = "mbr"
@@ -166,17 +174,20 @@ class DownloadUSGS(BaseDownload):
         # Request API for each dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
         response = self.session.get(url, data=json.dumps(params), headers=self.API_key)
-        response = response.json()        
+        response = response.json()['data']['results']
+        
+        # Filter products
+        response = [p for p in response if self.check_name(p['displayId'], checker)]
         
         # test if maximum number of returns is reached
         top = 1000
-        if response["data"]['recordsReturned'] >= top:
+        if len(response) >= top:
             raise ValueError('The request led to the maximum number '
-                    f'of results ({response["data"]["recordsReturned"]})')
+                    f'of results ({len(response)})')
 
         out = [{"id": d["entityId"], "name": d["displayId"],
                  **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
-                for d in response['data']['results']]
+                for d in response]
         
         return Query(out)
     
@@ -294,3 +305,9 @@ class DownloadUSGS(BaseDownload):
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
         collecs = select_cell(collecs,('SAND_name','=',collection),'collec')
         return collecs.split(' ')[0]
+        
+    def _get_contains(self, collection):
+        correspond = read_csv(self.table_collection)
+        content = select(correspond,('level','=',self.level),['SAND_name','contains'])
+        content = select_cell(content,('SAND_name','=',collection),'contains')
+        return content.split(' ')[0]

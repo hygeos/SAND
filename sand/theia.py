@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from sand.base import request_get, BaseDownload
 from sand.results import Query
+from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
@@ -84,6 +85,10 @@ class DownloadTHEIA(BaseDownload):
         dtend: Optional[date|datetime]=None,
         geo=None,
         cloudcover_thres: Optional[int]=None,
+        name_contains: Optional[list] = None,
+        name_startswith: Optional[str] = None,
+        name_endswith: Optional[str] = None,
+        name_glob: Optional[str] = None,
         tile_number: str = None,
         venus_site: str = None,
         other_attrs: Optional[list] = None,
@@ -116,6 +121,13 @@ class DownloadTHEIA(BaseDownload):
             dtstart = datetime.combine(dtstart, time(0))
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
+        
+        # Define check functions
+        checker = []
+        if name_contains: checker.append((check_name_contains, name_contains))
+        if name_startswith: checker.append((check_name_startswith, name_startswith))
+        if name_endswith: checker.append((check_name_endswith, name_endswith))
+        if name_glob: checker.append((check_name_glob, name_glob))
             
         query_lines = [
             f"https://theia.cnes.fr/atdistrib/resto2/api/collections/{self.collection}/search.json?"
@@ -143,18 +155,19 @@ class DownloadTHEIA(BaseDownload):
         req = ('&'.join(query_lines))+f'&maxRecords={top}'
         urllib_req = Request(req)
         urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
-        response = json.load(urllib_response)
+        response = json.load(urllib_response)['features']
+        
+        # Filter products
+        response = [p for p in response if self.check_name(p["properties"]['title'], checker)]   
 
         # test if maximum number of returns is reached
-        if len(response["features"]) >= top:
+        if len(response) >= top:
             raise ValueError('The request led to the maximum number '
-                             f'of results ({len(response["features"])})')
-        
-        json_value = response['features']
+                             f'of results ({len(response)})')
 
         out =  [{"id": d["id"], "name": d["properties"]["productIdentifier"],
                  **{k: d['properties'][k] for k in (other_attrs or ['quicklook','startDate', 'links','services'])}}
-                for d in json_value]
+                for d in response]
         
         return Query(out)
 

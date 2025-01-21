@@ -12,6 +12,7 @@ from datetime import datetime, time, date
 
 from sand.base import UnauthorizedError, BaseDownload
 from sand.results import Query, Collection
+from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
@@ -125,19 +126,33 @@ class DownloadEumDAC(BaseDownload):
             dtstart = datetime.combine(dtstart, time(0))
         if isinstance(dtend, date):
             dtend = datetime.combine(dtend, time(0))
+            
+        # Define check functions
+        checker = []
+        if name_contains: checker.append((check_name_contains, name_contains))
+        if name_startswith: checker.append((check_name_startswith, name_startswith))
+        if name_endswith: checker.append((check_name_endswith, name_endswith))
+        if name_glob: checker.append((check_name_glob, name_glob))
         
-        self.selected_collection = self.datastore.get_collection(self.collection)
-        product = list(self.selected_collection.search(
-            geo = to_wkt(geo),
-            dtstart = dtstart,
-            dtend = dtend
-        ))
-        
-        # test if maximum number of returns is reached
+        product = []
         top = 1000  # maximum value of number of retrieved values
-        if len(product) >= top:
-            raise ValueError('The request led to the maximum number '
-                             f'of results ({len(product)})')
+        for collec in self.collection:
+            
+            # Query EumDAC API
+            self.selected_collection = self.datastore.get_collection(collec)
+            prod = list(self.selected_collection.search(
+                geo = to_wkt(geo),
+                dtstart = dtstart,
+                dtend = dtend
+            ))
+            
+            # Filter products
+            product += [p for p in prod if self.check_name(str(p), checker)]
+        
+            # test if maximum number of returns is reached
+            if len(product) >= top:
+                raise ValueError('The request led to the maximum number '
+                                f'of results ({len(product)})')
         
         out = [{"id": str(d), 
                 "name": d.acronym, 
@@ -147,6 +162,7 @@ class DownloadEumDAC(BaseDownload):
                 "meta_url": d.metadata['properties']['links']['alternates'],
                 } 
                 for d in product]
+        
         return Query(out)
 
     def download(self, product: str, dir: Path, uncompress: bool=False) -> Path:
@@ -201,4 +217,4 @@ class DownloadEumDAC(BaseDownload):
         correspond = read_csv(self.table_collection)
         collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
         collecs = select_cell(collecs,('SAND_name','=',collection),'collec')  
-        return collecs.split(' ')[0]
+        return collecs.split(' ')
