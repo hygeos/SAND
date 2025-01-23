@@ -51,7 +51,7 @@ In addition, some providers such as Creodias require double authentication to do
 
 The package can be installed with the command:
 ```sh
-pip install git+https://github.com/hygeos/SAND.git
+pip install git+ssh://git@github.com:hygeos/SAND.git
 ```
 
 ## Get Started
