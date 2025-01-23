@@ -10,7 +10,7 @@ from xmltodict import parse
 from tempfile import TemporaryDirectory
 from datetime import datetime, time, date
 
-from sand.base import UnauthorizedError, BaseDownload
+from sand.base import request_get, UnauthorizedError, BaseDownload
 from sand.results import Query, Collection
 from sand.tinyfunc import *
 from core import log
@@ -160,6 +160,7 @@ class DownloadEumDAC(BaseDownload):
                 "time": d.processingTime,
                 "dl_url": d.metadata['properties']['links']['data'],
                 "meta_url": d.metadata['properties']['links']['alternates'],
+                "quicklook_url": d.metadata['properties']['links']['previews'],
                 } 
                 for d in product]
         
@@ -173,7 +174,7 @@ class DownloadEumDAC(BaseDownload):
         """
         data = self.datastore.get_product(
             product_id=product['id'],
-            collection_id=self.collection,
+            collection_id=product['collection'],
         )
 
         @filegen()
@@ -202,6 +203,58 @@ class DownloadEumDAC(BaseDownload):
 
         return target
     
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        url = product['quicklook_url'][0]['href']      
+        target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
+
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
+
+        return target
+    
+    def _download(
+        self,
+        target: Path,
+        url: str,
+    ):
+        """
+        Wrapped by filegen
+        """
+        pbar = tqdm(total=0, unit_scale=True, unit="B",
+                    unit_divisor=1024, leave=False)
+
+        # Initialize session for download
+        session = requests.Session()
+        session.headers.update({'Authorization': f'Bearer {self.tokens}'})
+
+        # Try to request server
+        pbar.set_description(f'Requesting server: {target.name}')
+        response = session.get(url, allow_redirects=False)
+        niter = 0
+        while response.status_code in (301, 302, 303, 307) and niter < 15:
+            if response.status_code//100 == 5:
+                raise ValueError(f'Got response code : {response.status_code}')
+            if 'Location' not in response.headers:
+                raise ValueError(f'status code : [{response.status_code}]')
+            url = response.headers['Location']
+            response = session.get(url, allow_redirects=False)
+            niter += 1
+
+        # Download file
+        filesize = int(response.headers["Content-Length"])
+        response = request_get(session, url, verify=False, allow_redirects=True)
+        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
+                    unit_divisor=1024, leave=True)
+        pbar.set_description(f"Downloading {target.name}")
+        with open(target, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+                    pbar.update(1024)
+                    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

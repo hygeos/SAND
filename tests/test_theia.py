@@ -29,7 +29,7 @@ def test_download(collec, level):
                   venus_site='NARYN')
 
 def test_metadata(collec, level):
-    with pytest.raises(AssertionError):
+    with pytest.raises(FileNotFoundError):
         eval_metadata(DownloadTHEIA, collec, level,
                     dtstart = datetime(2020, 1, 1),
                     dtend = datetime(2020, 6, 1),
@@ -37,8 +37,7 @@ def test_metadata(collec, level):
     
 def test_quicklook(request, collec, level):
     eval_quicklook(request, DownloadTHEIA, collec, level,
-                  dtstart = datetime(2020, 1, 1),
-                  dtend = datetime(2020, 6, 1),
-                  venus_site='NARYN')
-    
+                dtstart = datetime(2020, 1, 1),
+                dtend = datetime(2020, 6, 1),
+                venus_site='NARYN')
     

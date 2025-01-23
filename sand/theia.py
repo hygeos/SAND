@@ -201,7 +201,7 @@ class DownloadTHEIA(BaseDownload):
 
         if not target.exists():
             filegen(0)(self._download)(target, url)
-
+        
         return target
 
     def _download(
@@ -212,28 +212,9 @@ class DownloadTHEIA(BaseDownload):
         """
         Wrapped by filegen
         """
-        pbar = tqdm(total=0, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=False)
-
-        # Try to request server
-        url += '/?issuerId=theia'
-        pbar.set_description(f'Requesting server: {target.name}')
-        headers = {'Authorization': f'Bearer {self.tokens}'}
-        urllib_req = Request(url, headers=headers)
-        response = urlopen(urllib_req, timeout=15, context=self.ssl_ctx)
-
-        # Download file
-        filesize = response.length
-        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=True)
-        pbar.set_description(f"Downloading {target.name}")
+        content = requests.get(url).content
         with open(target, 'wb') as f:
-            while True:
-                chunk = response.read(1024)
-                if not chunk:  # End of response
-                    break
-                f.write(chunk)
-                pbar.update(1024)
+            f.write(content)
                     
     def metadata(self, product: dict):
         """
@@ -241,7 +222,8 @@ class DownloadTHEIA(BaseDownload):
         """
         req = self._get(product['links'], 'Metadata', 'title', 'href')
         meta = requests.get(req).text
-
+        
+        if 'Request Rejected' in meta:  raise FileNotFoundError
         return meta
     
     def _retrieve_collec_name(self, collection):
