@@ -37,10 +37,13 @@ class DownloadCDSE(BaseDownload):
         'SENTINEL-3-OLCI-FR',
         'SENTINEL-3-OLCI-RR',	
         'SENTINEL-5P-TROPOMI',	
-        'SENTINEL-6',	
+        'SENTINEL-6-HR',	
+        'SENTINEL-6-LR',	
         'SMOS',
-        'MODIS-TERRA',
-        'MODIS-AQUA',
+        'MODIS-TERRA-HR',
+        'MODIS-TERRA-LR',
+        'MODIS-AQUA-HR',
+        'MODIS-AQUA-LR',
     ]
     
     def __init__(self, collection: str = None, level: int = 1):
