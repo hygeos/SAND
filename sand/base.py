@@ -69,6 +69,13 @@ class BaseDownload:
         """
         return NotImplemented
 
+    def download(self, products, dir: Path|str, uncompress: bool=True) -> Path:
+        """
+        Download all products from API server resulting from a query
+        """
+        for i in range(len(products)): 
+            self.download(products.iloc[i], dir, uncompress)
+
     def download_base(self, 
                       url: str,
                       product: dict, 
