@@ -43,20 +43,18 @@ class DownloadNASA(BaseDownload):
         Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)
 
         Args:
-            collection (str): collection name ('LANDSAT-5', 'LANDSAT-7', etc.)
+            collection (str): collection name ('ECOSTRESS', 'VIIRS', etc.)
 
         Example:
-            usgs = DownloadNASA('LANDSAT-5')
+            usgs = DownloadNASA('ECOSTRESS')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(cds.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
-                geo=Point(119.514442, -8.411750),
-                name_contains='_MSIL1C_',
+                geo=Point(119.514442, -8.411750)
             )
-            for p in ls:
-                cds.download(p, <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadNASA.collections
         self.table_collection = Path(__file__).parent/'collections'/'nasa.csv'
@@ -100,9 +98,9 @@ class DownloadNASA(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         
         data = {}
@@ -171,12 +169,13 @@ class DownloadNASA(BaseDownload):
         return target
     
     def download(self, product: dict, dir: Path|str, uncompress: bool=False) -> Path:
-        """Download a product from copernicus data space
+        """
+        Download a product from NASA data space
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to False.
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         url = self._get(product['links'], '.h5', 'title', 'href')
         return self.download_base(url, product, dir, False)

@@ -38,20 +38,18 @@ class DownloadTHEIA(BaseDownload):
         Python interface to the CNES Theia Data Center (https://theia.cnes.fr/)
 
         Args:
-            collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
+            collection (str): collection name ('LANDSAT-5-TM', 'VENUS', etc.)
 
         Example:
-            cds = DownloadCNES('SENTINEL-2')
+            cds = DownloadCNES('VENUS')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(cds.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
-                name_contains=['_MSIL1C_'],
             )
-            for p in ls:
-                cds.download(p, <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadTHEIA.collections
         self.table_collection = Path(__file__).parent/'collections'/'theia.csv'
@@ -113,9 +111,9 @@ class DownloadTHEIA(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         if isinstance(dtstart, date):
             dtstart = datetime.combine(dtstart, time(0))
@@ -172,12 +170,13 @@ class DownloadTHEIA(BaseDownload):
         return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
-        """Download a product from copernicus data space
+        """
+        Download a product from Theia Datahub
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to True.
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         if uncompress:
             target = Path(dir)/(product['name'])

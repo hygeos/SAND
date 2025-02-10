@@ -47,17 +47,16 @@ class DownloadCreodias(BaseDownload):
             collection (str): collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
 
         Example:
-            cds = DownloadCreodias('SENTINEL-2-MSI')
+            cds = DownloadCDS('SENTINEL-2-MSI')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_pickle('query-S2.pickle')(cds.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
                 name_contains=['_MSIL1C_'],
             )
-            for p in ls:
-                cds.download(p, <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadCreodias.collections
         self.table_collection = Path(__file__).parent/'collections'/'creodias.csv'
@@ -139,9 +138,9 @@ class DownloadCreodias(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         if isinstance(dtstart, date):
@@ -228,12 +227,13 @@ class DownloadCreodias(BaseDownload):
         return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
-        """Download a product from copernicus data space
+        """
+        Download a product from CreoDias
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to True.
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         
         url = (f"https://zipper.creodias.eu/download/{product['id']}")

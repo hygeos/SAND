@@ -45,20 +45,18 @@ class DownloadEumDAC(BaseDownload):
         Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)
 
         Args:
-            collection (str): collection name ('SENTINEL-2', 'SENTINEL-3', etc.)
+            collection (str): collection name ('MVIRI-MFG', 'SENTINEL-3-OLCI-RR', etc.)
 
         Example:
-            eum = DownloadEumDAC('SENTINEL-2')
+            eum = DownloadEumDAC('MVIRI-MFG')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(eum.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
-                name_contains=['_MSIL1C_'],
             )
-            for p in ls:
-                eum.download(p, <dirname>, uncompress=True)
+            eum.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadEumDAC.collections
         self.table_collection = Path(__file__).parent/'collections'/'eumdac.csv'
@@ -100,7 +98,7 @@ class DownloadEumDAC(BaseDownload):
         other_attrs: Optional[list] = None,
     ):
         """
-        Product query on the Copernicus Data Space
+        Product query on Eumetsat datahub
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
@@ -117,9 +115,9 @@ class DownloadEumDAC(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         if isinstance(dtstart, date):
@@ -170,7 +168,10 @@ class DownloadEumDAC(BaseDownload):
         """
         Download a product to directory
 
-        product_id: 'S3A_OL_1_ERR____20231214T232432_20231215T000840_20231216T015921_2648_106_358______MAR_O_NT_002.SEN3'
+        Args:
+            product (dict): product definition with keys 'id' and 'name'
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         data = self.datastore.get_product(
             product_id=product['id'],

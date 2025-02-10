@@ -63,8 +63,7 @@ class DownloadCDSE(BaseDownload):
                 geo=Point(119.514442, -8.411750),
                 name_contains=['_MSIL1C_'],
             )
-            for p in ls:
-                cds.download(p, <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadCDSE.collections
         self.table_collection = Path(__file__).parent/'collections'/'cdse.csv'
@@ -136,9 +135,9 @@ class DownloadCDSE(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         if isinstance(dtstart, date):
@@ -224,7 +223,8 @@ class DownloadCDSE(BaseDownload):
         return Query(out)
 
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
-        """Download a product from copernicus data space
+        """
+        Download a product from copernicus data space
 
         Args:
             product (dict): product definition with keys 'id' and 'name'

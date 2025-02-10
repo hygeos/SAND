@@ -46,20 +46,18 @@ class DownloadUSGS(BaseDownload):
         Python interface to the USGS API (https://data.usgs.gov/)
 
         Args:
-            collection (str): collection name ('LANDSAT-5', 'LANDSAT-7', etc.)
+            collection (str): collection name ('LANDSAT-5-TM', 'LANDSAT-7-ET', etc.)
 
         Example:
-            usgs = DownloadUSGS('LANDSAT-5')
+            usgs = DownloadUSGS('LANDSAT-5-TM')
             # retrieve the list of products
-            # using a json cache file to avoid reconnection
-            ls = cache_json('query-S2.json')(cds.query)(
+            # using a pickle cache file to avoid reconnection
+            ls = cache_dataframe('query-S2.pickle')(cds.query)(
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
-                name_contains='_MSIL1C_',
             )
-            for p in ls:
-                cds.download(p, <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadUSGS.collections
         self.table_collection = Path(__file__).parent/'collections'/'usgs.csv'
@@ -120,9 +118,9 @@ class DownloadUSGS(BaseDownload):
                 (ex: ['ContentDate', 'Footprint'])
 
         Note:
-            This method can be decorated by cache_json for storing the outputs.
+            This method can be decorated by cache_dataframe for storing the outputs.
             Example:
-                cache_json('cache_result.json')(cds.query)(...)
+                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         if isinstance(dtstart, date):
             dtstart = datetime.combine(dtstart, time(0))
@@ -192,12 +190,13 @@ class DownloadUSGS(BaseDownload):
         return Query(out)
     
     def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
-        """Download a product from copernicus data space
+        """
+        Download a product from USGS
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): _description_
-            uncompress (bool, optional): _description_. Defaults to True.
+            dir (Path | str): Directory where to store downloaded file.
+            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         
         target = Path(dir)/(product['name'])
