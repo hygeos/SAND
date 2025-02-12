@@ -1,0 +1,6 @@
+
+Name,          pattern,  regexp
+ECOSTRESS,     {sensor}{product}_{level}_{var}_{orbit}_{id}_{acquisition_time}_{software}_{product_number}, ECO v[0-9]{3} L[123]G? [A-Z]* [0-9]{6} [0-9]{3} [0-9]{8}T[0-9]{6} [0-9]{4} [0-9]{2}
+SENTINEL-2,    {sensor}_{level}_{acquisition_time}_{processing_baseline}_{relative_orbit}_{tile}_{processing_time}, S2[AB]? MSIL[12][ABC] [0-9]{8}T[0-9]{6} N[0-9]{4} R[0-9]{3} T[0-9A-Z]{5} [0-9]{8}T[0-9]{6}
+SENTINEL-3,    {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] [A-Z]{2} [012] [A-Z_]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
+VENUS,         {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[0-9-]*
