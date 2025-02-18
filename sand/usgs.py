@@ -72,12 +72,13 @@ class DownloadUSGS(BaseDownload):
 
         data = {
             "username": auth['user'],
-            "password": auth['password'],
+            # "password": auth['password'],
+            "token": auth['password'],
             }
         
         try:
             self.session = requests.Session()
-            url = "https://m2m.cr.usgs.gov/api/api/json/stable/login"
+            url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
             r = self.session.post(url, json.dumps(data))
             r.raise_for_status()
             self.API_key = {'X-Auth-Token': r.json()['data']}
