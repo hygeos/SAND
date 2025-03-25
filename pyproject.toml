@@ -1,27 +1,34 @@
-[tool.poetry]
+[project]
 name = "sand"
 version = "0.2.1"
 description = "SAND - Satellite Acquisition Normative Downloader"
-authors = ["HYGEOS"]
+authors = [{name = "HYGEOS team"}]
+requires-python = ">=3.10"
 readme = "README.md"
+dependencies = [
+    "core @ git+https://github.com/hygeos/core.git",
+    "numpy", "requests", "eumdac", "shapely", "pyotp", "xmltodict"
+    ]
 
-[tool.poetry.dependencies]
-python = ">=3.10"
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.tasks]
+tests = "pytest tests"
+
+[tool.pixi.dependencies]
 numpy = "<2"
 requests = "*"
 eumdac = "*"
 shapely = "*"
 pyotp = "*"
 xmltodict = "*"
-
-core = {git = "https://github.com/hygeos/core.git"}
-
-[tool.poetry.group.dev.dependencies]
 pytest = "*"
 pytest-html = "*"
 pytest-xdist = "*"
 ipykernel = "*"
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
