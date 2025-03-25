@@ -69,13 +69,22 @@ class BaseDownload:
         """
         return NotImplemented
 
-    def download(self, products, dir: Path|str, uncompress: bool=True) -> Path:
+    def download_all(self, products, dir: Path|str, uncompress: bool=True) -> list[Path]:
         """
         Download all products from API server resulting from a query
         """
+        out = []
         for i in range(len(products)): 
-            self.download(products.iloc[i], dir, uncompress)
-
+            out.append(self.download(products.iloc[i], dir, uncompress))
+        return out 
+    
+    def download_file(product: str) -> Path:
+        """
+        Download product knowing is product id 
+        (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
+        """
+        return NotImplemented
+    
     def download_base(self, 
                       url: str,
                       product: dict, 

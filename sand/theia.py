@@ -13,7 +13,7 @@ from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_cell, select, read_csv, read_xml_from_text
+from core.table import select_cell, select, read_csv
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
