@@ -226,7 +226,7 @@ class DownloadCreodias(BaseDownload):
         
         return Query(out)
 
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
         """
         Download a product from CreoDias
 
@@ -237,7 +237,7 @@ class DownloadCreodias(BaseDownload):
         """
         
         url = (f"https://zipper.creodias.eu/download/{product['id']}")
-        return self.download_base(url, product, dir, uncompress)
+        return self.download_base(url, product, dir, if_exists, uncompress)
 
     def quicklook(self, product: dict, dir: Path|str):
         """

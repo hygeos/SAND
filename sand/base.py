@@ -89,15 +89,17 @@ class BaseDownload:
                       url: str,
                       product: dict, 
                       dir: Path|str, 
+                      if_exists: str = 'error',
                       uncompress: bool=True) -> Path:
+        filegen_opt = dict(if_exists=if_exists)    
         if uncompress:
             target = Path(dir)/(product['name'])
-            uncompress_ext = '.zip'
+            filegen_opt['uncompress'] = '.zip'
         else:
             target = Path(dir)/(product['name']+'.zip')
-            uncompress_ext = None
+            filegen_opt['uncompress'] = None
 
-        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
+        filegen(0, **filegen_opt)(self._download)(target, url)
 
         return target
 

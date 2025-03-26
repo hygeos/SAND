@@ -168,7 +168,7 @@ class DownloadNASA(BaseDownload):
 
         return target
     
-    def download(self, product: dict, dir: Path|str, uncompress: bool=False) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=False) -> Path:
         """
         Download a product from NASA data space
 
@@ -178,7 +178,7 @@ class DownloadNASA(BaseDownload):
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         url = self._get(product['links'], '.h5', 'title', 'href')
-        return self.download_base(url, product, dir, False)
+        return self.download_base(url, product, dir, if_exists, False)
     
     
     def _download(

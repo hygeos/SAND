@@ -222,7 +222,7 @@ class DownloadCDSE(BaseDownload):
     
         return Query(out)
 
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
         """
         Download a product from copernicus data space
 
@@ -231,19 +231,9 @@ class DownloadCDSE(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """        
-        if uncompress:
-            target = Path(dir)/(product['name'])
-            uncompress_ext = '.zip'
-        else:
-            target = Path(dir)/(product['name']+'.zip')
-            uncompress_ext = None
-        
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
-
-        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
-
-        return target
+        return self.download_base(url, product, dir, if_exists, uncompress)
 
     def quicklook(self, product: dict, dir: Path|str):
         """

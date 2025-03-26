@@ -190,7 +190,7 @@ class DownloadUSGS(BaseDownload):
         
         return Query(out)
     
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
         """
         Download a product from USGS
 
@@ -200,8 +200,8 @@ class DownloadUSGS(BaseDownload):
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         
-        target = Path(dir)/(product['name'])
-        uncompress_ext = None
+        target = Path(dir)/(product['name'])        
+        filegen_opt = dict(if_exists=if_exists)
         
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
@@ -223,7 +223,7 @@ class DownloadUSGS(BaseDownload):
         assert dl['numInvalidScenes'] == 0, 'Scene is invalid'
         url = dl['availableDownloads'][0]['url']
         
-        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
+        filegen(0, **filegen_opt)(self._download)(target, url)
 
         return target
 

@@ -169,7 +169,7 @@ class DownloadTHEIA(BaseDownload):
         
         return Query(out)
 
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
         """
         Download a product from Theia Datahub
 
@@ -178,17 +178,11 @@ class DownloadTHEIA(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
-        if uncompress:
-            target = Path(dir)/(product['name'])
-            uncompress_ext = '.zip'
-        else:
-            target = Path(dir)/(product['name']+'.zip')
-            uncompress_ext = None
-
+        filegen_opt = dict(if_exists=if_exists)  
+        target = Path(dir)/(product['name'])
         url = product['services']['download']['url']
 
-        filegen(0, uncompress=uncompress_ext)(self._download)(target, url)
-
+        filegen(0, **filegen_opt)(self._download)(target, url)
         return target
 
     def quicklook(self, product: dict, dir: Path|str):
