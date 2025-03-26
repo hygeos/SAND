@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 readme = "README.md"
 dependencies = [
     "core @ git+https://github.com/hygeos/core.git",
-    "numpy", "requests", "eumdac", "shapely", "pyotp", "xmltodict"
+    "numpy", "requests", "eumdac", "shapely", "pyotp", "xmltodict", 'pillow'
     ]
 
 [tool.pixi.project]
@@ -28,6 +28,8 @@ pytest = "*"
 pytest-html = "*"
 pytest-xdist = "*"
 ipykernel = "*"
+pillow = "*"
+matplotlib = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
