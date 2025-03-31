@@ -233,7 +233,7 @@ class DownloadCDSE(BaseDownload):
         """        
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
-        return self.download_base(url, product, dir, if_exists, uncompress)
+        return self.download_base(url, product, dir, uncompress=uncompress, if_exists=if_exists)
 
     def quicklook(self, product: dict, dir: Path|str):
         """
