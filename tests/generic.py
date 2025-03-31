@@ -44,3 +44,9 @@ def eval_quicklook(request, downloader, collec, level, **kwargs):
         img = Image.open(quick)
         plt.imshow(img)
         savefig(request)
+
+def eval_download_file(downloader, product_id):
+    dl = downloader()
+    with TemporaryDirectory() as tmpdir:
+        quick = dl.download_file(product_id, tmpdir)
+        assert Path(quick).exists()

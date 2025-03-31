@@ -4,6 +4,7 @@ from time import sleep
 from pathlib import Path
 
 from sand.results import Collection
+from sand.patterns import get_pattern, get_level
 from core.fileutils import filegen
 from core.table import select_cell, read_csv
 
@@ -25,7 +26,7 @@ class BaseDownload:
             self.collection = self._retrieve_collec_name(collection)
         
         # Login to API
-        self.ssl_ctx = get_ssl_context()
+        self.ssl_ctx = get_ssl_context() # Copernicus ?
         self._login()
 
     def _login(self):
@@ -78,18 +79,22 @@ class BaseDownload:
             out.append(self.download(products.iloc[i], dir, uncompress))
         return out 
     
-    def download_file(product: str) -> Path:
+    def download_file(self, product: str, dir: Path | str) -> Path:
         """
         Download product knowing is product id 
         (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
         """
-        return NotImplemented
+        p = get_pattern(product)
+        self.__init__(p['Name'], get_level(product, p))
+        ls = self.query(name_contains=[product])
+        assert len(ls) == 1, 'Multiple products found'
+        return self.download(ls.iloc[0], dir)
     
     def download_base(self, 
                       url: str,
                       product: dict, 
                       dir: Path|str, 
-                      if_exists: str = 'error',
+                      if_exists: str = 'overwrite',
                       uncompress: bool=True) -> Path:
         filegen_opt = dict(if_exists=if_exists)    
         if uncompress:

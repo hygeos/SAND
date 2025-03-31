@@ -208,24 +208,27 @@ class DownloadUSGS(BaseDownload):
         params = {'entityIds': product['id'], "datasetName": self.collection}
         dl_opt = self.session.get(url, data=json.dumps(params), headers=self.API_key)
         dl_opt = dl_opt.json()['data']
-        product = dl_opt[0]
         
-        # Find one available product     
-        assert any(d['available'] for d in dl_opt), 'No product immediately available'
-        url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-request"
-        label = datetime.now().strftime("%Y%m%d_%H%M%S") # Customized label using date time
-        downloads = [{'entityId':product['entityId'], 'productId':product['id']}]
-        params = {'label': label, 'downloads' : downloads}
-        dl = self.session.get(url, data=json.dumps(params), headers=self.API_key)
-        dl = dl.json()['data']
-        
-        # Collect url for download
-        assert dl['numInvalidScenes'] == 0, 'Scene is invalid'
-        url = dl['availableDownloads'][0]['url']
-        
-        filegen(0, **filegen_opt)(self._download)(target, url)
-
-        return target
+        # Find available acquisitions
+        for product in dl_opt:
+            if not product['available']: continue
+                       
+            # Find one available product     
+            url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-request"
+            label = datetime.now().strftime("%Y%m%d_%H%M%S") # Customized label using date time
+            downloads = [{'entityId':product['entityId'], 'productId':product['id']}]
+            params = {'label': label, 'downloads' : downloads}
+            dl = self.session.get(url, data=json.dumps(params), headers=self.API_key)
+            dl = dl.json()['data']
+            
+            # Collect url for download
+            if dl['numInvalidScenes'] != 0: continue
+            url = dl['availableDownloads'][0]['url']
+            
+            filegen(0, **filegen_opt)(self._download)(target, url)
+            return target
+            
+        log.error('No product immediately available')
 
     def quicklook(self, product: dict, dir: Path|str):
         """
@@ -254,15 +257,13 @@ class DownloadUSGS(BaseDownload):
         """
         Wrapped by filegen
         """
-        pbar = tqdm(total=0, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=False)
 
         # Initialize session for download
         session = requests.Session()
         session.headers.update(self.API_key)
 
         # Try to request server
-        pbar.set_description(f'Requesting server: {target.name}')
+        log.info(f'Requesting server: {target.name}')
         response = session.get(url, allow_redirects=False)
         niter = 0
         while response.status_code in (301, 302, 303, 307) and niter < 15:

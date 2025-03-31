@@ -1,6 +1,17 @@
 
-Name,          pattern,  regexp
-ECOSTRESS,     {sensor}{product}_{level}_{var}_{orbit}_{id}_{acquisition_time}_{software}_{product_number}, ECO v[0-9]{3} L[123]G? [A-Z]* [0-9]{6} [0-9]{3} [0-9]{8}T[0-9]{6} [0-9]{4} [0-9]{2}
-SENTINEL-2,    {sensor}_{level}_{acquisition_time}_{processing_baseline}_{relative_orbit}_{tile}_{processing_time}, S2[AB]? MSIL[12][ABC] [0-9]{8}T[0-9]{6} N[0-9]{4} R[0-9]{3} T[0-9A-Z]{5} [0-9]{8}T[0-9]{6}
-SENTINEL-3,    {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] [A-Z]{2} [012] [A-Z_]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
-VENUS,         {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[0-9-]*
+Name,               pattern,  regexp
+ECOSTRESS,          {sensor}{product}_{level}_{var}_{orbit}_{id}_{acquisition_time}_{software}_{product_number}, ECO v[0-9]{3} L[123]G? [A-Z]* [0-9]{6} [0-9]{3} [0-9]{8}T[0-9]{6} [0-9]{4} [0-9]{2}
+LANDSAT-1-4-MSS,    {sensor}{satellite}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LM0[78] L1(PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12])
+LANDSAT-5-TM,       {sensor}{satellite}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LT0[78] L1(PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12])	
+LANDSAT-7-ET,       {sensor}{satellite}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LE07 L1(PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12])
+LANDSAT-8-OLI,      {sensor}{satellite}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LC08 L1(PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12])
+LANDSAT-9-OLI,      {sensor}{satellite}_{level}_{wrs}_{acquisition_time}_{processing_time}_{collection}_{category}, LC09 L1(TP|PT|GT|GS) [0-9]{6} [0-9]{8} [0-9]{8} 0[0-9] (RT|T[12])
+SENTINEL-2-MSI,     {sensor}_{level}_{acquisition_time}_{processing_baseline}_{relative_orbit}_{tile}_{processing_time}, S2[AB]? MSIL[12][ABC] [0-9]{8}T[0-9]{6} N[0-9]{4} R[0-9]{3} T[0-9A-Z]{5} [0-9]{8}T[0-9]{6}
+SENTINEL-3-OLCI-FR, {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] OL [012] [A-Z]FR[A-Z_]{3} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
+SENTINEL-3-OLCI-RR, {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] OL [012] [A-Z]RR[A-Z_]{3} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
+SENTINEL-3-SLSTR,   {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] SL [012] [A-Z_]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
+SENTINEL-3-SRAL,    {sensor}_{data}_{level}_{type}_{start}_{stop}_{creation}_{id}_{centre}_{class}, S3[AB_] SR [012] [A-Z_]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{17} [0-9A-Z_]{3} [0-9A-Z_]{8}
+SENTINEL-5P-TROPOMI,{sensor}_{class}_{type}_{instance_id}, S5P [A-Z]{4} [A-Z0-9_]{4}[A-Z0-9_]{6} [A-Z0-9_]*
+SENTINEL-6-HR,      {sensor}_{consumer}_{level}_{type}_{start}_{end}_{generation_time}_{instance}_{source}_{environment}_{class_id}, S6[AB_] [A-Z4]{2} [123_][A-Z_] HR[_]{5} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{16} [A-Z_]{4} [A-Z_]{3} [A-Z0-9_]{6}
+SENTINEL-6-LR,      {sensor}_{consumer}_{level}_{type}_{start}_{end}_{generation_time}_{instance}_{source}_{environment}_{class_id}, S6[AB_] [A-Z4]{2} [123_][A-Z_] LR[_]{5} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9]{8}T[0-9]{6} [0-9A-Z_]{16} [A-Z_]{4} [A-Z_]{3} [A-Z0-9_]{6}
+VENUS,              {sensor}_{acquisition_time}_{level}_{site}_{software}_{version}, VENUS-XS [0-9]{8}-[0-9]{6}-[0-9]{3} L[123][ABC] [A-Z]* [A-Z] V[0-9-]*

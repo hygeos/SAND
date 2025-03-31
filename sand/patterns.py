@@ -3,10 +3,24 @@ from pathlib import Path
 from core import log
 import re
 
+
 def retrieve_product(product_id: str, fields: dict, pattern: tuple[str] = None) -> str:
+    """
+    Function retrieve a product base on another one.
+    For example, retrieve Level-2 product based on Level-1
+
+    Args:
+        product_id (str): Product considered as base
+        fields (dict): Fields to change
+        pattern (tuple[str], optional): Pattern of <product_id>. Defaults to None.
+
+    Returns:
+        str: New product id
+    """
     
     # Check fields input
-    row = get_pattern(product_id).iloc[0]
+    if pattern:
+        row = get_pattern(product_id)
     valid_fields = get_fields(row['pattern'])
     assert all(k in valid_fields for k in fields.keys()), \
     f'Invalid fields: keys of fields should be in {valid_fields}, got {fields.keys()}'
@@ -31,19 +45,37 @@ def retrieve_product(product_id: str, fields: dict, pattern: tuple[str] = None) 
     return new
 
 def get_pattern(name: str) -> dict:
+    """
+    Get pattern that match product name
+
+    Args:
+        name (str): Product name or id
+
+    Returns:
+        dict: Dictionary containing sensor name, pattern and regular expression
+    """
     
     # Find patterns
     db = read_csv(Path(__file__).parent/'patterns.csv')
     sensors = _find_pattern(name.split('.')[0], db)
     
     # Check patterns contentpattern
-    if len(sensors) == 0: log.error(f'No match found for {name}', e=Exception)
+    if len(sensors) == 0: log.error(f'No pattern matches product ID : {name}', e=Exception)
     assert len(sensors) == 1, f'Multiple matches, got {sensors}'
-    sensor = sensors[0]
     
-    return select(db, ('Name','=',sensor))  
+    return select(db, ('Name','=',sensors[0])).iloc[0].to_dict() 
 
-def _find_pattern(name: str, database) -> str:
+def _find_pattern(name: str, database) -> list:
+    """
+    Hidden function that returns the list of sensor that match product id
+
+    Args:
+        name (str): Product name and id
+        database (pd.DataFrame): Table with all patterns
+
+    Returns:
+        list: List of name of sensor
+    """
     out = []
     for _, row in database.iterrows():
         regexp = row['regexp'].strip().split(' ')
@@ -52,22 +84,27 @@ def _find_pattern(name: str, database) -> str:
     return out
 
 def check(name: str, regexp: str) -> bool:
+    """
+    Check if name satisfies regular expression
+    """
     return bool(re.fullmatch(regexp, name))
 
-def decompose(name: str, regexps: list[str], sep: str = '_') -> list:
+def decompose(name: str, regexps: list[str], sep: str = '_') -> dict:
     """
     Decompose a string according to the list of regexp, 
     assumming that every regexp block are splitted by sep
     """
     l = []
-    seps = ['_' for i in range(len(regexps[:-1]))] + ['']
+    seps = [sep for i in range(len(regexps[:-1]))] + ['']
     for i in range(100): # Prefer using for loop rather than while loop
         if i == len(seps): break
         check = re.match(regexps[i] + seps[i], name)
         if check: 
             l.append(name[:check.span()[1]-len(seps[i])])
             name = name[check.span()[1]:]
-        else: raise ValueError('name can be decompose be regexp list')
+        else: 
+            log.error('name cannot be decompose by regexp list. '
+                      f'{name} does not match {regexps[i]}')
     return l
 
 def get_fields(name: str, out: list = []):
@@ -80,3 +117,11 @@ def get_fields(name: str, out: list = []):
         out.append(name[:check.span()[1]-1])
         name = name[check.span()[1]:]
     return get_fields(name, out)
+
+def get_level(name: str, pattern: dict):
+    decomp = decompose(name, pattern['regexp'].split(' '))
+    fields = [f.strip('{}') for f in pattern['pattern'].split('_')]
+    level = {fields[i]: d for i,d in enumerate(decomp)}['level']
+    level_int = [c for c in level if c.isdigit()]
+    assert len(level_int) == 1
+    return int(level_int[0])
