@@ -31,7 +31,8 @@ class BaseDownload:
             self.collection = self._retrieve_collec_name(collection)
         
         # Login to API
-        self.ssl_ctx = get_ssl_context() # Copernicus ?
+        self.session = requests.Session()
+        self.ssl_ctx = get_ssl_context()
         self._login()
 
     def _login(self):
@@ -145,6 +146,11 @@ class BaseDownload:
         to_add = select_cell(collecs, ('level','=',self.level), 'contains')
         if str(to_add) == 'nan': return name_contains
         return name_contains + to_add.split(' ')
+    
+    def __del__(self):
+        self.session.close()
+    
+    
     r = session.get(url, **kwargs)
     for _ in range(10):
         try:
