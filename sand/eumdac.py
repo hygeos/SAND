@@ -2,22 +2,22 @@ import eumdac
 import requests
 import shutil
 
-from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
 from shapely import to_wkt
 from xmltodict import parse
 from tempfile import TemporaryDirectory
-from datetime import datetime, time, date
+from datetime import datetime, date
 
-from sand.base import request_get, UnauthorizedError, BaseDownload
-from sand.results import Query, Collection
+from sand.base import raise_api_error, RequestsError, BaseDownload
+from sand.results import Query
 from sand.tinyfunc import *
 
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
 from core.static import interface
+from core.table import select_cell, select
 from core.uncompress import uncompress as func_uncompress
 
 
@@ -31,6 +31,7 @@ class DownloadEumDAC(BaseDownload):
 
         Args:
             collection (str): collection name ('MVIRI-MFG', 'SENTINEL-3-OLCI-RR', etc.)
+            level (int): Level of product to download [Should be 1, 2 or 3]
 
         Example:
             eum = DownloadEumDAC('MVIRI-MFG')
@@ -63,15 +64,15 @@ class DownloadEumDAC(BaseDownload):
         
         self.datastore = eumdac.DataStore(self.tokens)        
         log.info(f'Log to API (https://data.eumetsat.int/)')
-
+    
     @interface
     def query(
         self,
-        dtstart: Optional[date|datetime]=None,
-        dtend: Optional[date|datetime]=None,
-        geo=None,
-        cloudcover_thres: Optional[int]=None,
-        name_contains: Optional[list] = None,
+        dtstart: Optional[date|datetime] = None,
+        dtend: Optional[date|datetime] = None,
+        geo = None,
+        cloudcover_thres: Optional[int] = None,
+        name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
@@ -110,17 +111,18 @@ class DownloadEumDAC(BaseDownload):
         if name_glob: checker.append((check_name_glob, name_glob))
         
         product = []
-        top = 1000  # maximum value of number of retrieved values
-        for collec in self.collection:
+        for collec in self.api_collection:
             
             # Query EumDAC API
             log.debug(f'Query EumDAC API for collection {collec}')
             self.selected_collection = self.datastore.get_collection(collec)
-            prod = list(self.selected_collection.search(
-                geo = to_wkt(geo),
-                dtstart = dtstart,
-                dtend = dtend
-            ))
+            try:
+                prod = list(self.selected_collection.search(
+                    geo = to_wkt(geo),
+                    dtstart = dtstart,
+                    dtend = dtend
+                ))
+            except eumdac.collection.CollectionError: continue
             
             # Filter products
             product += [p for p in prod if self.check_name(str(p), checker)]
@@ -142,8 +144,9 @@ class DownloadEumDAC(BaseDownload):
         
         log.info(f'{len(product)} products has been found')
         return Query(out)
-
+    
     @interface
+    def download(self, product: str, dir: Path, if_exists='skip', uncompress: bool=False) -> Path:
         """
         Download a product to directory
 
@@ -157,14 +160,14 @@ class DownloadEumDAC(BaseDownload):
             collection_id=product['collection'],
         )
 
-        @filegen()
+        @filegen(if_exists=if_exists)
         def _download(target: Path):
             with TemporaryDirectory() as tmpdir:
                 target_compressed = Path(tmpdir)/(product['id'] + '.zip')
                 with data.open() as fsrc, open(target_compressed, mode='wb') as fdst:
-                    pbar = tqdm(total=data.size*1e3, unit_scale=True, unit="B",
-                                initial=0, unit_divisor=1024, leave=False)
-                    pbar.set_description(f"Downloading {product['id']}")
+                    pbar = log.pbar(log.lvl.INFO, total=data.size*1e3, unit="B",
+                        unit_scale=True, initial=0, unit_divisor=1024, leave=False)
+                    pbar.set_description(f"Downloading {product['id'][:8]}...")
                     while True:
                         chunk = fsrc.read(1024)
                         if not chunk:
@@ -172,10 +175,10 @@ class DownloadEumDAC(BaseDownload):
                         fdst.write(chunk)
                         pbar.update(len(chunk))
                 log.info(f"Download of product {product['id']} finished.")
-                if uncompress:
-                    func_uncompress(target_compressed, target.parent)
-                else:
-                    shutil.move(target_compressed, target.parent)
+                
+                # Uncompress file if needed
+                if uncompress: func_uncompress(target_compressed, target.parent)
+                else: shutil.move(target_compressed, target.parent)
 
         target = Path(dir)/(product['id'] if uncompress else (product['id'] + '.zip'))
 
@@ -191,24 +194,23 @@ class DownloadEumDAC(BaseDownload):
         """
         Wrapped by filegen
         """
-        pbar = tqdm(total=0, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=False)
 
         # Initialize session for download
-        session = requests.Session()
-        session.headers.update({'Authorization': f'Bearer {self.tokens}'})
+        self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
 
         # Try to request server
-        pbar.set_description(f'Requesting server: {target.name}')
-        response = session.get(url, allow_redirects=False)
         niter = 0
+        response = self.session.get(url, allow_redirects=False)
         log.debug(f'Requesting server for {target.name}')
+        while response.status_code in (301, 302, 303, 307) and niter < 5:
             log.debug(f'Download content [Try {niter+1}/5]')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
             url = response.headers['Location']
-            response = session.get(url, allow_redirects=False)
+            # response = self.session.get(url, allow_redirects=False)
+            response = self.session.get(url, verify=True, allow_redirects=True)
             niter += 1
+        raise_api_error(response)
 
         # Download file
         log.debug('Start writing on device')
@@ -222,8 +224,18 @@ class DownloadEumDAC(BaseDownload):
                     pbar.update(1024)
     
     @interface
-                    
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        url = product['quicklook_url'][0]['href']      
+        target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
+
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
+
         log.info(f'Quicklook has been downloaded at : {target}')
+        return target
     
     @interface
     def metadata(self, product):

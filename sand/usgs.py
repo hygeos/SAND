@@ -1,18 +1,17 @@
 import requests
 import json
 
-from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
 from shapely import Point, Polygon
-from datetime import datetime, time, date
+from datetime import datetime, date
 
 from core import log
 from core.ftp import get_auth
 from core.static import interface
 from core.fileutils import filegen
-from core.table import select, select_cell, read_csv
-from sand.base import request_get, BaseDownload
+from core.table import select, select_cell
+from sand.base import raise_api_error, BaseDownload
 from sand.results import Query
 from sand.tinyfunc import *
 
@@ -70,7 +69,6 @@ class DownloadUSGS(BaseDownload):
             }
         
         try:
-            self.session = requests.Session()
             url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
             r = self.session.post(url, json.dumps(data))
             r.raise_for_status()
@@ -84,11 +82,11 @@ class DownloadUSGS(BaseDownload):
     @interface
     def query(
         self,
-        dtstart: Optional[date|datetime]=None,
-        dtend: Optional[date|datetime]=None,
-        geo=None,
-        cloudcover_thres: Optional[int]=None,
-        name_contains: Optional[list] = None,
+        dtstart: Optional[date|datetime] = None,
+        dtend: Optional[date|datetime] = None,
+        geo = None,
+        cloudcover_thres: Optional[int] = None,
+        name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
@@ -157,7 +155,7 @@ class DownloadUSGS(BaseDownload):
                         "seasonalFilter"   : None}
 
         params = {
-            "datasetName": self.collection,
+            "datasetName": self.api_collection,
             "sceneFilter": scene_filter,
             "maxResults": 1000,
             "metadataType": "full",
@@ -166,10 +164,13 @@ class DownloadUSGS(BaseDownload):
         # Request API for each dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
         response = self.session.get(url, data=json.dumps(params), headers=self.API_key)
-        response = response.json()['data']['results']
+        raise_api_error(response)
+        r = response.json()
+        if r['data'] is None: log.error(r['errorMessage'], e=Exception)
+        r = r['data']['results']
         
         # Filter products
-        response = [p for p in response if self.check_name(p['displayId'], checker)]
+        response = [p for p in r if self.check_name(p['displayId'], checker)]
         
         # test if maximum number of returns is reached
         if len(response) >= 1000:
@@ -184,6 +185,7 @@ class DownloadUSGS(BaseDownload):
         return Query(out)
     
     @interface
+    def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=True) -> Path:
         """
         Download a product from USGS
 
@@ -193,8 +195,7 @@ class DownloadUSGS(BaseDownload):
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         
-        target = Path(dir)/(product['name'])        
-        filegen_opt = dict(if_exists=if_exists)
+        target = Path(dir)/(product['name'])    
         
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
@@ -218,29 +219,11 @@ class DownloadUSGS(BaseDownload):
             if dl['numInvalidScenes'] != 0: continue
             url = dl['availableDownloads'][0]['url']
             
+            filegen(0, if_exists=if_exists)(self._download)(target, url)
             log.info(f'Product has been downloaded at : {target}')
             return target
             
         log.error('No product immediately available')
-
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        
-        target = Path(dir)/(product['name'] + '.png')
-
-        if not target.exists():
-            assets = self.metadata(product)['Landsat Product Identifier L1']
-            if not assets:
-                raise FileNotFoundError(f'Skipping quicklook {target.name}')
-            for b in product['browse']:
-                url = b['browsePath']
-                if 'type=refl' in url: break
-            filegen(0)(self._download)(target, url)
-
-        return target
-    
     
     def _download(
         self,
@@ -252,20 +235,18 @@ class DownloadUSGS(BaseDownload):
         """
 
         # Initialize session for download
-        session = requests.Session()
-        session.headers.update(self.API_key)
+        self.session.headers.update(self.API_key)
 
         # Try to request server
-        log.info(f'Requesting server: {target.name}')
-        response = session.get(url, allow_redirects=False)
         niter = 0
-        while response.status_code in (301, 302, 303, 307) and niter < 15:
+        response = self.session.get(url, allow_redirects=False)
         log.debug(f'Requesting server for {target.name}')
-                raise ValueError(f'Got response code : {response.status_code}')
+        while response.status_code in (301, 302, 303, 307) and niter < 5:
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
             url = response.headers['Location']
-            response = session.get(url, allow_redirects=False)
+            # response = self.session.get(url, allow_redirects=False)
+            response = self.session.get(url, verify=True, allow_redirects=True)
             niter += 1
 
         # Download file
@@ -280,8 +261,23 @@ class DownloadUSGS(BaseDownload):
                     pbar.update(1024)
     
     @interface
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        
+        target = Path(dir)/(product['name'] + '.png')
+
+        if not target.exists():
+            assets = self.metadata(product)['Landsat Product Identifier L1']
+            log.check(assets, f'Skipping quicklook {target.name}', e=FileNotFoundError)
+            for b in product['browse']:
+                url = b['browsePath']
+                if 'type=refl' in url: break
+            filegen(0)(self._download)(target, url)
 
         log.info(f'Quicklook has been downloaded at : {target}')
+        return target    
     
     @interface
     def metadata(self, product):
@@ -289,8 +285,7 @@ class DownloadUSGS(BaseDownload):
         Returns the product metadata including attributes and assets
         """
         meta = {}
-        for m in product['metadata']:
-            meta[m['fieldName']] = m['value']
+        for m in product['metadata']: meta[m['fieldName']] = m['value']
         return meta
     
     def _retrieve_collec_name(self, collection):

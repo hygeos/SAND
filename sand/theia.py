@@ -1,20 +1,17 @@
 import requests
-import json
 
-from urllib.request import urlopen, Request
-from datetime import datetime, date, time
+from datetime import datetime, date
 from pathlib import Path
 from typing import Optional
-from tqdm import tqdm
 
-from sand.base import request_get, BaseDownload
+from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
 from core.static import interface
 from core.fileutils import filegen
-from core.table import select_cell, select, read_csv
+from core.table import select_cell, select
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
@@ -64,7 +61,7 @@ class DownloadTHEIA(BaseDownload):
                 )
         self.tokens = r.text
         log.info('Log to API (https://theia.cnes.fr/)')
-
+    
     @interface
     def query(
         self,
@@ -140,12 +137,12 @@ class DownloadTHEIA(BaseDownload):
 
         top = 500  # maximum value of number of retrieved values
         req = ('&'.join(query_lines))+f'&maxRecords={top}'
-        urllib_req = Request(req)
-        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
-        response = json.load(urllib_response)['features']
+        response = requests.get(req, verify=True)
+        raise_api_error(response)
         
         # Filter products
-        response = [p for p in response if self.check_name(p["properties"]['title'], checker)]   
+        r = response.json()['features']
+        response = [p for p in r if self.check_name(p["properties"]['title'], checker)]   
 
         # test if maximum number of returns is reached
         if len(response) >= top:
@@ -158,8 +155,9 @@ class DownloadTHEIA(BaseDownload):
                 for d in response]
         
         return Query(out)
-
+    
     @interface
+    def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=True) -> Path:
         """
         Download a product from Theia Datahub
 
@@ -168,9 +166,9 @@ class DownloadTHEIA(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
-        filegen_opt = dict(if_exists=if_exists)  
         target = Path(dir)/(product['name'])
         url = product['services']['download']['url']
+        filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -187,8 +185,18 @@ class DownloadTHEIA(BaseDownload):
             f.write(content)
     
     @interface 
-                    
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        target = Path(dir)/(product['name'] + '.jpeg')
+        url = product['quicklook']
+
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
+        
         log.info(f'Quicklook has been downloaded at : {target}')
+        return target
         
     @interface           
     def metadata(self, product: dict):

@@ -1,7 +1,6 @@
 import requests
 import json
 
-from tqdm import tqdm
 from pathlib import Path
 from typing import Optional
 from xmltodict import parse
@@ -9,13 +8,13 @@ from shapely import Point, Polygon
 from requests.utils import requote_uri
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
-from datetime import datetime, time, date
+from datetime import datetime, date
 
 from core import log
 from core.table import *
 from core.static import interface
 from core.fileutils import filegen
-from sand.base import request_get, BaseDownload
+from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
 
@@ -62,7 +61,7 @@ class DownloadNASA(BaseDownload):
         dtend: Optional[date|datetime]=None,
         geo=None,
         cloudcover_thres: Optional[int]=None,
-        name_contains: Optional[list] = None,
+        name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
@@ -98,10 +97,10 @@ class DownloadNASA(BaseDownload):
         data = {}
         headers = {'Accept': 'application/json'}
         
-        # Configure scene constraints for request        
+        # Configure scene constraints for request
         date_range = dtstart.isoformat() + 'Z,'
         date_range += dtend.isoformat() + 'Z'
-            data['temporal'] = date_range
+        data['temporal'] = date_range
         
         if isinstance(geo, Point):
             bbox = f"{geo.x},{geo.y},{geo.x},{geo.y}"
@@ -145,8 +144,9 @@ class DownloadNASA(BaseDownload):
         
         log.info(f'{len(response)} products has been found')
         return Query(out)
-
+    
     @interface
+    def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=False) -> Path:
         """
         Download a product from NASA data space
 
@@ -155,8 +155,11 @@ class DownloadNASA(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
+        target = Path(dir)/(product['name'])
         url = self._get(product['links'], '.h5', 'title', 'href')
+        filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
+        return target
     
     def _download(
         self,
@@ -166,22 +169,20 @@ class DownloadNASA(BaseDownload):
         """
         Wrapped by filegen
         """
-        pbar = tqdm(total=0, unit_scale=True, unit="B", 
-                    unit_divisor=1024, leave=False)
-
-        # Initialize session for download
-        session = requests.Session()
 
         # Try to request server
-        pbar.set_description(f'Requesting server: {target.name}')
-        response = session.get(url, allow_redirects=False)
         niter = 0
+        response = self.session.get(url, allow_redirects=False)
         log.debug(f'Requesting server for {target.name}')
+        while response.status_code in (301, 302, 303, 307) and niter < 5:
             log.debug(f'Download content [Try {niter+1}/5]')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
-            response = session.get(url, allow_redirects=False)
+            url = response.headers['Location']
+            # response = self.session.get(url, allow_redirects=False)
+            response = self.session.get(url, verify=True, allow_redirects=True)
             niter += 1
+        raise_api_error(response)
 
         # Download file
         log.debug('Start writing on device')
@@ -195,8 +196,18 @@ class DownloadNASA(BaseDownload):
                     pbar.update(1024)
     
     @interface
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook to `dir`
+        """
+        target = Path(dir)/(product['name'] + '.jpeg')
+        url = self._get(product['links'], '.png', 'title', 'href')
+
+        if not target.exists():
+            filegen(0)(self._download)(target, url)
 
         log.info(f'Quicklook has been downloaded at : {target}')
+        return target
     
     @interface
     def metadata(self, product):

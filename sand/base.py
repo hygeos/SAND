@@ -1,11 +1,15 @@
 from datetime import datetime, date, time
 from shapely import Point, Polygon
 from pathlib import Path
+from time import sleep
 
 from sand.results import Collection
 from sand.tinyfunc import end_of_day
 from sand.patterns import get_pattern, get_level
+from core.table import *
 from core import log
+
+import requests
 import ssl
 
 
@@ -24,7 +28,7 @@ class BaseDownload:
         self.available_collection = list(self.provider_prop['SAND_name'])
         
         # Check collection validity
-            self.collection = collection
+        self.collection = collection
         if collection is not None:
             log.check(collection in self.available_collection,
                 f"Collection '{collection}' does not exist for this downloader,"
@@ -54,13 +58,13 @@ class BaseDownload:
         """
         return NotImplemented
 
-    def download_all(self, products, dir: Path|str, uncompress: bool=True) -> list[Path]:
+    def download_all(self, products, dir: Path|str, if_exists: str='skip', uncompress: bool=True) -> list[Path]:
         """
         Download all products from API server resulting from a query
         """
         out = []
         for i in range(len(products)): 
-            out.append(self.download(products.iloc[i], dir, uncompress))
+            out.append(self.download(products.iloc[i], dir, if_exists, uncompress))
         return out 
     
     def download_file(self, product: str, dir: Path | str) -> Path:
@@ -73,34 +77,10 @@ class BaseDownload:
         ls = self.query(name_contains=[product])
         assert len(ls) == 1, 'Multiple products found'
         return self.download(ls.iloc[0], dir)
-    
-    def download_base(self, 
-                      url: str,
-                      product: dict, 
-                      dir: Path|str, 
-                      if_exists: str = 'overwrite',
-                      uncompress: bool=True) -> Path:
-        filegen_opt = dict(if_exists=if_exists)    
-        if uncompress:
-            target = Path(dir)/(product['name'])
-            filegen_opt['uncompress'] = '.zip'
-        else:
-            target = Path(dir)/(product['name']+'.zip')
-            filegen_opt['uncompress'] = None
-
-        filegen(0, **filegen_opt)(self._download)(target, url)
-
-        return target
 
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
-        """
-        return NotImplemented
-
-    def _download(self, target: Path, url: str):
-        """
-        Wrapped by filegen
         """
         return NotImplemented
 
@@ -190,13 +170,15 @@ class BaseDownload:
         self.session.close()
     
     
+def request_get(session, url, nb_loop=5, **kwargs):
     r = session.get(url, **kwargs)
-    for _ in range(10):
+    for _ in range(nb_loop):
         try:
             raise_api_error(r)
-        except RateLimitError:
-            sleep(3)
-            r = session.get(url, **kwargs)
+        except RequestsError as e:
+            if 'Too Many Requests' in e:
+                sleep(3)
+                r = session.get(url, **kwargs)
     return r
 
 def raise_api_error(response: dict):
