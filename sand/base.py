@@ -5,8 +5,7 @@ from pathlib import Path
 
 from sand.results import Collection
 from sand.patterns import get_pattern, get_level
-from core.fileutils import filegen
-from core.table import select_cell, read_csv
+import ssl
 
 
 class BaseDownload:
@@ -21,14 +20,15 @@ class BaseDownload:
         provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
         log.check(provider_file.exists(), 'Provider properties file is missing')
         self.provider_prop = read_csv(provider_file)
+        self.available_collection = list(self.provider_prop['SAND_name'])
+        
         # Check collection validity
-        if collection is None:
             self.collection = collection
-        else:
-            assert collection in self.available_collection, \
-            f"Collection '{collection}' does not exist,"
-            "please use get_availbale_collection methods"
-            self.collection = self._retrieve_collec_name(collection)
+        if collection is not None:
+            log.check(collection in self.available_collection,
+                f"Collection '{collection}' does not exist for this downloader,"
+                " please use get_available_collection methods", e=ValueError)
+            self.api_collection = self._retrieve_collec_name(collection)
         
         # Login to API
         self.session = requests.Session()
@@ -38,29 +38,6 @@ class BaseDownload:
     def _login(self):
         """
         Login to API server with credentials storted in .netrc
-        """
-        return NotImplemented
-
-    def get_available_collection(self) -> dict:
-        """
-        Every downloadable collections
-        """
-        current_dir = Path(__file__).parent
-        sensor = read_csv(current_dir/'sensors.csv')
-        collec = {}
-        for c in self.available_collection:
-            try: 
-                collec[c] = select_cell(sensor,('Name','=',c),'longname')
-            except AssertionError: 
-                raise ValueError(f'{c} is not a valid collection') 
-        return Collection(collec)
-    
-    def check_name(self, name, check_funcs):
-        return all(c[0](name, c[1]) for c in check_funcs)
-    
-    def _check_collection(self) -> dict:
-        """
-        Every available collection on the API server
         """
         return NotImplemented
 
@@ -137,6 +114,16 @@ class BaseDownload:
         Returns the collection name used by API
         """
         return NotImplemented 
+
+    def get_available_collection(self) -> dict:
+        """
+        Every downloadable collections
+        """
+        current_dir = Path(__file__).parent
+        sensor = read_csv(current_dir/'sensors.csv')
+        sensor['launch_date'] = sensor['launch_date'].astype(str)
+        sensor['end_date'] = sensor['end_date'].astype(str)
+        return Collection(self.available_collection , sensor)
     
     def _complete_name_contains(self, name_contains: list):
         """
