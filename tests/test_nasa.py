@@ -1,9 +1,8 @@
 import pytest
 
 from tests.generic import *
+from sample_product import products
 from sand.nasa import DownloadNASA
-from datetime import datetime
-from shapely import Polygon
 
 
 @pytest.fixture(params=['ECOSTRESS'])
@@ -14,6 +13,9 @@ def collec(request):
 def level(request):
     return request.param
     
+@pytest.fixture
+def constraint(collec):
+    return products[collec]['level1']
 
 
 def test_login(collec, level):
@@ -22,38 +24,12 @@ def test_login(collec, level):
 def test_collection():
     eval_collection(DownloadNASA)
 
-def test_download(collec, level):
-    eval_download(DownloadNASA, collec, level,
-                  dtstart = datetime(2023, 10, 20),
-                  dtend = datetime(2023, 11, 14),
-                  geo = Polygon(((34.210026,-120.295181),
-                                 (34.210026,-119.526215),
-                                 (35.225021,-119.526215),
-                                 (35.225021,-120.295181),
-                                 (34.210026,-120.295181)))
-                  )
+def test_download(collec, level, constraint):
+    eval_download(DownloadNASA, collec, level, **constraint)
 
-def test_metadata(collec, level):
-    eval_metadata(DownloadNASA, collec, level,
-                  dtstart = datetime(2023, 10, 20),
-                  dtend = datetime(2023, 11, 14),
-                  geo = Polygon(((34.210026,-120.295181),
-                                 (34.210026,-119.526215),
-                                 (35.225021,-119.526215),
-                                 (35.225021,-120.295181),
-                                 (34.210026,-120.295181)))
-                  )
-    
+def test_metadata(collec, level, constraint):
+    eval_metadata(DownloadNASA, collec, level, **constraint)
 
-def test_quicklook(request, collec, level):
-    eval_quicklook(request, DownloadNASA, collec, level,
-                  dtstart = datetime(2023, 10, 20),
-                  dtend = datetime(2023, 11, 14),
-                  geo = Polygon(((34.210026,-120.295181),
-                                 (34.210026,-119.526215),
-                                 (35.225021,-119.526215),
-                                 (35.225021,-120.295181),
-                                 (34.210026,-120.295181)))
-                  )
-    
+def test_quicklook(request, collec, level, constraint):
+    eval_quicklook(request, DownloadNASA, collec, level, **constraint)
     

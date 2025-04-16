@@ -1,9 +1,8 @@
 import pytest
 
 from tests.generic import *
+from sample_product import products
 from sand.theia import DownloadTHEIA
-from datetime import datetime
-from shapely import Point
 
 
 @pytest.fixture(params=['VENUS'])
@@ -14,6 +13,9 @@ def collec(request):
 def level(request):
     return request.param
     
+@pytest.fixture
+def constraint(collec):
+    return products[collec]['level1']
 
 
 def test_login(collec, level):
@@ -22,22 +24,13 @@ def test_login(collec, level):
 def test_collection():
     eval_collection(DownloadTHEIA)
 
-def test_download(collec, level):
-    eval_download(DownloadTHEIA, collec, level,
-                  dtstart = datetime(2020, 1, 1),
-                  dtend = datetime(2020, 6, 1),
-                  venus_site='NARYN')
+def test_download(collec, level, constraint):
+    eval_download(DownloadTHEIA, collec, level, **constraint)
 
-def test_metadata(collec, level):
+def test_metadata(collec, level, constraint):
     with pytest.raises(FileNotFoundError):
-        eval_metadata(DownloadTHEIA, collec, level,
-                    dtstart = datetime(2020, 1, 1),
-                    dtend = datetime(2020, 6, 1),
-                    venus_site='NARYN')
+        eval_metadata(DownloadTHEIA, collec, level, **constraint)
     
-def test_quicklook(request, collec, level):
-    eval_quicklook(request, DownloadTHEIA, collec, level,
-                dtstart = datetime(2020, 1, 1),
-                dtend = datetime(2020, 6, 1),
-                venus_site='NARYN')
+def test_quicklook(request, collec, level, constraint):
+    eval_quicklook(request, DownloadTHEIA, collec, level, **constraint)
     
