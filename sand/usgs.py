@@ -59,8 +59,7 @@ class DownloadUSGS(BaseDownload):
             )
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.available_collection = DownloadUSGS.collections
-        self.table_collection = Path(__file__).parent/'collections'/'usgs.csv'
+        self.provider = 'usgs'
         super().__init__(collection, level)
         
 

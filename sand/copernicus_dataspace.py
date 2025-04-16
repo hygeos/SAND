@@ -66,7 +66,7 @@ class DownloadCDSE(BaseDownload):
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
         self.available_collection = DownloadCDSE.collections
-        self.table_collection = Path(__file__).parent/'collections'/'cdse.csv'
+        self.provider = 'cdse'
         super().__init__(collection, level)
 
     def _login(self):

@@ -58,8 +58,7 @@ class DownloadEumDAC(BaseDownload):
             )
             eum.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.available_collection = DownloadEumDAC.collections
-        self.table_collection = Path(__file__).parent/'collections'/'eumdac.csv'
+        self.provider = 'eumdac'
         super().__init__(collection, level)
         
     def _login(self):

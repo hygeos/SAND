@@ -16,6 +16,11 @@ class BaseDownload:
         Python interface to API Server
         """
         self.level = level
+        
+        # Load provider properties
+        provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
+        log.check(provider_file.exists(), 'Provider properties file is missing')
+        self.provider_prop = read_csv(provider_file)
         # Check collection validity
         if collection is None:
             self.collection = collection
@@ -132,8 +137,14 @@ class BaseDownload:
         """
         return NotImplemented 
     
-    
-def request_get(session, url, **kwargs):
+    def _complete_name_contains(self, name_contains: list):
+        """
+        Function to add name constraint to list of user constraint
+        """
+        collecs = select(self.provider_prop,('SAND_name','=',self.collection),['level','contains'])
+        to_add = select_cell(collecs, ('level','=',self.level), 'contains')
+        if str(to_add) == 'nan': return name_contains
+        return name_contains + to_add.split(' ')
     r = session.get(url, **kwargs)
     for _ in range(10):
         try:

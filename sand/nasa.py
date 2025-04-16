@@ -56,8 +56,7 @@ class DownloadNASA(BaseDownload):
             )
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.available_collection = DownloadNASA.collections
-        self.table_collection = Path(__file__).parent/'collections'/'nasa.csv'
+        self.provider = 'nasa'
         super().__init__(collection, level)
         
 

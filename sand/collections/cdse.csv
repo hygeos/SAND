@@ -1,22 +1,22 @@
-SAND_name,              name,               contains, 
-CCM,                    CCM,                ,
-COP-DEM,                COP-DEM,            ,
-ENVISAT,                ENVISAT,            ,
-GLOBAL-MOSAICS,         GLOBAL-MOSAICS,     ,
-LANDSAT-5-TM,           LANDSAT-5,          ,
-LANDSAT-7-ET,           LANDSAT-7,          ,
-LANDSAT-8-OLI,          LANDSAT-8,          ,
-S2GLC,                  S2GLC,              ,
-SENTINEL-1,             SENTINEL-1,         ,
-SENTINEL-1-RTC,         SENTINEL-1-RTC,     ,
-SENTINEL-2-MSI,         SENTINEL-2,         MSI,
-SENTINEL-3-OLCI-FR,     SENTINEL-3,         OLCI,
-SENTINEL-3-OLCI-RR,     SENTINEL-3,         OLCI,
-SENTINEL-5P-TROPOMI,    SENTINEL-5P,        TROPOMI,
-SENTINEL-6-HR,          SENTINEL-6,         ,
-SENTINEL-6-LR,          SENTINEL-6,         ,
-SMOS,                   SMOS,               ,
-MODIS-TERRA-HR,         TERRAAQUA,          ,
-MODIS-TERRA-LR,         TERRAAQUA,          ,
-MODIS-AQUA-HR,          TERRAAQUA,          ,
-MODIS-AQUA-LR,          TERRAAQUA,          ,
+SAND_name,              level,  contains,  collec
+CCM,                    1,      ,          CCM           
+COP-DEM,                1,      ,          COP-DEM       
+ENVISAT,                1,      ,          ENVISAT       
+GLOBAL-MOSAICS,         1,      ,          GLOBAL-MOSAICS
+LANDSAT-5-TM,           1,      ,          LANDSAT-5     
+LANDSAT-7-ET,           1,      ,          LANDSAT-7     
+LANDSAT-8-OLI,          1,      ,          LANDSAT-8    
+S2GLC,                  1,      ,          S2GLC   
+SENTINEL-1,             1,      ,          SENTINEL-1    
+SENTINEL-1-RTC,         1,      ,          SENTINEL-1-RTC
+SENTINEL-2-MSI,         1,      MSI,       SENTINEL-2    
+SENTINEL-3-OLCI-FR,     1,      OL FR,     SENTINEL-3    
+SENTINEL-3-OLCI-RR,     1,      OL RR,     SENTINEL-3    
+SENTINEL-5P-TROPOMI,    1,      TROPOMI,   SENTINEL-5P   
+SENTINEL-6-HR,          1,      ,          SENTINEL-6    
+SENTINEL-6-LR,          1,      ,          SENTINEL-6    
+SMOS,                   1,      ,          SMOS          
+MODIS-TERRA-HR,         1,      ,          TERRAAQUA     
+MODIS-TERRA-LR,         1,      ,          TERRAAQUA     
+MODIS-AQUA-HR,          1,      ,          TERRAAQUA     
+MODIS-AQUA-LR,          1,      ,          TERRAAQUA     

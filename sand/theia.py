@@ -51,8 +51,7 @@ class DownloadTHEIA(BaseDownload):
             )
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.available_collection = DownloadTHEIA.collections
-        self.table_collection = Path(__file__).parent/'collections'/'theia.csv'
+        self.provider = 'theia'
         super().__init__(collection, level)
 
     def _login(self):
