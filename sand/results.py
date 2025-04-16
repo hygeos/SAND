@@ -1,7 +1,7 @@
-import pandas as pd
+import fireducks.pandas as pd
 
 
-def Query(json_value: dict) -> None:
+def Query(json_value: dict) -> pd.DataFrame:
     if len(json_value) == 0:
         return pd.DataFrame()
     res = []
@@ -10,8 +10,24 @@ def Query(json_value: dict) -> None:
         res.append(sub)
     return pd.concat(res, ignore_index=True) 
 
-def Collection(json_value: dict):
-    data = dict(Name=json_value.keys(), Description=json_value.values())
-    data = pd.DataFrame(data).sort_values(by='Name')
+def Collection(selection: list, collec_table: pd.DataFrame) -> pd.DataFrame:
+    """
+    Function to extract a selection of collection from a reference table as pandas DataFrame
+
+    Args:
+        selection (list): List of selected collections
+        collec_table (pd.DataFrame): Reference table
+
+    Returns:
+        pd.DataFrame: Filtered table containing selected collections
+    """
+    assert all(c in collec_table['Name'].values for c in selection), \
+    f'Some collection in {selection} does not exists in {collec_table['Name']}'
+    
+    # Filter reference table
+    filt = [c in selection for c in collec_table['Name']]
+    data = collec_table.iloc[filt]
+    data = data.sort_values(by='Name')
     data.reset_index(drop=True, inplace=True)
-    return data.style.set_properties(**{'text-align': 'left'})
+    
+    return data

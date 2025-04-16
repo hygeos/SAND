@@ -25,18 +25,6 @@ from sand.tinyfunc import *
 class DownloadNASA(BaseDownload):
     
     name = 'DownloadNASA'
-    
-    collections = [
-        'ECOSTRESS',
-        'EMIT',
-        'MODIS-AQUA-HR',
-        'MODIS-AQUA-LR',
-        'MODIS-TERRA-HR',
-        'MODIS-TERRA-LR',
-        'SENTINEL-6-HR',
-        'SENTINEL-6-LR',
-        'VIIRS',
-    ]
 
     def __init__(self, collection: str = None, level: int = 1):
         """
@@ -229,9 +217,10 @@ class DownloadNASA(BaseDownload):
         return parse(meta)
     
     def _retrieve_collec_name(self, collection):
-        correspond = read_csv(self.table_collection)
-        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')
+        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
+        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
+        except AssertionError: log.error(
+            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
         return collecs.split(' ')
     
     def _get(self, liste, name, in_key, out_key):

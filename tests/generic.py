@@ -11,7 +11,7 @@ def eval_login(downloader, collec, level):
     
 def eval_collection(downloader):
     collec = downloader().get_available_collection()
-    print(collec.data)   
+    print(collec)   
 
 def eval_download(downloader, collec, level, **kwargs):
     dl = downloader(collec, level)

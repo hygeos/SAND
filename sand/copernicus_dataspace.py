@@ -22,30 +22,6 @@ class DownloadCDSE(BaseDownload):
     
     name = 'DownloadCDSE'
     
-    collections = [
-        'CCM',	
-        'COP-DEM',	
-        'ENVISAT',	
-        'GLOBAL-MOSAICS',	
-        'LANDSAT-5-TM',
-        'LANDSAT-7-ET',	
-        'LANDSAT-8-OLI',	
-        'S2GLC',
-        'SENTINEL-1',	
-        'SENTINEL-1-RTC',	
-        'SENTINEL-2-MSI',
-        'SENTINEL-3-OLCI-FR',
-        'SENTINEL-3-OLCI-RR',	
-        'SENTINEL-5P-TROPOMI',	
-        'SENTINEL-6-HR',	
-        'SENTINEL-6-LR',	
-        'SMOS',
-        'MODIS-TERRA-HR',
-        'MODIS-TERRA-LR',
-        'MODIS-AQUA-HR',
-        'MODIS-AQUA-LR',
-    ]
-    
     def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
@@ -144,6 +120,12 @@ class DownloadCDSE(BaseDownload):
         pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
                         desc='writing', unit_divisor=1024, leave=False)
         log.info(f'Quicklook has been downloaded at : {target}')
+    
+    def _retrieve_collec_name(self, collection):
+        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
+        try: return select_cell(collecs,('level','=',self.level),'collec')
+        except AssertionError: log.error(
+            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
         query_lines = [
             f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name 
                 eq '{self.collection}' """

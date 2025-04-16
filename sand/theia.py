@@ -21,18 +21,6 @@ class DownloadTHEIA(BaseDownload):
     
     name = 'DownloadTHEIA'
     
-    collections = [
-        'LANDSAT-5-TM',
-        'LANDSAT-7-ET', 
-        'LANDSAT-8-OLI', 
-        'PLEIADES',
-        'SPOT', 
-        'SWH', 
-        'SENTINEL-2-MSI', 
-        'VENUS', 
-        'VENUS-VM5',
-    ]
-    
     def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the CNES Theia Data Center (https://theia.cnes.fr/)
@@ -208,14 +196,15 @@ class DownloadTHEIA(BaseDownload):
         return meta
     
     def _retrieve_collec_name(self, collection):
-        correspond = read_csv(self.table_collection)
-        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')  
+        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
+        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
+        except AssertionError: log.error(
+            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
         return collecs.split(' ')[0]
     
     def _get(self, liste, name, in_key, out_key):
         for col in liste:
+            if in_key not in col: continue
             if name in col[in_key]:
-                print(col[in_key])
                 return col[out_key]
         log.error(f'{name} has not been found', e=KeyError)

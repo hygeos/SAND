@@ -25,22 +25,6 @@ class DownloadEumDAC(BaseDownload):
     
     name = 'DownloadEumDAC'
     
-    collections = [
-        'AMSU',
-        'ASCAT-METOP-FR',
-        'ASCAT-METOP-RES',
-        'FCI-MTG-HR',
-        'FCI-MTG-NR',
-        'IASI', 
-        'MVIRI-MFG',
-        'SENTINEL-3-OLCI-FR',
-        'SENTINEL-3-OLCI-RR',
-        'SENTINEL-3-SRAL',
-        'SENTINEL-5P-TROPOMI',
-        'SEVIRI-MSG',
-        'VIIRS',
-    ]
-    
     def __init__(self, collection: str = None, level: int = 1):
         """
         Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)
@@ -156,7 +140,7 @@ class DownloadEumDAC(BaseDownload):
         
         out = [{"id": str(d), 
                 "name": d.acronym, 
-                "collection": d.collection, 
+                "collection": str(d.collection), 
                 "time": d.processingTime,
                 "dl_url": d.metadata['properties']['links']['data'],
                 "meta_url": d.metadata['properties']['links']['alternates'],
@@ -258,7 +242,8 @@ class DownloadEumDAC(BaseDownload):
         return parse(meta)
     
     def _retrieve_collec_name(self, collection):
-        correspond = read_csv(self.table_collection)
-        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')  
+        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
+        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
+        except AssertionError: log.error(
+            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
         return collecs.split(' ')

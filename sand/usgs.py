@@ -23,13 +23,6 @@ class DownloadUSGS(BaseDownload):
     
     name = 'DownloadUSGS'
     
-    collections = [
-        'LANDSAT-5-TM',
-        'LANDSAT-7-ET',
-        'LANDSAT-8-OLI',
-        'LANDSAT-9-OLI',
-    ]
-    
     DATA_PRODUCTS = {
         # Level 1 datasets
         "landsat_tm_c2_l1": ["5e81f14f92acf9ef", "5e83d0a0f94d7d8d", "63231219fdd8c4e5"],
@@ -295,19 +288,9 @@ class DownloadUSGS(BaseDownload):
             meta[m['fieldName']] = m['value']
         return meta
     
-    def _check_collection(self):
-        url = "https://m2m.cr.usgs.gov/api/api/json/stable/dataset-search"
-        response = self.session.get(url, data=json.dumps({}), headers=self.API_key)
-        return [d['datasetAlias'] for d in response.json()['data']]
-    
     def _retrieve_collec_name(self, collection):
-        correspond = read_csv(self.table_collection)
-        collecs = select(correspond,('level','=',self.level),['SAND_name','collec'])
-        collecs = select_cell(collecs,('SAND_name','=',collection),'collec')
-        return collecs.split(' ')[0]
-        
-    def _get_contains(self, collection):
-        correspond = read_csv(self.table_collection)
-        content = select(correspond,('level','=',self.level),['SAND_name','contains'])
-        content = select_cell(content,('SAND_name','=',collection),'contains')
-        return content.split(' ')[0]
+        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
+        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
+        except AssertionError: log.error(
+            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
+        return collecs.split(' ')
