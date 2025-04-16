@@ -12,6 +12,7 @@ from sand.results import Query
 from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
+from core.static import interface
 from core.fileutils import filegen
 from core.table import select_cell, select, read_csv
 
@@ -64,6 +65,7 @@ class DownloadTHEIA(BaseDownload):
         self.tokens = r.text
         log.info('Log to API (https://theia.cnes.fr/)')
 
+    @interface
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -102,10 +104,10 @@ class DownloadTHEIA(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        if isinstance(dtstart, date):
-            dtstart = datetime.combine(dtstart, time(0))
-        if isinstance(dtend, date):
-            dtend = datetime.combine(dtend, time(0))
+        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        
+        # Add provider constraint
+        name_contains = self._complete_name_contains(name_contains)
         
         # Define check functions
         checker = []
@@ -157,7 +159,7 @@ class DownloadTHEIA(BaseDownload):
         
         return Query(out)
 
-    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
+    @interface
         """
         Download a product from Theia Datahub
 
@@ -183,8 +185,12 @@ class DownloadTHEIA(BaseDownload):
         content = requests.get(url).content
         with open(target, 'wb') as f:
             f.write(content)
+    
+    @interface 
                     
         log.info(f'Quicklook has been downloaded at : {target}')
+        
+    @interface           
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets

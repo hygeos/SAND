@@ -9,6 +9,7 @@ from datetime import datetime, time, date
 
 from core import log
 from core.ftp import get_auth
+from core.static import interface
 from core.fileutils import filegen
 from core.table import select, select_cell, read_csv
 from sand.base import request_get, BaseDownload
@@ -80,7 +81,7 @@ class DownloadUSGS(BaseDownload):
                 )
         log.info(f'Log to API (https://m2m.cr.usgs.gov/)')
         
-
+    @interface
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -115,10 +116,10 @@ class DownloadUSGS(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        if isinstance(dtstart, date):
-            dtstart = datetime.combine(dtstart, time(0))
-        if isinstance(dtend, date):
-            dtend = datetime.combine(dtend, time(0))
+        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        
+        # Add provider constraint
+        name_contains = self._complete_name_contains(name_contains)
         
         # Define check functions
         checker = []
@@ -182,7 +183,7 @@ class DownloadUSGS(BaseDownload):
         
         return Query(out)
     
-    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
+    @interface
         """
         Download a product from USGS
 
@@ -277,8 +278,12 @@ class DownloadUSGS(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
+    
+    @interface
 
         log.info(f'Quicklook has been downloaded at : {target}')
+    
+    @interface
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

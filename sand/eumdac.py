@@ -17,7 +17,7 @@ from sand.tinyfunc import *
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_cell, select, read_csv
+from core.static import interface
 from core.uncompress import uncompress as func_uncompress
 
 
@@ -64,11 +64,7 @@ class DownloadEumDAC(BaseDownload):
         self.datastore = eumdac.DataStore(self.tokens)        
         log.info(f'Log to API (https://data.eumetsat.int/)')
 
-    def _check_collection(self):
-        datastore = eumdac.DataStore(self.tokens)
-        data = {c.title: c.abstract for c in datastore.collections}
-        return Collection(data)
-
+    @interface
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -104,11 +100,7 @@ class DownloadEumDAC(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
-        if isinstance(dtstart, date):
-            dtstart = datetime.combine(dtstart, time(0))
-        if isinstance(dtend, date):
-            dtend = datetime.combine(dtend, time(0))
+        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
             
         # Define check functions
         checker = []
@@ -151,7 +143,7 @@ class DownloadEumDAC(BaseDownload):
         log.info(f'{len(product)} products has been found')
         return Query(out)
 
-    def download(self, product: str, dir: Path, uncompress: bool=False) -> Path:
+    @interface
         """
         Download a product to directory
 
@@ -228,8 +220,12 @@ class DownloadEumDAC(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
+    
+    @interface
                     
         log.info(f'Quicklook has been downloaded at : {target}')
+    
+    @interface
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

@@ -1,44 +1,43 @@
-
-Name,               longname,  
-AMSU,               Advanced Microwave Sounding Unit,
-ASCAT-METOP-FR,     Advanced Scatterometer on Metop at Full Resolution,
-ASCAT-METOP-RES,    Advanced Scatterometer on Metop resampled,
-ASTER,              Advanced Spaceborne Thermal Emission and Reflection,
-CCM,                Copernicus Contributing Missions,
-COP-DEM,            Copernicus Digital Elevation Model,	
-ECOSTRESS,          ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station,
-EMIT,               Earth surface Mineral dust source InvesTigation,
-ENVISAT,            EnviSat (Environmental Satellite),
-FCI-MTG-HR,         Flexible Combined Imager (Meteosat Third Generation) at High Resolution,
-FCI-MTG-NR,         Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution,
-GLOBAL-MOSAICS,     GLOBAL-MOSAICS,
-IASI,               Infrared Atmospheric Sounding Interferometer,
-LANDSAT-1-4-MSS,    LANDSAT-5 Thematic Mapper,	
-LANDSAT-5-TM,       LANDSAT-5 Thematic Mapper,	
-LANDSAT-7-ET,       LANDSAT-7 Enhanced Thematic Mapper,
-LANDSAT-8-OLI,      LANDSAT-8 Operational Land Imager,
-LANDSAT-9-OLI,      LANDSAT-9 Operational Land Imager,
-MODIS-AQUA-HR,      Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution,
-MODIS-AQUA-LR,      Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at Low Resolution,
-MODIS-TERRA-HR,     Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution,
-MODIS-TERRA-LR,     Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution,
-MVIRI-MFG,          Meteosat Visible Infra-Red Imager (Meteosat First Generation), 
-PLEIADES,           Pléiades constellation from CNES,
-S2GLC,              Sentinel-2 Global Land Cover,
-SENTINEL-1,         Sentinel-1,	
-SENTINEL-1-RTC,     Sentinel-1 Radiometric Terrain Corrected (RTC),
-SENTINEL-2-MSI,     Sentinel-2 MultiSpectral Instrument,
-SENTINEL-3-OLCI-FR, Sentinel-3 Ocean and Land Colour Instrument at Full Resolution,
-SENTINEL-3-OLCI-RR, Sentinel-3 Ocean and Land Colour Instrument at Reduced Resolution,
-SENTINEL-3-SLSTR,   Sentinel-3 Sea and Land Surface Temperature Radiometer,
-SENTINEL-3-SRAL,    Sentinel-3 Radar ALtimeter,
-SENTINEL-5P-TROPOMI,Sentinel-5P TROPOspheric Monitoring Instrument,
-SENTINEL-6-HR,      Sentinel-6 at High Resolution,
-SENTINEL-6-LR,      Sentinel-6 at Low Resolution,
-SEVIRI-MSG,         Spinning Enhanced Visible Infra-Red Imager (Meteosat Second Generation),
-SMOS,               Soil Moisture and Ocean Salinity,
-SPOT,               Satellite Pour l'Observation de la Terre,
-SWH,                Spot World Heritage,
-VENUS,              Vegetation and Environment monitoring on a New Micro-Satellite,
-VENUS-VM5,          Vegetation and Environment monitoring on a New Micro-Satellite (Second phase),
-VIIRS,              Visible Infrared Imaging Radiometer Suite,
+Name,               launch_date, end_date,   longname,  url
+AMSU,               2002-05-04,  x,           Advanced Microwave Sounding Unit, https://nwp-saf.eumetsat.int/site/software/aapp/aapp-overview/amsu-a/
+ASCAT-METOP-FR,     2006-10-19,  x,           Advanced Scatterometer on Metop at Full Resolution, https://www.eoportal.org/satellite-missions/metop#summary
+ASCAT-METOP-RES,    2006-10-19,  x,           Advanced Scatterometer on Metop resampled, https://www.eoportal.org/satellite-missions/metop#summary
+ASTER,              1999-12-18,  x,           Advanced Spaceborne Thermal Emission and Reflection, https://www.satimagingcorp.com/satellite-sensors/other-satellite-sensors/aster/
+CCM,                x,  x,           Copernicus Contributing Missions,
+COP-DEM,            x,  x,           Copernicus Digital Elevation Model,	
+ECOSTRESS,          2018-06-29,  x,           ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station, https://www.eoportal.org/satellite-missions/iss-ecostress
+EMIT,               2022-07-14,  x,           Earth surface Mineral dust source InvesTigation, https://www.eoportal.org/satellite-missions/iss-emit
+ENVISAT,            2002-03-01,  x,           EnviSat (Environmental Satellite), https://www.eoportal.org/satellite-missions/envisat
+FCI-MTG-HR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
+FCI-MTG-NR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
+GLOBAL-MOSAICS,     x,  x,           GLOBAL-MOSAICS,
+IASI,               2006-10-19,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
+LANDSAT-1-4-MSS,    x,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-4
+LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-5
+LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-7
+LANDSAT-8-OLI,      2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-8
+LANDSAT-9-OLI,      2021-09-27,  x,           LANDSAT-9 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-9
+MODIS-AQUA-HR,      2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+MODIS-AQUA-LR,      2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+MODIS-TERRA-HR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+MODIS-TERRA-LR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+MVIRI-MFG,          1977-11-01,  2017-01-01,  Meteosat Visible Infra-Red Imager (Meteosat First Generation), https://www.eoportal.org/satellite-missions/meteosat-first-generation
+PLEIADES,           2011-12-17,  x,           Pléiades constellation from CNES, https://www.eoportal.org/satellite-missions/pleiades
+S2GLC,              x,  x,           Sentinel-2 Global Land Cover,
+SENTINEL-1,         2014-04-03,  x,           Sentinel-1, https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
+SENTINEL-1-RTC,     2014-04-03,  x,           Sentinel-1 Radiometric Terrain Corrected (RTC), https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
+SENTINEL-2-MSI,     2015-06-23,  x,           Sentinel-2 MultiSpectral Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-2#spacecraft
+SENTINEL-3-OLCI-FR, 2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Full Resolution,https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-OLCI-RR, 2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Reduced Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-SLSTR,   2016-02-16,  x,           Sentinel-3 Sea and Land Surface Temperature Radiometer, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-SRAL,    2016-02-16,  x,           Sentinel-3 Radar ALtimeter, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-5P-TROPOMI,2017-10-13,  x,           Sentinel-5P TROPOspheric Monitoring Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-5p
+SENTINEL-6-HR,      2020-11-21,  x,           Sentinel-6 at High Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
+SENTINEL-6-LR,      2020-11-21,  x,           Sentinel-6 at Low Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
+SEVIRI-MSG,         2002-02-28,  x,           Spinning Enhanced Visible Infra-Red Imager (Meteosat Second Generation), https://www.eoportal.org/satellite-missions/meteosat-second-generation
+SMOS,               2009-12-02,  x,           Soil Moisture and Ocean Salinity, https://directory.eoportal.org/satellite-missions/smos#smos-soil-moisture-and-ocean-salinity-mission
+SPOT,               1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-5
+SWH,                x,  x,           Spot World Heritage,
+VENUS,              2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite, https://www.eoportal.org/satellite-missions/venus
+VENUS-VM5,          2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite (Second phase), https://www.eoportal.org/satellite-missions/venus
+VIIRS,              2011-11-28,  x,           Visible Infrared Imaging Radiometer Suite, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/

@@ -10,12 +10,11 @@ import json
 import fnmatch
 import requests
 
-from sand.base import request_get, BaseDownload
-from sand.results import Query, Collection
+from sand.tinyfunc import _parse_geometry, change_lon_convention
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
-from core.table import select_cell, read_csv
+from core.static import interface
 
 
 class DownloadCDSE(BaseDownload):
@@ -68,7 +67,9 @@ class DownloadCDSE(BaseDownload):
         self.tokens = r.json()["access_token"]
         log.info('Log to API (https://dataspace.copernicus.eu/)')
 
+    @interface
         log.debug(f'Move from {self.api} API to {api_name} API')
+    @interface
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -105,6 +106,12 @@ class DownloadCDSE(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
+        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        geo = change_lon_convention(geo)
+        
+        # Add provider constraint
+        name_contains = self._complete_name_contains(name_contains)
+        
         log.debug(f'Query {self.api} API')
         else: log.error(f'Invalid API, got {self.api}', e=ValueError)
 
@@ -113,13 +120,16 @@ class DownloadCDSE(BaseDownload):
             log.error('The request led to the maximum number of results '
                       f'({len(response)})', e=ValueError)
         else: log.info(f'{len(response)} products has been found')
+    @interface
         log.info(f'Product has been downloaded at : {target}')
         log.debug(f'Requesting server for {target.name}')
             log.debug(f'Download content [Try {niter+1}/5]')
         log.debug('Start writing on device')
         pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
                         desc='writing', unit_divisor=1024, leave=False)
+    @interface
         log.info(f'Quicklook has been downloaded at : {target}')
+    @interface
     
     def _retrieve_collec_name(self, collection):
         collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])

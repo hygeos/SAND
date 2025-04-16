@@ -1,9 +1,9 @@
-import ssl
-
-from time import sleep
+from datetime import datetime, date, time
+from shapely import Point, Polygon
 from pathlib import Path
 
 from sand.results import Collection
+from sand.tinyfunc import end_of_day
 from sand.patterns import get_pattern, get_level
 from core import log
 import ssl
@@ -125,6 +125,57 @@ class BaseDownload:
         sensor['launch_date'] = sensor['launch_date'].astype(str)
         sensor['end_date'] = sensor['end_date'].astype(str)
         return Collection(self.available_collection , sensor)
+    
+    def check_name(self, name, check_funcs):
+        return all(c[0](name, c[1]) for c in check_funcs)
+    
+    def _format_input_query(self, dtstart, dtend, geo):
+        """
+        Function to check and format main arguments of query method
+
+        Args:
+            dtstart (datetime, optional): Start date.
+            dtend (datetime, optional): End date.
+            geo (Shapely object, optional): Spatial constraint.
+        """
+        
+        # Open reference file
+        ref_file = Path(__file__).parent/'sensors.csv'
+        ref = read_csv(ref_file)
+        ref = ref[ref['Name'] == self.collection]
+        
+        # Check format
+        assert dtstart is not None, 'Start date could not be None'
+        if isinstance(dtstart, date):
+            dtstart = datetime.combine(dtstart, time(0))
+        if dtend is None:
+            dtend = datetime.now()
+        elif isinstance(dtend, date):
+            dtend = end_of_day(datetime.combine(dtend, time(0)))
+        assert isinstance(dtstart, datetime) and isinstance(dtend, datetime)        
+        
+        # Check time 
+        launch, end = ref['launch_date'].values[0], ref['end_date'].values[0]
+        assert dtstart.date() > date.fromisoformat(launch)
+        if end != 'x': assert dtend.date() < date.fromisoformat(end)
+        
+        # Check spatial
+        if isinstance(geo, Polygon): 
+            bounds = geo.bounds
+            log.check(0 <= bounds[0] < 360 and 0 <= bounds[1] < 360 and \
+                      -90 <= bounds[2] <= 90 and -90 <= bounds[3] <= 90,
+                      "Polygon constraint should be a shapely object of (lon, lat) "
+                      f"and 0<=lon<360 and -90<lat<90, got bounds at ({bounds})",
+                      e=RequestsError)
+        elif isinstance(geo, Point): 
+            log.check(0 <= geo.x < 360 and -90 <= geo.y <= 90,
+                      "Point constraint should be a shapely object of (lon, lat) "
+                      f"and 0<=lon<360 and -90<lat<90, got point at ({geo.x},{geo.y})",
+                      e=RequestsError)
+        elif geo is None: pass
+        else: log.error(f'Invalid type for geo argmuent, got {type(geo)}', e=ValueError)
+        
+        return dtstart, dtend, geo
     
     def _complete_name_contains(self, name_contains: list):
         """

@@ -13,6 +13,7 @@ from datetime import datetime, time, date
 
 from core import log
 from core.table import *
+from core.static import interface
 from core.fileutils import filegen
 from sand.base import request_get, BaseDownload
 from sand.results import Query
@@ -54,7 +55,7 @@ class DownloadNASA(BaseDownload):
         """
         log.info(f'No log required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
-
+    @interface
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -89,17 +90,17 @@ class DownloadNASA(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
+        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        
+        # Add provider constraint
+        name_contains = self._complete_name_contains(name_contains)
         
         data = {}
         headers = {'Accept': 'application/json'}
         
         # Configure scene constraints for request        
-        if isinstance(dtstart, date):
-            date_range = datetime.combine(dtstart, time(0)).isoformat() + 'Z,'
-            if isinstance(dtend, date):
-                date_range += datetime.combine(dtend, time(0)).isoformat() + 'Z'
-            else:
-                date_range += datetime.now().isoformat() + 'Z'
+        date_range = dtstart.isoformat() + 'Z,'
+        date_range += dtend.isoformat() + 'Z'
             data['temporal'] = date_range
         
         if isinstance(geo, Point):
@@ -145,19 +146,7 @@ class DownloadNASA(BaseDownload):
         log.info(f'{len(response)} products has been found')
         return Query(out)
 
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        target = Path(dir)/(product['name'] + '.jpeg')
-        url = self._get(product['links'], '.png', 'title', 'href')
-
-        if not target.exists():
-            filegen(0)(self._download)(target, url)
-
-        return target
-    
-    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=False) -> Path:
+    @interface
         """
         Download a product from NASA data space
 
@@ -204,8 +193,12 @@ class DownloadNASA(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
+    
+    @interface
 
         log.info(f'Quicklook has been downloaded at : {target}')
+    
+    @interface
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
