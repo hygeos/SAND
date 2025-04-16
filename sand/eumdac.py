@@ -13,6 +13,7 @@ from datetime import datetime, time, date
 from sand.base import request_get, UnauthorizedError, BaseDownload
 from sand.results import Query, Collection
 from sand.tinyfunc import *
+
 from core import log
 from core.ftp import get_auth
 from core.fileutils import filegen
@@ -71,9 +72,10 @@ class DownloadEumDAC(BaseDownload):
         self.tokens = eumdac.AccessToken(credentials)
         try:
             if self.tokens.expiration < datetime.now():
-                raise UnauthorizedError("Tokens has expired. Please refresh on https://api.eumetsat.int/api-key/#")
+                msg = "Tokens has expired. Please refresh on https://api.eumetsat.int/api-key/#"
+                log.error(msg, e=RequestsError)
         except requests.exceptions.HTTPError:
-            raise UnauthorizedError("Invalid Credentials")  
+            log.error("Invalid Credentials", e=RequestsError)  
         
         self.datastore = eumdac.DataStore(self.tokens)        
         log.info(f'Log to API (https://data.eumetsat.int/)')
@@ -136,6 +138,7 @@ class DownloadEumDAC(BaseDownload):
         for collec in self.collection:
             
             # Query EumDAC API
+            log.debug(f'Query EumDAC API for collection {collec}')
             self.selected_collection = self.datastore.get_collection(collec)
             prod = list(self.selected_collection.search(
                 geo = to_wkt(geo),
@@ -147,9 +150,9 @@ class DownloadEumDAC(BaseDownload):
             product += [p for p in prod if self.check_name(str(p), checker)]
         
             # test if maximum number of returns is reached
-            if len(product) >= top:
-                raise ValueError('The request led to the maximum number '
-                                f'of results ({len(product)})')
+            if len(product) >= 1000:
+                log.error('The request led to the maximum number of results '
+                        f'({len(product)})', e=ValueError)
         
         out = [{"id": str(d), 
                 "name": d.acronym, 
@@ -161,6 +164,7 @@ class DownloadEumDAC(BaseDownload):
                 } 
                 for d in product]
         
+        log.info(f'{len(product)} products has been found')
         return Query(out)
 
     def download(self, product: str, dir: Path, uncompress: bool=False) -> Path:
@@ -200,19 +204,7 @@ class DownloadEumDAC(BaseDownload):
         target = Path(dir)/(product['id'] if uncompress else (product['id'] + '.zip'))
 
         _download(target)
-
-        return target
-    
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        url = product['quicklook_url'][0]['href']      
-        target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
-
-        if not target.exists():
-            filegen(0)(self._download)(target, url)
-
+        log.info(f'Product has been downloaded at : {target}')
         return target
     
     def _download(
@@ -234,9 +226,8 @@ class DownloadEumDAC(BaseDownload):
         pbar.set_description(f'Requesting server: {target.name}')
         response = session.get(url, allow_redirects=False)
         niter = 0
-        while response.status_code in (301, 302, 303, 307) and niter < 15:
-            if response.status_code//100 == 5:
-                raise ValueError(f'Got response code : {response.status_code}')
+        log.debug(f'Requesting server for {target.name}')
+            log.debug(f'Download content [Try {niter+1}/5]')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
             url = response.headers['Location']
@@ -244,17 +235,17 @@ class DownloadEumDAC(BaseDownload):
             niter += 1
 
         # Download file
+        log.debug('Start writing on device')
         filesize = int(response.headers["Content-Length"])
-        response = request_get(session, url, verify=False, allow_redirects=True)
-        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=True)
-        pbar.set_description(f"Downloading {target.name}")
+        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                        desc='writing', unit_divisor=1024, leave=False)
         with open(target, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
                     
+        log.info(f'Quicklook has been downloaded at : {target}')
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

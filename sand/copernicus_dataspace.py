@@ -92,18 +92,7 @@ class DownloadCDSE(BaseDownload):
         self.tokens = r.json()["access_token"]
         log.info('Log to API (https://dataspace.copernicus.eu/)')
 
-    def _check_collection(self) -> dict:
-        """
-        Every available collection on the API server
-        """
-        req = 'https://catalogue.dataspace.copernicus.eu/odata/v1/Attributes'
-        USER_AGENT = {'User-Agent': 'eodag/3.0.1'}
-        urllib_req = Request(requote_uri(req), headers=USER_AGENT)
-        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
-        content = json.load(urllib_response)
-        collec = {k: '' for k in content.keys()}
-        return Collection(collec)
-
+        log.debug(f'Move from {self.api} API to {api_name} API')
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -140,10 +129,21 @@ class DownloadCDSE(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
-        if isinstance(dtstart, date):
-            dtstart = datetime.combine(dtstart, time(0))
-        if isinstance(dtend, date):
-            dtend = datetime.combine(dtend, time(0))
+        log.debug(f'Query {self.api} API')
+        else: log.error(f'Invalid API, got {self.api}', e=ValueError)
+
+        # test if maximum number of returns is reached
+        if len(response) >= 1000:
+            log.error('The request led to the maximum number of results '
+                      f'({len(response)})', e=ValueError)
+        else: log.info(f'{len(response)} products has been found')
+        log.info(f'Product has been downloaded at : {target}')
+        log.debug(f'Requesting server for {target.name}')
+            log.debug(f'Download content [Try {niter+1}/5]')
+        log.debug('Start writing on device')
+        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                        desc='writing', unit_divisor=1024, leave=False)
+        log.info(f'Quicklook has been downloaded at : {target}')
         query_lines = [
             f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name 
                 eq '{self.collection}' """

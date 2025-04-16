@@ -5,6 +5,7 @@ from pathlib import Path
 
 from sand.results import Collection
 from sand.patterns import get_pattern, get_level
+from core import log
 import ssl
 
 
@@ -148,22 +149,16 @@ class BaseDownload:
     return r
 
 def raise_api_error(response: dict):
-    assert hasattr(response,'status_code')
-    status = response.status_code
-
-    if status == 401:
-        raise UnauthorizedError(response.text)
-    if status == 404:
-        raise FileNotFoundError(response.text)
-    if status == 429:
-        raise RateLimitError(response.text)
+    log.check(hasattr(response,'status_code'), 'No status code in response', e=Exception)
+    ref = read_csv(Path(__file__).parent/'html_status_code.csv')
     
-    if status//100 == 3:
-        raise RedirectionError(response.text)
-    if status//100 == 4:
-        raise InvalidParametersError(response.text)
-    if status//100 == 5:
-        raise ServerError(response.text)
+    msg = '[{}] {}'
+    status = response.status_code
+    line = ref[ref['value']==status]
+    if status > 300:
+        log.error(msg.format(line['tag'].values[0], line['explain'].values[0]), 
+                  e=RequestsError)
+    return status
     
 def get_ssl_context() -> ssl.SSLContext:
     """
@@ -178,22 +173,4 @@ def get_ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-class InvalidParametersError(Exception):
-    """Provided parameters are invalid."""
-    pass
-
-class UnauthorizedError(Exception):
-    """User does not have access to the requested endpoint."""
-    pass
-
-class RateLimitError(Exception):
-    """Account does not support multiple requests at a time."""
-    pass
-
-class RedirectionError(Exception):
-    """Account does not support multiple requests at a time."""
-    pass
-
-class ServerError(Exception):
-    """The server failed to fulfil a request."""
-    pass
+class RequestsError(Exception): pass

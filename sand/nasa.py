@@ -64,7 +64,7 @@ class DownloadNASA(BaseDownload):
         """
         Login to NASA with credentials storted in .netrc
         """
-        log.info(f'Log to API (https://cmr.earthdata.nasa.gov/)')
+        log.info(f'No log required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
 
     def query(
@@ -132,6 +132,7 @@ class DownloadNASA(BaseDownload):
         for collec in self.collection:
             
             # Query NASA API
+            log.debug(f'Query NASA API for collection {collec}')
             data['concept_id'] = collec
             data['page_size'] = 1000
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
@@ -146,13 +147,14 @@ class DownloadNASA(BaseDownload):
             # test if maximum number of returns is reached
             top = 1000
             if len(response) + len(out) >= top:
-                raise ValueError('The request led to the maximum number '
-                        f'of results ({len(response)})')
+                log.error('The request led to the maximum number of results '
+                        f'({len(response) + len(out)})', e=ValueError)
             
             for d in response:
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
                     **{k: d[k] for k in ['links','collection_concept_id']}})
         
+        log.info(f'{len(response)} products has been found')
         return Query(out)
 
     def quicklook(self, product: dict, dir: Path|str):
@@ -177,8 +179,7 @@ class DownloadNASA(BaseDownload):
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         url = self._get(product['links'], '.h5', 'title', 'href')
-        return self.download_base(url, product, dir, if_exists, False)
-    
+        log.info(f'Product has been downloaded at : {target}')
     
     def _download(
         self,
@@ -198,26 +199,25 @@ class DownloadNASA(BaseDownload):
         pbar.set_description(f'Requesting server: {target.name}')
         response = session.get(url, allow_redirects=False)
         niter = 0
-        while response.status_code in (301, 302, 303, 307) and niter < 15:
-            if response.status_code//100 == 5:
-                raise ValueError(f'Got response code : {response.status_code}')
+        log.debug(f'Requesting server for {target.name}')
+            log.debug(f'Download content [Try {niter+1}/5]')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
             response = session.get(url, allow_redirects=False)
             niter += 1
 
         # Download file
+        log.debug('Start writing on device')
         filesize = int(response.headers["Content-Length"])
-        response = request_get(session, url, verify=False, allow_redirects=True)
-        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=True)
-        pbar.set_description(f"Downloading {target.name}")
+        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                        desc='writing', unit_divisor=1024, leave=False)
         with open(target, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
 
+        log.info(f'Quicklook has been downloaded at : {target}')
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
@@ -239,4 +239,4 @@ class DownloadNASA(BaseDownload):
             if in_key not in col: continue
             if name in col[in_key]:
                 return col[out_key]
-        raise FileNotFoundError
+        log.error(f'{name} has not been found', e=KeyError)

@@ -159,8 +159,9 @@ class DownloadTHEIA(BaseDownload):
 
         # test if maximum number of returns is reached
         if len(response) >= top:
-            raise ValueError('The request led to the maximum number '
-                             f'of results ({len(response)})')
+            log.error('The request led to the maximum number of results '
+                      f'({len(response)})', e=ValueError)
+        else: log.info(f'{len(response)} products has been found')
 
         out =  [{"id": d["id"], "name": d["properties"]["productIdentifier"],
                  **{k: d['properties'][k] for k in (other_attrs or ['quicklook','startDate', 'links','services'])}}
@@ -180,20 +181,7 @@ class DownloadTHEIA(BaseDownload):
         filegen_opt = dict(if_exists=if_exists)  
         target = Path(dir)/(product['name'])
         url = product['services']['download']['url']
-
-        filegen(0, **filegen_opt)(self._download)(target, url)
-        return target
-
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        target = Path(dir)/(product['name'] + '.jpeg')
-        url = product['quicklook']
-
-        if not target.exists():
-            filegen(0)(self._download)(target, url)
-        
+        log.info(f'Product has been downloaded at : {target}')
         return target
 
     def _download(
@@ -208,6 +196,7 @@ class DownloadTHEIA(BaseDownload):
         with open(target, 'wb') as f:
             f.write(content)
                     
+        log.info(f'Quicklook has been downloaded at : {target}')
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets
@@ -229,4 +218,4 @@ class DownloadTHEIA(BaseDownload):
             if name in col[in_key]:
                 print(col[in_key])
                 return col[out_key]
-        raise FileNotFoundError
+        log.error(f'{name} has not been found', e=KeyError)

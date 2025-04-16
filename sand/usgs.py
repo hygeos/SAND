@@ -178,10 +178,10 @@ class DownloadUSGS(BaseDownload):
         response = [p for p in response if self.check_name(p['displayId'], checker)]
         
         # test if maximum number of returns is reached
-        top = 1000
-        if len(response) >= top:
-            raise ValueError('The request led to the maximum number '
-                    f'of results ({len(response)})')
+        if len(response) >= 1000:
+            log.error('The request led to the maximum number of results '
+                      f'({len(response)})', e=ValueError)
+        else: log.info(f'{len(response)} products has been found')
 
         out = [{"id": d["entityId"], "name": d["displayId"],
                  **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
@@ -224,7 +224,7 @@ class DownloadUSGS(BaseDownload):
             if dl['numInvalidScenes'] != 0: continue
             url = dl['availableDownloads'][0]['url']
             
-            filegen(0, **filegen_opt)(self._download)(target, url)
+            log.info(f'Product has been downloaded at : {target}')
             return target
             
         log.error('No product immediately available')
@@ -266,7 +266,7 @@ class DownloadUSGS(BaseDownload):
         response = session.get(url, allow_redirects=False)
         niter = 0
         while response.status_code in (301, 302, 303, 307) and niter < 15:
-            if response.status_code//100 == 5:
+        log.debug(f'Requesting server for {target.name}')
                 raise ValueError(f'Got response code : {response.status_code}')
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
@@ -275,17 +275,17 @@ class DownloadUSGS(BaseDownload):
             niter += 1
 
         # Download file
+        log.debug('Start writing on device')
         filesize = int(response.headers["Content-Length"])
-        response = request_get(session, url, verify=False, allow_redirects=True)
-        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=True)
-        pbar.set_description(f"Downloading {target.name}")
+        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                        desc='writing', unit_divisor=1024, leave=False)
         with open(target, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
 
+        log.info(f'Quicklook has been downloaded at : {target}')
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
