@@ -1,6 +1,6 @@
 import pytest
 
-from sand.patterns import get_pattern
+from sand.patterns import get_pattern, retrieve_product
 
 @pytest.mark.parametrize(['sensor', 'example_prod'], [
     ('LANDSAT-8-OLI'     ,'LC08_L1GT_029030_20151209_20160131_01_RT'),
@@ -12,3 +12,8 @@ from sand.patterns import get_pattern
 ])
 def test_identify_product(sensor, example_prod):
     assert sensor == get_pattern(example_prod)['Name']
+
+@pytest.mark.parametrize('example_prod', ['LC08_L1GT_029030_20151209_20160131_01_RT'])
+def test_retrieve_product(example_prod):
+    pattern = get_pattern(example_prod)
+    print(retrieve_product(example_prod, {'level': 'L2GS'}, pattern))
