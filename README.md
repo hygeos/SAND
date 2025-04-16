@@ -22,14 +22,13 @@ It also acts as a proxy for executing the API requests and is designed to use a 
 Depending on the provider or resource you want to download, you will need to add your credentials in the *.netrc* file in the home folder. To help you create your different accounts, please find below a table summarising the different registration links.
 
 
-| Provider | Registration | TOTP | 
-| --- | --- | --- | 
-| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) |  | 
-| CNES | [theia.cnes.fr](https://sso.theia-land.fr) |   |
-| Creodias | [datahub.creodias.eu](https://creodias.eu/) | ✅ | 
-| EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   | 
-| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) |   | 
-| USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   | 
+| Provider | Registration |
+| --- | --- | 
+| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) |   
+| CNES | [theia.cnes.fr](https://sso.theia-land.fr) |   
+| EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   
+| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) |   
+| USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   
 
 
 ## Configuration 
@@ -86,11 +85,10 @@ dl.download(ls[0], outdir, uncompress=True)
 <center>
 <p float="left">
   <img src="img/logo/copernicus_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
-  <img src="img/logo/creodias_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
   <img src="img/logo/eumetsat_logo.svg" height="150" align="center" />
+  <img src="img/logo/nasa_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
 </p>
 <p float="left">
-  <img src="img/logo/nasa_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
   <img src="img/logo/theia_logo.svg" height="150" align="center" style="margin-right: 20px;"/>
   <img src="img/logo/usgs_logo.svg" height="150" align="center" />
 </p>
