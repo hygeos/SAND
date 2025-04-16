@@ -1,35 +1,47 @@
 [project]
 name = "sand"
-version = "0.2.2"
+version = "0.4.0"
 description = "SAND - Satellite Acquisition Normative Downloader"
 authors = [{name = "HYGEOS team"}]
 requires-python = ">=3.10"
 readme = "README.md"
 dependencies = [
-    "core @ git+https://github.com/hygeos/core.git",
-    "numpy", "requests", "eumdac", "shapely", "pyotp", "xmltodict", 'pillow'
-    ]
+    "numpy<2", 
+    "requests", 
+    "eumdac", 
+    "shapely", 
+    "xmltodict", 
+    'pillow', 
+    "fireducks", "core @ git+https://github.com/hygeos/core"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
+[tool.pixi.environments]
+default = { features = ["hyp", "sys"], solve-group = "default" }
+
 [tool.pixi.tasks]
 tests = "pytest tests"
 
+[tool.pixi.pypi-dependencies]
+sand = { path = ".", editable = true }
+
 [tool.pixi.dependencies]
 numpy = "<2"
-requests = "*"
 eumdac = "*"
 shapely = "*"
-pyotp = "*"
-xmltodict = "*"
 pytest = "*"
 pytest-html = "*"
 pytest-xdist = "*"
 ipykernel = "*"
 pillow = "*"
 matplotlib = "*"
+pyotp = "*"
+ipywidgets = "*"
+
+[tool.pixi.feature.hyp.dependencies]
+[tool.pixi.feature.sys.dependencies]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
