@@ -1,3 +1,4 @@
+from shapely.geometry import shape
 from shapely.ops import transform
 from datetime import timedelta
 import re
@@ -13,7 +14,7 @@ def check_name_endswith(name: str, suffix: str):
 
 def check_name_glob(name: str, regexp: str):
     return bool(re.fullmatch(regexp, name))
-    
+
 def end_of_day(date):
     if date.hour == 0 and date.minute == 0 and date.second == 0:
         date = date + timedelta(hours=23, minutes=59, seconds=59)
@@ -27,3 +28,20 @@ def change_lon_convention(geo):
 def flip_coords(geo):
     """Flips the x and y coordinate values"""
     return transform(lambda x,y: (y,x), geo)
+
+def _parse_geometry(geom):
+    try:
+        # If geom has a __geo_interface__
+        return shape(geom).wkt
+    except AttributeError:
+        if _tastes_like_wkt_polygon(geom):
+            return geom
+        raise ValueError(
+            "geometry must be a WKT polygon str or have a __geo_interface__"
+        )
+    
+def _tastes_like_wkt_polygon(geometry):
+    try:
+        return geometry.replace(", ", ",").replace(" ", "", 1).replace(" ", "+")
+    except Exception:
+        raise ValueError("Geometry must be in well-known text format")

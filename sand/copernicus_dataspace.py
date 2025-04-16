@@ -40,7 +40,7 @@ class DownloadCDSE(BaseDownload):
             )
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.available_collection = DownloadCDSE.collections
+        self.api = 'OData'
         self.provider = 'cdse'
         super().__init__(collection, level)
 
@@ -68,7 +68,14 @@ class DownloadCDSE(BaseDownload):
         log.info('Log to API (https://dataspace.copernicus.eu/)')
 
     @interface
+    def change_api(self, api_name: Literal['OData', 'OpenSearch']):
+        """
+        To change backend Copernicus API
+        """
+        assert api_name in ['OData', 'OpenSearch']
         log.debug(f'Move from {self.api} API to {api_name} API')
+        self.api = api_name
+    
     @interface
     def query(
         self,
@@ -113,6 +120,11 @@ class DownloadCDSE(BaseDownload):
         name_contains = self._complete_name_contains(name_contains)
         
         log.debug(f'Query {self.api} API')
+        params = (dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres)
+        if self.api == 'OpenSearch':
+            response = self._query_opensearch(*params)
+        elif self.api == 'OData': 
+            response = self._query_odata(*params)
         else: log.error(f'Invalid API, got {self.api}', e=ValueError)
 
         # test if maximum number of returns is reached
@@ -136,16 +148,18 @@ class DownloadCDSE(BaseDownload):
         try: return select_cell(collecs,('level','=',self.level),'collec')
         except AssertionError: log.error(
             f'Level{self.level} products are not available for {self.collection}', e=KeyError)
+
+    def _query_odata(self, dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres):
+        """Query the EOData Finder API"""
+        
         query_lines = [
-            f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name 
-                eq '{self.collection}' """
+            f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '{self.api_collection}' """
         ]
 
         if dtstart:
             query_lines.append(f'ContentDate/Start gt {dtstart.isoformat()}Z')
         if dtend:
             query_lines.append(f'ContentDate/Start lt {dtend.isoformat()}Z')
-
         if geo:
             query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{geo}')")
 
@@ -179,142 +193,38 @@ class DownloadCDSE(BaseDownload):
 
         top = 1000  # maximum value of number of retrieved values
         req = (' and '.join(query_lines))+f'&$top={top}'
-        urllib_req = Request(requote_uri(req))
-        urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
-        response = json.load(urllib_response)
-
-        # test if maximum number of returns is reached
-        if len(response["value"]) >= top:
-            raise ValueError('The request led to the maximum number '
-                             f'of results ({len(response["value"])})')
+        # urllib_req = Request(requote_uri(req))
+        # urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+        # response = json.load(urllib_response)
+        response = requests.get(requote_uri(req), verify=True)
         
-        if use_most_recent and (self.collection == 'SENTINEL-2'):
-            # remove duplicate products, take only the most recent one
-            mp = {}  # maps a single_id to a list of lines
-            for line in response["value"]:
-                # build a common identifier for multiple versions
-                s = line['Name'].split('_')
-                ident = '_'.join([s[i] for i in [0, 1, 2, 4, 5]])
-                if ident in mp:
-                    mp[ident].append(line)
-                else:
-                    mp[ident] = [line]
-            # for each identifier, sort the corresponding lines by "Name"
-            # and select the last one
-            json_value = [sorted(lines, key=lambda line: line['Name'])[-1]
-                             for lines in mp.values()]
-        else:
-            json_value = response['value']
+        # assert urllib_response.status == 200
+        return response.json()['value']
 
-        out = [{"id": d["Id"], "name": d["Name"],
-                 **{k: d[k] for k in (other_attrs or [])}}
-                for d in json_value
-                if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
-                ]
-    
-        return Query(out)
+    def _query_opensearch(self, dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres):
+        """Query the OpenSearch Finder API"""
+        
+        def _get_next_page(links):
+            for link in links:
+                if link["rel"] == "next":
+                    return link["href"]
+            return False
 
-    def download(self, product: dict, dir: Path|str, if_exists='error', uncompress: bool=True) -> Path:
-        """
-        Download a product from copernicus data space
+        query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{self.api_collection}/search.json?maxRecords=1000"""
+        
+        query_params = {'status': 'ALL'}
+        if dtstart is not None: query_params["startDate"] = dtstart.isoformat()
+        if dtend is not None: query_params["completionDate"] = dtend.isoformat()
+        if geo is not None: query_params["geometry"] = _parse_geometry(geo)
 
-        Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
-        """        
-        url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
-               f"Products({product['id']})/$value")
-        return self.download_base(url, product, dir, uncompress=uncompress, if_exists=if_exists)
-
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        target = Path(dir)/(product['name'] + '.jpeg')
-
-        if not target.exists():
-            assets = self.metadata(product)['Assets']
-            if not assets:
-                raise FileNotFoundError(f'Skipping quicklook {target.name}')
-            url = assets[0]['DownloadLink']
-            filegen(0)(self._download)(target, url)
-
-        return target
-
-    def _download(
-        self,
-        target: Path,
-        url: str,
-    ):
-        """
-        Wrapped by filegen
-        """
-        pbar = tqdm(total=0, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=False)
-
-        # Initialize session for download
-        session = requests.Session()
-        session.headers.update({'Authorization': f'Bearer {self.tokens}'})
-
-        # Try to request server
-        pbar.set_description(f'Requesting server: {target.name}')
-        response = session.get(url, allow_redirects=False)
-        niter = 0
-        while response.status_code in (301, 302, 303, 307) and niter < 15:
-            if response.status_code//100 == 5:
-                raise ValueError(f'Got response code : {response.status_code}')
-            if 'Location' not in response.headers:
-                raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
-            response = session.get(url, allow_redirects=False)
-            niter += 1
-
-        # Download file
-        filesize = int(response.headers["Content-Length"])
-        response = request_get(session, url, verify=False, allow_redirects=True)
-        pbar = tqdm(total=filesize, unit_scale=True, unit="B",
-                    unit_divisor=1024, leave=True)
-        pbar.set_description(f"Downloading {target.name}")
-        with open(target, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(1024)
-
-    def metadata(self, product):
-        """
-        Returns the product metadata including attributes and assets
-        """
-        req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
-               f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")
-        json = requests.get(req).json()
-
-        assert len(json['value']) == 1
-        return json['value'][0]
-    
-    def _retrieve_collec_name(self, collection):
-        correspond = read_csv(self.table_collection)
-        return select_cell(correspond,('SAND_name','=',collection),'name')  
-
-
-def Sentinel2_level2_pattern(level1: str) -> str:
-    """returns level2 glob pattern from level1 product name"""
-    # https://sentiwiki.copernicus.eu/web/s2-products
-    # the following filename:
-    # S2A_MSIL1C_20170105T013442_N0204_R031_T53NMJ_20170105T013443.SAFE
-    # Identifies a Level-1C product acquired by Sentinel-2A on the 5th of January, 2017
-    # at 1:34:42 AM. It was acquired over Tile 53NMJ during Relative Orbit 031,
-    # and processed with Processing Baseline 02.04.
-    ls = level1.split("_")
-    return "_".join(
-        [
-            ls[0],  # sensor
-            "MSIL2A",
-            ls[2],  # acquisition time
-            "*",    # processing baseline
-            ls[4],  # relative orbit
-            ls[5],  # tile
-            "*",    # processing time
-        ]
-    )
+        query += f"&{urlencode(query_params)}"
+        
+        query_response = []
+        while query:
+            response = requests.get(query, verify=True)
+            response.raise_for_status()
+            data = response.json()
+            for feature in data["features"]:
+                query_response.append(feature)
+            query = _get_next_page(data["properties"]["links"])
+        return query_response
