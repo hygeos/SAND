@@ -1,7 +1,7 @@
 import pytest
 
 from tests.generic import *
-from sample_product import products
+from sand.sample_product import products
 from sand.eumdac import DownloadEumDAC
 
 

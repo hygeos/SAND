@@ -1,4 +1,4 @@
-from sample_product import products
+from sand.sample_product import products
 from core.table import read_csv
 from pathlib import Path
 

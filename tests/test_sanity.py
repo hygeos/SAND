@@ -1,6 +1,6 @@
 from sand.copernicus_dataspace import DownloadCDSE
 from sand.base import RequestsError
-from sample_product import products
+from sand.sample_product import products
 from shapely import Point
 
 import pytest
