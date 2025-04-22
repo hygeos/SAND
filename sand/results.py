@@ -2,13 +2,19 @@ import fireducks.pandas as pd
 
 
 def Query(json_value: dict) -> pd.DataFrame:
-    if len(json_value) == 0:
-        return pd.DataFrame()
+    # If no product returns empty pandas DataFrame
+    if len(json_value) == 0: return pd.DataFrame()
+    
+    # Concatenate every product data into a DataFrame
     res = []
     for d in json_value:
         sub = pd.DataFrame.from_dict({k: [v] for k,v in d.items()})
         res.append(sub)
-    return pd.concat(res, ignore_index=True) 
+    
+    # Sort query results by name
+    df = pd.concat(res, ignore_index=True)
+    df = df.sort_values(by='id')
+    return df 
 
 def Collection(selection: list, collec_table: pd.DataFrame) -> pd.DataFrame:
     """
