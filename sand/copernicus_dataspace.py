@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, time
 from requests.utils import requote_uri
 from urllib.parse import urlencode
 from pathlib import Path
@@ -169,6 +169,7 @@ class DownloadCDSE(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """        
+        
         target = Path(dir)/(product['name'])
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
@@ -184,24 +185,46 @@ class DownloadCDSE(BaseDownload):
         """
         Wrapped by filegen
         """
+        status = False
+        exp_timeout_cnt = 1
+        
+        while not status:
+            
+            if exp_timeout_cnt >= 16:
+                log.error("The server error bypass method failed", e=RuntimeError)
+                
+            try:
+                # Initialize session for download
+                self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
 
-        # Initialize session for download
-        self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
-
-        # Try to request server
-        niter = 0
-        response = self.session.get(url, allow_redirects=False)
-        log.debug(f'Requesting server for {target.name}')
-        while response.status_code in (301, 302, 303, 307) and niter < 5:
-            log.debug(f'Download content [Try {niter+1}/5]')
-            if 'Location' not in response.headers:
-                raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
-            # response = self.session.get(url, allow_redirects=False)
-            response = self.session.get(url, verify=True, allow_redirects=True)
-            niter += 1
-        raise_api_error(response)
-
+                # Try to request server
+                niter = 0
+                response = self.session.get(url, allow_redirects=False)
+                log.debug(f'Requesting server for {target.name}')
+                while response.status_code in (301, 302, 303, 307) and niter < 5:
+                    log.debug(f'Download content [Try {niter+1}/5]')
+                    if 'Location' not in response.headers:
+                        raise ValueError(f'status code : [{response.status_code}]')
+                    url = response.headers['Location']
+                    # response = self.session.get(url, allow_redirects=False)
+                    response = self.session.get(url, verify=True, allow_redirects=True)
+                    niter += 1
+                raise_api_error(response)
+                status = True
+            
+            except Exception as e: # exponential wait when ecountering errors
+                log.warning(log.rgb.red, str(e))
+                
+                exp_timeout_cnt *= 2
+                self.session.close()
+                
+                log.warning(log.rgb.red, f"Waiting {exp_timeout_cnt}min ...")
+                time.sleep(60 * exp_timeout_cnt)
+                
+                self.session = requests.Session()
+                
+        # end while
+        
         # Download file
         log.debug('Start writing on device')
         filesize = int(response.headers["Content-Length"])
