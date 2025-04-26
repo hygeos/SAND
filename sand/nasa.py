@@ -90,6 +90,7 @@ class DownloadNASA(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        geo = flip_coords(change_lon_convention(geo))
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
@@ -117,7 +118,7 @@ class DownloadNASA(BaseDownload):
         if name_glob: checker.append((check_name_glob, name_glob))
         
         out = []
-        for collec in self.collection:
+        for collec in self.api_collection:
             
             # Query NASA API
             log.debug(f'Query NASA API for collection {collec}')

@@ -35,7 +35,7 @@ products['ECOSTRESS'] = {
     'level1':{
         'dtstart': datetime(2023, 10, 20),
         'dtend': datetime(2023, 11, 14),
-        'geo': Polygon.from_bounds(34.21,35.23,-120.30,-119.53)
+        'geo': Polygon.from_bounds(239.70,34.21,240.47,35.23)
     }    
 }
 

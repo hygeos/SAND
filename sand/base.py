@@ -142,8 +142,8 @@ class BaseDownload:
         # Check spatial
         if isinstance(geo, Polygon): 
             bounds = geo.bounds
-            log.check(0 <= bounds[0] < 360 and 0 <= bounds[1] < 360 and \
-                      -90 <= bounds[2] <= 90 and -90 <= bounds[3] <= 90,
+            log.check(0 <= bounds[0] < 360 and 0 <= bounds[2] < 360 and \
+                      -90 <= bounds[1] <= 90 and -90 <= bounds[3] <= 90,
                       "Polygon constraint should be a shapely object of (lon, lat) "
                       f"and 0<=lon<360 and -90<lat<90, got bounds at ({bounds})",
                       e=RequestsError)

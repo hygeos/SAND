@@ -23,7 +23,7 @@ def end_of_day(date):
 
 def change_lon_convention(geo):
     """Change longitude convention to (-180,180), assuming geo has coords as (lon,lat)"""
-    return transform(lambda x,y: ((x+180)%360-180,y), geo)
+    return transform(lambda x,y: ([(a+180)%360-180 for a in x],y), geo)
 
 def flip_coords(geo):
     """Flips the x and y coordinate values"""
