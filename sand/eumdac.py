@@ -102,6 +102,9 @@ class DownloadEumDAC(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        
+        # Add provider constraint
+        name_contains = self._complete_name_contains(name_contains)
             
         # Define check functions
         checker = []

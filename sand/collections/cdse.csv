@@ -9,9 +9,9 @@ LANDSAT-8-OLI,          1,      ,          LANDSAT-8
 S2GLC,                  1,      ,          S2GLC   
 SENTINEL-1,             1,      ,          SENTINEL-1    
 SENTINEL-1-RTC,         1,      ,          SENTINEL-1-RTC
-SENTINEL-2-MSI,         1,      MSI,       SENTINEL-2    
-SENTINEL-3-OLCI-FR,     1,      OL FR,     SENTINEL-3    
-SENTINEL-3-OLCI-RR,     1,      OL RR,     SENTINEL-3    
+SENTINEL-2-MSI,         1,      MSIL1,     SENTINEL-2    
+SENTINEL-3-OLCI-FR,     1,      OL_1 FR,   SENTINEL-3    
+SENTINEL-3-OLCI-RR,     1,      OL_1 RR,   SENTINEL-3    
 SENTINEL-5P-TROPOMI,    1,      TROPOMI,   SENTINEL-5P   
 SENTINEL-6-HR,          1,      ,          SENTINEL-6    
 SENTINEL-6-LR,          1,      ,          SENTINEL-6    
@@ -20,3 +20,6 @@ MODIS-TERRA-HR,         1,      ,          TERRAAQUA
 MODIS-TERRA-LR,         1,      ,          TERRAAQUA     
 MODIS-AQUA-HR,          1,      ,          TERRAAQUA     
 MODIS-AQUA-LR,          1,      ,          TERRAAQUA     
+SENTINEL-2-MSI,         2,      MSIL2,     SENTINEL-2    
+SENTINEL-3-OLCI-FR,     2,      OL_2 FR,   SENTINEL-3    
+SENTINEL-3-OLCI-RR,     2,      OL_2 RR,   SENTINEL-3   
