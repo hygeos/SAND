@@ -67,14 +67,14 @@ class BaseDownload:
             out.append(self.download(products.iloc[i], dir, if_exists, uncompress))
         return out 
     
-    def download_file(self, product: str, dir: Path | str) -> Path:
+    def download_file(self, product_id: str, dir: Path | str) -> Path:
         """
         Download product knowing is product id 
         (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
         """
-        p = get_pattern(product)
-        self.__init__(p['Name'], get_level(product, p))
-        ls = self.query(name_contains=[product])
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        ls = self.query(name_contains=[product_id])
         assert len(ls) == 1, 'Multiple products found'
         return self.download(ls.iloc[0], dir)
 

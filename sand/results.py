@@ -1,4 +1,4 @@
-import fireducks.pandas as pd
+import pandas as pd
 
 
 def Query(json_value: dict) -> pd.DataFrame:

@@ -91,6 +91,7 @@ class DownloadUSGS(BaseDownload):
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
         other_attrs: Optional[list] = None,
+        **kwargs
     ):
         """
         Product query on the USGS

@@ -4,6 +4,16 @@ from shapely import Point, Polygon
 products = {}
 
 # SENTINEL-2 Product
+products['SENTINEL-1'] = {
+    'level1':{
+        'dtstart': datetime(2024, 1, 1),
+        'dtend': datetime(2024, 2, 1),
+        'geo': Point(10, 12),
+        'product_id': 'S1A_IW_GRDH_1SDH_20250330T141400_20250330T141425_058535_073E3A_5675'
+    }    
+}
+
+# SENTINEL-2 Product
 products['SENTINEL-2-MSI'] = {
     'level1':{
         'dtstart': datetime(2024, 1, 1),

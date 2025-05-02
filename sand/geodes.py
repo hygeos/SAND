@@ -1,5 +1,3 @@
-import requests
-
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional
@@ -15,13 +13,14 @@ from core.table import select_cell, select
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
-class DownloadTHEIA(BaseDownload):
+# https://geodes.cnes.fr/support/api/
+class DownloadCNES(BaseDownload):
     
-    name = 'DownloadTHEIA'
+    name = 'DownloadCNES'
     
     def __init__(self, collection: str = None, level: int = 1):
         """
-        Python interface to the CNES Theia Data Center (https://theia.cnes.fr/)
+        Python interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)
 
         Args:
             collection (str): collection name ('LANDSAT-5-TM', 'VENUS', etc.)
@@ -37,30 +36,16 @@ class DownloadTHEIA(BaseDownload):
             )
             cds.download(ls.iloc[0], <dirname>, uncompress=True)
         """
-        self.provider = 'theia'
+        self.provider = 'geodes'
         super().__init__(collection, level)
 
     def _login(self):
         """
         Login to copernicus dataspace with credentials storted in .netrc
         """
-        auth = get_auth("theia.cnes.fr")     
-        
-        data = {
-            "ident" : auth['user'],
-            "pass"  : auth['password'],
-            }
-        
-        try:
-            url = 'https://theia.cnes.fr/atdistrib/services/authenticate/'
-            r = requests.post(url, data=data)
-            r.raise_for_status()
-        except Exception:
-            raise Exception(
-                f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
-                )
-        self.tokens = r.text
-        log.info('Log to API (https://theia.cnes.fr/)')
+        auth = get_auth("geodes.cnes.fr")     
+        self.tokens = auth['password']
+        log.info('Log to API (https://geodes-portal.cnes.fr/)')
     
     @interface
     def query(
@@ -76,9 +61,10 @@ class DownloadTHEIA(BaseDownload):
         tile_number: str = None,
         venus_site: str = None,
         other_attrs: Optional[list] = None,
+        **kwargs
     ):
         """
-        Product query on the Theia Data Center
+        Product query on the Geodes Data Center
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
@@ -112,46 +98,45 @@ class DownloadTHEIA(BaseDownload):
         if name_startswith: checker.append((check_name_startswith, name_startswith))
         if name_endswith: checker.append((check_name_endswith, name_endswith))
         if name_glob: checker.append((check_name_glob, name_glob))
-            
-        query_lines = [
-            f"https://theia.cnes.fr/atdistrib/resto2/api/collections/{self.collection}/search.json?"
-        ]
+        
+        server_url = f'https://geodes-portal.cnes.fr/api/stac/collections/{self.api_collection}/items'
+        data = {'page':1, 'limit':500}
+        query = {}
 
         if dtstart:
-            query_lines.append(f"startDate={dtstart.strftime('%Y-%m-%d')}")
+            query['datetime'] = {'lte':dtstart.isoformat()}
         if dtend:
-            query_lines.append(f"completionDate={dtend.strftime('%Y-%m-%d')}")
+            query['datetime']['gte'] = dtend.isoformat()
         
         assert sum(v is not None for v in [geo, tile_number, venus_site]) != 0, \
         "Please fill in at least geo or tile number or venus site"
         assert sum(v is not None for v in [geo, tile_number, venus_site]) == 1
-        if geo:
-            query_lines.append(f"q={geo}")
-        if tile_number:
-            query_lines.append(f"location={tile_number}")
-        if venus_site:
-            query_lines.append(f"location={venus_site}")
+        if geo: data['bbox'] = geo
+        # if tile_number:
+        #     query_lines.append(f"location={tile_number}")
+        # if venus_site:
+        #     query_lines.append(f"location={venus_site}")
 
-        if cloudcover_thres:
-            query_lines.append(f"maxcloud={cloudcover_thres}")
-
-        top = 500  # maximum value of number of retrieved values
-        req = ('&'.join(query_lines))+f'&maxRecords={top}'
-        response = requests.get(req, verify=True)
+        if cloudcover_thres: query['eo:cloud_cover'] = {"lte":cloudcover_thres}
+        
+        data['query'] = query
+        self.session.headers.update({"X-API-Key": self.tokens})
+        self.session.headers.update({"Content-type": "application/json"})
+        response = self.session.get(server_url, data=data, verify=False)
         raise_api_error(response)
         
         # Filter products
         r = response.json()['features']
-        response = [p for p in r if self.check_name(p["properties"]['title'], checker)]   
+        response = [p for p in r if self.check_name(p["properties"]['identifier'], checker)]   
 
         # test if maximum number of returns is reached
-        if len(response) >= top:
+        if len(response) >= 500:
             log.error('The request led to the maximum number of results '
                       f'({len(response)})', e=ValueError)
         else: log.info(f'{len(response)} products has been found')
 
-        out =  [{"id": d["id"], "name": d["properties"]["productIdentifier"],
-                 **{k: d['properties'][k] for k in (other_attrs or ['quicklook','startDate', 'links','services'])}}
+        out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
+                 'links': d['assets'], 'time': d['properties']['datetime']}
                 for d in response]
         
         return Query(out)
@@ -159,16 +144,18 @@ class DownloadTHEIA(BaseDownload):
     @interface
     def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=True) -> Path:
         """
-        Download a product from Theia Datahub
+        Download a product from Geodes Datahub
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
-        target = Path(dir)/(product['name'])
-        url = product['services']['download']['url']
-        filegen(0, if_exists=if_exists)(self._download)(target, url)
+        search = [l for l in product['links'] if product['name']+'.' in l]
+        assert len(search) == 1
+        target = Path(dir)/search[0]
+        dl_data = product['links'][search[0]]
+        filegen(0, if_exists=if_exists)(self._download)(target, dl_data)
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -180,17 +167,47 @@ class DownloadTHEIA(BaseDownload):
         """
         Wrapped by filegen
         """
-        content = requests.get(url).content
+        desc = url['description'].split()
+        filesize = int(desc[desc.index('bytes')-1])
+        self.session.headers.update({"X-API-Key": self.tokens})
+        response = self.session.get(url['href'], verify=False)
+        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                        desc='writing', unit_divisor=1024, leave=False)
         with open(target, 'wb') as f:
-            f.write(content)
+            for chunk in response.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+                    pbar.update(1024)
     
+    @interface
+    def download_file(self, product_id: str, dir, if_exists='skip'):
+        # Query and check if product exists
+        server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
+        data = {'page':1, 'limit':1}
+        data['query'] = {'identifier': {'contains':[product_id]}}
+        self.session.headers.update({"X-API-Key": self.tokens})
+        self.session.headers.update({"Content-type": "application/json"})
+        
+        response = self.session.get(server_url, data=data, verify=False)
+        raise_api_error(response)        
+        r = response.json()['features']
+        log.check(len(r) > 0, f'No product named {product_id}')
+        
+        # Download the product
+        out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
+                 'links': d['assets'], 'time': d['properties']['datetime']}
+                for d in r]
+        return self.download(Query(out).iloc[0], dir, if_exists)
+        
     @interface 
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
         """
-        target = Path(dir)/(product['name'] + '.jpeg')
-        url = product['quicklook']
+        search = [l for l in product['links'] if 'quicklook' in l]
+        assert len(search) == 1
+        target = Path(dir)/search[0].split('/')[-1]
+        url = product['links'][search[0]]
 
         if not target.exists():
             filegen(0)(self._download)(target, url)
@@ -203,11 +220,7 @@ class DownloadTHEIA(BaseDownload):
         """
         Returns the product metadata including attributes and assets
         """
-        req = self._get(product['links'], 'Metadata', 'title', 'href')
-        meta = requests.get(req).text
-        
-        if 'Request Rejected' in meta:  raise FileNotFoundError
-        return meta
+        raise NotImplementedError
     
     def _retrieve_collec_name(self, collection):
         collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])

@@ -78,6 +78,7 @@ class DownloadEumDAC(BaseDownload):
         name_glob: Optional[str] = None,
         use_most_recent: bool = True,
         other_attrs: Optional[list] = None,
+        **kwargs
     ):
         """
         Product query on Eumetsat datahub
