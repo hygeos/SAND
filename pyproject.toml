@@ -12,7 +12,7 @@ dependencies = [
     "shapely", 
     "xmltodict", 
     'pillow', 
-    "fireducks", "core @ git+https://github.com/hygeos/core"]
+    "pandas", "core @ git+https://github.com/hygeos/core"]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
