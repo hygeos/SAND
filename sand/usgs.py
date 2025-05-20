@@ -7,9 +7,9 @@ from shapely import Point, Polygon
 from datetime import datetime, date
 
 from core import log
-from core.ftp import get_auth
+from core.download.ftp import get_auth
 from core.static import interface
-from core.fileutils import filegen
+from core.files.fileutils import filegen
 from core.table import select, select_cell
 from sand.base import raise_api_error, BaseDownload
 from sand.results import Query

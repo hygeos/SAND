@@ -14,11 +14,11 @@ from sand.results import Query
 from sand.tinyfunc import *
 
 from core import log
-from core.ftp import get_auth
-from core.fileutils import filegen
+from core.download.ftp import get_auth
+from core.files.fileutils import filegen
 from core.static import interface
 from core.table import select_cell, select
-from core.uncompress import uncompress as func_uncompress
+from core.files.uncompress import uncompress as func_uncompress
 
 
 class DownloadEumDAC(BaseDownload):
