@@ -1,6 +1,6 @@
-from core.fileutils import mdir, filegen
+from core.files.fileutils import mdir, filegen
 from core.static import interface
-from core.uncompress import uncompress
+from core.files.uncompress import uncompress
 from pathlib import Path
 from os import system
 
