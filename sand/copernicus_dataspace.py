@@ -14,8 +14,8 @@ from sand.base import raise_api_error, BaseDownload
 from sand.results import Query
 
 from core import log
-from core.download.ftp import get_auth
-from core.files.fileutils import filegen
+from core.download import get_auth
+from core.files import filegen
 from core.table import select_cell, select
 from core.static import interface
 

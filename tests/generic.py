@@ -1,5 +1,5 @@
 from tempfile import TemporaryDirectory
-from core.cache import cache_dataframe
+from core.files import cache_dataframe
 from .conftest import savefig 
 from pathlib import Path
 from PIL import Image

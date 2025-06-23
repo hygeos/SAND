@@ -6,9 +6,9 @@ from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
 from core import log
-from core.download.ftp import get_auth
+from core.download import get_auth
 from core.static import interface
-from core.files.fileutils import filegen
+from core.files import filegen
 from core.table import select_cell, select
 
 
