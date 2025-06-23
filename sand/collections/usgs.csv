@@ -1,10 +1,10 @@
 SAND_name,              level,  contains, collec 
 LANDSAT-1-4-MSS,        1,      , landsat_mss_c2_l1
-LANDSAT-5-TM,           1,      LT5 L1, landsat_tm_c2_l1 
+LANDSAT-5-TM,           1,      LT05 L1, landsat_tm_c2_l1 
 LANDSAT-7-ET,           1,      LE7 L1, landsat_etm_c2_l1
 LANDSAT-8-OLI,          1,      LC8 L1, landsat_ot_c2_l1 
 LANDSAT-9-OLI,          1,      LC9 L1, landsat_ot_c2_l1 
-LANDSAT-5-TM,           2,      LT5 L2, landsat_tm_c2_l2 
+LANDSAT-5-TM,           2,      LT05 L2, landsat_tm_c2_l2 
 LANDSAT-7-ET,           2,      LE7 L2, landsat_etm_c2_l2
 LANDSAT-8-OLI,          2,      LC8 L2, landsat_ot_c2_l2 
 LANDSAT-9-OLI,          2,      LC9 L2, landsat_ot_c2_l2

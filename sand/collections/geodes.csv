@@ -6,8 +6,11 @@ PLEIADES,               1,      ,         MUSCATE_PLEIADES_PLEIADES_ORTHO
 SENTINEL-1,             1,      ,         PEPS_S1_L1
 SENTINEL-2-MSI,         1,      ,         PEPS_S2_L1C
 SENTINEL-2-MSI,         2,      ,         PEPS_S2_L2A
-SPOT,                   1,      ,         Spirit
-SWH,                    1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT1_L1C
+SPOT-1,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT1_L1C
+SPOT-2,                 1,      ,         Spirit
+SPOT-3,                 1,      ,         Spirit
+SPOT-4,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT4_L1C
+SPOT-5,                 1,      ,         Spirit
 VENUS,                  1,      ,         VENUS
 VENUS,                  2,      ,         VENUS   
 VENUS-VM5,              1,      ,         VENUSVM05
