@@ -23,7 +23,7 @@ class DownloadUSGS(BaseDownload):
     
     name = 'DownloadUSGS'
     
-    DATA_PRODUCTS = {
+    _DATA_PRODUCTS = {
         # Level 1 datasets
         "landsat_tm_c2_l1": ["5e81f14f92acf9ef", "5e83d0a0f94d7d8d", "63231219fdd8c4e5"],
         "landsat_etm_c2_l1":[ "5e83d0d0d2aaa488", "5e83d0d08fec8a66"],
@@ -72,6 +72,7 @@ class DownloadUSGS(BaseDownload):
             url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
             r = self.session.post(url, json.dumps(data))
             r.raise_for_status()
+            assert r.json()['errorCode'] == None
             self.API_key = {'X-Auth-Token': r.json()['data']}
         except Exception:
             raise Exception(
@@ -156,7 +157,7 @@ class DownloadUSGS(BaseDownload):
                         "seasonalFilter"   : None}
 
         params = {
-            "datasetName": self.api_collection,
+            "datasetName": self.api_collection[0],
             "sceneFilter": scene_filter,
             "maxResults": 1000,
             "metadataType": "full",
@@ -200,7 +201,7 @@ class DownloadUSGS(BaseDownload):
         
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
-        params = {'entityIds': product['id'], "datasetName": self.collection}
+        params = {'entityIds': product['id'], "datasetName": self.api_collection[0]}
         dl_opt = self.session.get(url, data=json.dumps(params), headers=self.API_key)
         dl_opt = dl_opt.json()['data']
         
