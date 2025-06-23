@@ -3,9 +3,9 @@ import json
 
 from pathlib import Path
 from typing import Optional
-from xmltodict import parse
 from shapely import Point, Polygon
 from requests.utils import requote_uri
+from tempfile import TemporaryDirectory
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 from datetime import datetime, date
@@ -220,7 +220,10 @@ class DownloadNASA(BaseDownload):
         meta = requests.get(req).text
 
         assert len(meta) > 0
-        return parse(meta)
+        with TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir)/'meta.xml', 'w') as f:
+                f.writelines(meta.split('\n'))
+            return read_xml(Path(tmpdir)/'meta.xml')
     
     def _retrieve_collec_name(self, collection):
         collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])

@@ -5,7 +5,6 @@ import shutil
 from pathlib import Path
 from typing import Optional
 from shapely import to_wkt
-from xmltodict import parse
 from tempfile import TemporaryDirectory
 from datetime import datetime, date
 
@@ -250,7 +249,10 @@ class DownloadEumDAC(BaseDownload):
         meta = requests.get(req).text
 
         assert len(meta) > 0
-        return parse(meta)
+        with TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir)/'meta.xml', 'w') as f:
+                f.writelines(meta.split('\n'))
+            return read_xml(Path(tmpdir)/'meta.xml')
     
     def _retrieve_collec_name(self, collection):
         collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
