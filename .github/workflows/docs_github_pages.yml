@@ -1,0 +1,40 @@
+name: docs
+ 
+# execute this workflow automatically when a we push to master
+on:
+  push:
+    branches: [ main ] # ⚠️ Renseigner le nom de votre branche principale
+ 
+jobs:
+ 
+  build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x # ⚠️ Vérifier que la version python est conforme
+ 
+      - name: Install dependencies
+        run: |
+          python -m pip install -U sphinx
+          python -m pip install sphinx-rtd-theme
+          python -m pip install nbsphinx
+          python -m pip install sphinxcontrib-napoleon
+          python -m pip install ghp-import
+          python -m pip install uv
+          python -m uv pip install -r pyproject.toml
+          python -m uv pip install .
+          python -m pip install numpydoc
+
+      - name: Generate the docs
+        run: |
+          make -C docs clean 
+          make -C docs html
+        
+      - name: Run ghp-import
+        run: |
+          ghp-import -n -p -f docs/build/html
