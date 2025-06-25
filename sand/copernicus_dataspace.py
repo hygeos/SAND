@@ -159,6 +159,7 @@ class DownloadCDSE(BaseDownload):
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
                 ]
     
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
     @interface

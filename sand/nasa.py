@@ -146,7 +146,7 @@ class DownloadNASA(BaseDownload):
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
                     **{k: d[k] for k in ['links','collection_concept_id']}})
         
-        log.info(f'{len(response)} products has been found')
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
     def download_file(self, product_id, dir):

@@ -145,7 +145,7 @@ class DownloadEumDAC(BaseDownload):
                 } 
                 for d in product]
         
-        log.info(f'{len(product)} products has been found')
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
     @interface

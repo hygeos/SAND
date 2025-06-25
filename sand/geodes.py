@@ -139,6 +139,7 @@ class DownloadCNES(BaseDownload):
                  'links': d['assets'], 'time': d['properties']['datetime']}
                 for d in response]
         
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
     @interface

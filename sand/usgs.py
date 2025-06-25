@@ -186,6 +186,7 @@ class DownloadUSGS(BaseDownload):
                  **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
                 for d in response]
         
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
     def download_file(self, product_id, dir):
