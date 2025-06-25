@@ -9,15 +9,15 @@ from tempfile import TemporaryDirectory
 from datetime import datetime, date
 
 from sand.base import raise_api_error, RequestsError, BaseDownload
-from sand.patterns import get_pattern, get_level
 from sand.results import Query
 from sand.tinyfunc import *
 
 from core import log
-from core.download import get_auth
-from core.files import filegen, uncompress as func_uncompress
-from core.static import interface
 from core.table import *
+from core.static import interface
+from core.download import get_auth
+from core.geo.product_name import get_pattern, get_level
+from core.files import filegen, uncompress as func_uncompress
 
 
 class DownloadEumDAC(BaseDownload):

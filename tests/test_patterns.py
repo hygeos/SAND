@@ -1,7 +1,7 @@
 import pytest
 
 from sand.sample_product import products
-from sand.patterns import get_pattern, retrieve_product
+from core.geo.product_name import get_pattern, retrieve_product
 
 
 list_prod = []

@@ -9,16 +9,16 @@ import re
 import fnmatch
 import requests
 
-from sand.patterns import get_pattern, get_level
 from sand.tinyfunc import _parse_geometry, change_lon_convention
 from sand.base import raise_api_error, BaseDownload
 from sand.results import Query
 
 from core import log
-from core.download import get_auth
 from core.files import filegen
-from core.table import select_cell, select
 from core.static import interface
+from core.download import get_auth
+from core.table import select_cell, select
+from core.geo.product_name import get_pattern, get_level
 
 
 class DownloadCDSE(BaseDownload):

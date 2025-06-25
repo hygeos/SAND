@@ -12,10 +12,10 @@ from datetime import datetime, date
 
 from core import log
 from core.table import *
-from core.static import interface
 from core.files import filegen
+from core.static import interface
+from core.geo.product_name import get_pattern, get_level
 
-from sand.patterns import get_pattern, get_level
 from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
