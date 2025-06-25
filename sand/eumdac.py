@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from datetime import datetime, date
 
 from sand.base import raise_api_error, RequestsError, BaseDownload
+from sand.patterns import get_pattern, get_level
 from sand.results import Query
 from sand.tinyfunc import *
 
@@ -187,6 +188,18 @@ class DownloadEumDAC(BaseDownload):
         _download(target)
         log.info(f'Product has been downloaded at : {target}')
         return target
+    
+    def download_file(self, product_id, dir):
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        
+        for c in self.api_collection:   
+            collec = self.datastore.get_collection(c)
+            prod = self.datastore.get_product(collec, product_id)
+            target = Path(dir)/prod._id
+            try: self._download(target, prod.url)
+            except RequestsError: continue
+            return target
     
     def _download(
         self,

@@ -11,7 +11,9 @@ from core.download import get_auth
 from core.static import interface
 from core.files import filegen
 from core.table import select, select_cell
+
 from sand.base import raise_api_error, BaseDownload
+from sand.patterns import get_pattern, get_level
 from sand.results import Query
 from sand.tinyfunc import *
 
@@ -185,6 +187,37 @@ class DownloadUSGS(BaseDownload):
                 for d in response]
         
         return Query(out)
+    
+    def download_file(self, product_id, dir):
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        
+        scene_filter = {
+            "MetadataValue": {
+                "filterType": 'value',
+                "filterId": 'displayId',
+                "value": product_id,
+                "operand": "=",
+            }
+        }
+        
+        params = {
+            "datasetName": self.api_collection[0],
+            # "sceneFilter": scene_filter,
+            "MetadataFilter": scene_filter,  
+            "maxResults": 10,
+            "metadataType": "full",
+        }
+        
+        # Request API for each dataset
+        url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
+        response = self.session.get(url, data=json.dumps(params), headers=self.API_key)
+        raise_api_error(response)
+        r = response.json()
+        
+        target = Path(dir)/prod._id
+        self._download(target, prod.url)
+        return target
     
     @interface
     def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=True) -> Path:

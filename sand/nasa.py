@@ -14,6 +14,8 @@ from core import log
 from core.table import *
 from core.static import interface
 from core.files import filegen
+
+from sand.patterns import get_pattern, get_level
 from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
@@ -91,7 +93,7 @@ class DownloadNASA(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        geo = flip_coords(change_lon_convention(geo))
+        if geo: geo = flip_coords(change_lon_convention(geo))
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
@@ -109,7 +111,7 @@ class DownloadNASA(BaseDownload):
         elif isinstance(geo, Polygon):
             bounds = geo.bounds
             bbox = f"{bounds[1]},{bounds[0]},{bounds[3]},{bounds[2]}"
-        data['bounding_box'] = bbox
+        if geo: data['bounding_box'] = bbox
         
         # Define check functions
         checker = []
@@ -147,6 +149,28 @@ class DownloadNASA(BaseDownload):
         log.info(f'{len(response)} products has been found')
         return Query(out)
     
+    def download_file(self, product_id, dir):
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        
+        data = {'page_size': 10}
+        headers = {'Accept': 'application/json'}
+        url = 'https://cmr.earthdata.nasa.gov/search/granules'
+        for collec in self.api_collection:   
+            data['concept_id'] = collec
+            data['granule_ur'] = product_id
+            url_encode = url + '?' + urlencode(data)
+            urllib_req = Request(requote_uri(url_encode), headers=headers)
+            urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+            response = json.load(urllib_response)['feed']['entry']
+            if len(response) == 0: continue            
+            
+            dl_url = self._get(response[0]['links'], '.h5', 'title', 'href')
+            target = Path(dir)/Path(dl_url).name
+            try: filegen(0, if_exists='skip')(self._download)(target, dl_url)
+            except: continue
+            return target
+    
     @interface
     def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=False) -> Path:
         """
@@ -157,8 +181,8 @@ class DownloadNASA(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
-        target = Path(dir)/(product['name'])
         url = self._get(product['links'], '.h5', 'title', 'href')
+        target = Path(dir)/Path(url).name
         filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
         return target

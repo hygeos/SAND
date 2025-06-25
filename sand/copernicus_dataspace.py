@@ -9,6 +9,7 @@ import re
 import fnmatch
 import requests
 
+from sand.patterns import get_pattern, get_level
 from sand.tinyfunc import _parse_geometry, change_lon_convention
 from sand.base import raise_api_error, BaseDownload
 from sand.results import Query
@@ -118,7 +119,7 @@ class DownloadCDSE(BaseDownload):
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        geo = change_lon_convention(geo)
+        if geo: geo = change_lon_convention(geo)
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
@@ -236,6 +237,18 @@ class DownloadCDSE(BaseDownload):
                 if chunk:
                     f.write(chunk)
                     pbar.update(1024)
+    
+    
+    def download_file(self, product_id: str, dir: Path | str) -> Path:
+        """
+        Download product knowing is product id 
+        (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
+        """
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        ls = self.query(name_contains=[product_id])
+        assert len(ls) == 1, 'Multiple products found'
+        return self.download(ls.iloc[0], dir)
     
     @interface
     def quicklook(self, product: dict, dir: Path|str):

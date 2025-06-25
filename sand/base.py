@@ -5,7 +5,6 @@ from time import sleep
 
 from sand.results import Collection
 from sand.tinyfunc import end_of_day
-from sand.patterns import get_pattern, get_level
 from core.table import *
 from core import log
 
@@ -66,17 +65,6 @@ class BaseDownload:
         for i in range(len(products)): 
             out.append(self.download(products.iloc[i], dir, if_exists, uncompress))
         return out 
-    
-    def download_file(self, product_id: str, dir: Path | str) -> Path:
-        """
-        Download product knowing is product id 
-        (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
-        """
-        p = get_pattern(product_id)
-        self.__init__(p['Name'], get_level(product_id, p))
-        ls = self.query(name_contains=[product_id])
-        assert len(ls) == 1, 'Multiple products found'
-        return self.download(ls.iloc[0], dir)
 
     def quicklook(self, product: dict, dir: Path|str):
         """
@@ -125,7 +113,8 @@ class BaseDownload:
         ref = ref[ref['Name'] == self.collection]
         
         # Check format
-        assert dtstart is not None, 'Start date could not be None'
+        if dtstart is None: 
+            dtstart = datetime.fromisoformat(ref['launch_date'].values[0])
         if isinstance(dtstart, date):
             dtstart = datetime.combine(dtstart, time(0))
         if dtend is None:
@@ -136,7 +125,7 @@ class BaseDownload:
         
         # Check time 
         launch, end = ref['launch_date'].values[0], ref['end_date'].values[0]
-        assert dtstart.date() > date.fromisoformat(launch)
+        assert dtstart.date() >= date.fromisoformat(launch)
         if end != 'x': assert dtend.date() < date.fromisoformat(end)
         
         # Check spatial
