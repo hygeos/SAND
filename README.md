@@ -41,16 +41,14 @@ machine [Registration link]
     password [password]
 ```
 
-Note that the login field is not necessarily the e-mail address but can be a character string provided by the registration site (cf. EumDAC). 
+Note that the login field is not necessarily the e-mail address but can be a tokens provided by the registration site (cf. EumDAC). 
 
-
-In addition, some providers such as Creodias require double authentication to download the data. Please enter your TOTP key in the file to finalise the configuration of these providers.
 
 ## Installation
 
 The package can be installed with the command:
 ```sh
-pip install git+ssh://git@github.com:hygeos/SAND.git
+pip install https://github.com/hygeos/SAND.git
 ```
 
 ## Get Started
@@ -66,18 +64,17 @@ from shapely import Point
 # Login to USGS API
 dl = DownloadUSGS('LANDSAT-5-TM', level=1)
 
-# Search for appropriated acquistions
+# Search for appropriated acquisitions
 name_cache = './cache.pickle'
 ls = cache_dataframe(name_cache)(dl.query)(
     dtstart = datetime(2000, 12, 10),
     dtend = datetime(2005, 12, 10),
     geo = Point(119.514442, -8.411750),
-    name_contains = ['LT05_L1TP_114066_20051115_20201008_02_T1']
 )
 
 # Download Landsat granule
 outdir = '.'
-dl.download(ls[0], outdir, uncompress=True)
+dl.download(ls[0], outdir)
 ```
 
 ## Providers
