@@ -1,0 +1,441 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sand.usgs &mdash; sand 0.4.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=6c02275b"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sand
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sand.html">sand package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sand.usgs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sand.usgs</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely</span><span class="w"> </span><span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Polygon</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.files</span><span class="w"> </span><span class="kn">import</span> <span class="n">filegen</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.static</span><span class="w"> </span><span class="kn">import</span> <span class="n">interface</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.download</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_auth</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">select</span><span class="p">,</span> <span class="n">select_cell</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.geo.product_name</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_pattern</span><span class="p">,</span> <span class="n">get_level</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">raise_api_error</span><span class="p">,</span> <span class="n">BaseDownload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">Query</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.tinyfunc</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="c1"># BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore</span>
+
+
+
+<div class="viewcode-block" id="DownloadUSGS">
+<a class="viewcode-back" href="../../sand.html#sand.usgs.DownloadUSGS">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DownloadUSGS</span><span class="p">(</span><span class="n">BaseDownload</span><span class="p">):</span>
+    
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;DownloadUSGS&#39;</span>
+    
+    <span class="n">_DATA_PRODUCTS</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Level 1 datasets</span>
+        <span class="s2">&quot;landsat_tm_c2_l1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;5e81f14f92acf9ef&quot;</span><span class="p">,</span> <span class="s2">&quot;5e83d0a0f94d7d8d&quot;</span><span class="p">,</span> <span class="s2">&quot;63231219fdd8c4e5&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;landsat_etm_c2_l1&quot;</span><span class="p">:[</span> <span class="s2">&quot;5e83d0d0d2aaa488&quot;</span><span class="p">,</span> <span class="s2">&quot;5e83d0d08fec8a66&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;landsat_ot_c2_l1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;632211e26883b1f7&quot;</span><span class="p">,</span> <span class="s2">&quot;5e81f14ff4f9941c&quot;</span><span class="p">,</span> <span class="s2">&quot;5e81f14f92acf9ef&quot;</span><span class="p">],</span>
+        <span class="c1"># Level 2 datasets</span>
+        <span class="s2">&quot;landsat_tm_c2_l2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;5e83d11933473426&quot;</span><span class="p">,</span> <span class="s2">&quot;5e83d11933473426&quot;</span><span class="p">,</span> <span class="s2">&quot;632312ba6c0988ef&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;landsat_etm_c2_l2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;5e83d12aada2e3c5&quot;</span><span class="p">,</span> <span class="s2">&quot;5e83d12aed0efa58&quot;</span><span class="p">,</span> <span class="s2">&quot;632311068b0935a8&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;landsat_ot_c2_l2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;5e83d14f30ea90a9&quot;</span><span class="p">,</span> <span class="s2">&quot;5e83d14fec7cae84&quot;</span><span class="p">,</span> <span class="s2">&quot;632210d4770592cf&quot;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Python interface to the USGS API (https://data.usgs.gov/)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            collection (str): collection name (&#39;LANDSAT-5-TM&#39;, &#39;LANDSAT-7-ET&#39;, etc.)</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            usgs = DownloadUSGS(&#39;LANDSAT-5-TM&#39;)</span>
+<span class="sd">            # retrieve the list of products</span>
+<span class="sd">            # using a pickle cache file to avoid reconnection</span>
+<span class="sd">            ls = cache_dataframe(&#39;query-S2.pickle&#39;)(cds.query)(</span>
+<span class="sd">                dtstart=datetime(2024, 1, 1),</span>
+<span class="sd">                dtend=datetime(2024, 2, 1),</span>
+<span class="sd">                geo=Point(119.514442, -8.411750),</span>
+<span class="sd">            )</span>
+<span class="sd">            cds.download(ls.iloc[0], &lt;dirname&gt;, uncompress=True)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">=</span> <span class="s1">&#39;usgs&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+        
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_login</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Login to USGS with credentials storted in .netrc</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">auth</span> <span class="o">=</span> <span class="n">get_auth</span><span class="p">(</span><span class="s2">&quot;usgs.gov&quot;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">],</span>
+            <span class="c1"># &quot;password&quot;: auth[&#39;password&#39;],</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/login-token&quot;</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errorCode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">API_key</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;X-Auth-Token&#39;</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Keycloak token creation failed. Reponse from the server was: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Log to API (https://m2m.cr.usgs.gov/)&#39;</span><span class="p">)</span>
+        
+    <span class="nd">@interface</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dtstart</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">date</span><span class="o">|</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dtend</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">date</span><span class="o">|</span><span class="n">datetime</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">geo</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cloudcover_thres</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_contains</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+        <span class="n">name_startswith</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_endswith</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name_glob</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">other_attrs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Product query on the USGS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dtstart and dtend (datetime): start and stop datetimes</span>
+<span class="sd">            geo: shapely geometry. Examples:</span>
+<span class="sd">                Point(lon, lat)</span>
+<span class="sd">                Polygon(...)</span>
+<span class="sd">            cloudcover_thres: Optional[int]=None,</span>
+<span class="sd">            name_contains (list): list of substrings</span>
+<span class="sd">            name_startswith (str): search for name starting with this str</span>
+<span class="sd">            name_endswith (str): search for name ending with this str</span>
+<span class="sd">            name_glob (str): match name with this string</span>
+<span class="sd">            use_most_recent (bool): keep only the most recent processing baseline version</span>
+<span class="sd">            other_attrs (list): list of other attributes to include in the output</span>
+<span class="sd">                (ex: [&#39;ContentDate&#39;, &#39;Footprint&#39;])</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            This method can be decorated by cache_dataframe for storing the outputs.</span>
+<span class="sd">            Example:</span>
+<span class="sd">                cache_dataframe(&#39;cache_result.pickle&#39;)(cds.query)(...)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dtstart</span><span class="p">,</span> <span class="n">dtend</span><span class="p">,</span> <span class="n">geo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_input_query</span><span class="p">(</span><span class="n">dtstart</span><span class="p">,</span> <span class="n">dtend</span><span class="p">,</span> <span class="n">geo</span><span class="p">)</span>
+        
+        <span class="c1"># Add provider constraint</span>
+        <span class="n">name_contains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_complete_name_contains</span><span class="p">(</span><span class="n">name_contains</span><span class="p">)</span>
+        
+        <span class="c1"># Define check functions</span>
+        <span class="n">checker</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">name_contains</span><span class="p">:</span> <span class="n">checker</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">check_name_contains</span><span class="p">,</span> <span class="n">name_contains</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name_startswith</span><span class="p">:</span> <span class="n">checker</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">check_name_startswith</span><span class="p">,</span> <span class="n">name_startswith</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name_endswith</span><span class="p">:</span> <span class="n">checker</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">check_name_endswith</span><span class="p">,</span> <span class="n">name_endswith</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">name_glob</span><span class="p">:</span> <span class="n">checker</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">check_name_glob</span><span class="p">,</span> <span class="n">name_glob</span><span class="p">))</span>
+        
+        <span class="c1"># Configure scene constraints for request        </span>
+        <span class="n">spatial_filter</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;filterType&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mbr&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">Point</span><span class="p">):</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;lowerLeft&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span><span class="n">geo</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> 
+                                            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span><span class="n">geo</span><span class="o">.</span><span class="n">x</span><span class="p">}</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;upperRight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;lowerLeft&quot;</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">geo</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;lowerLeft&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> 
+                                            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;upperRight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> 
+                                            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]}</span>
+        
+        <span class="n">acquisition_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">dtstart</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+                              <span class="s2">&quot;end&quot;</span>  <span class="p">:</span> <span class="n">dtend</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()}</span>
+
+        <span class="n">cloud_cover_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;min&quot;</span> <span class="p">:</span> <span class="n">cloudcover_thres</span><span class="p">,</span>
+                              <span class="s2">&quot;max&quot;</span> <span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                              <span class="s2">&quot;includeUnknown&quot;</span> <span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+
+        <span class="n">scene_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;acquisitionFilter&quot;</span><span class="p">:</span> <span class="n">acquisition_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;spatialFilter&quot;</span>    <span class="p">:</span> <span class="n">spatial_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;cloudCoverFilter&quot;</span> <span class="p">:</span> <span class="n">cloud_cover_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;metadataFilter&quot;</span>   <span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="s2">&quot;seasonalFilter&quot;</span>   <span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;sceneFilter&quot;</span><span class="p">:</span> <span class="n">scene_filter</span><span class="p">,</span>
+            <span class="s2">&quot;maxResults&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+            <span class="s2">&quot;metadataType&quot;</span><span class="p">:</span> <span class="s2">&quot;full&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Request API for each dataset</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-search&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+        <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;errorMessage&#39;</span><span class="p">],</span> <span class="n">e</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;results&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Filter products</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">r</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_name</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;displayId&#39;</span><span class="p">],</span> <span class="n">checker</span><span class="p">)]</span>
+        
+        <span class="c1"># test if maximum number of returns is reached</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1000</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;The request led to the maximum number of results &#39;</span>
+                      <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">ValueError</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span> <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span><span class="si">}</span><span class="s1"> products has been found&#39;</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;entityId&quot;</span><span class="p">],</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;displayId&quot;</span><span class="p">],</span>
+                 <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="n">other_attrs</span> <span class="ow">or</span> <span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">,</span><span class="s1">&#39;publishDate&#39;</span><span class="p">,</span><span class="s1">&#39;browse&#39;</span><span class="p">])}}</span>
+                <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">]</span>
+        
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s1"> products has been found&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Query</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="DownloadUSGS.download_file">
+<a class="viewcode-back" href="../../sand.html#sand.usgs.DownloadUSGS.download_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product_id</span><span class="p">,</span> <span class="nb">dir</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">get_pattern</span><span class="p">(</span><span class="n">product_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span> <span class="n">get_level</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+        
+        <span class="n">scene_filter</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;MetadataValue&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;filterType&quot;</span><span class="p">:</span> <span class="s1">&#39;value&#39;</span><span class="p">,</span>
+                <span class="s2">&quot;filterId&quot;</span><span class="p">:</span> <span class="s1">&#39;displayId&#39;</span><span class="p">,</span>
+                <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">product_id</span><span class="p">,</span>
+                <span class="s2">&quot;operand&quot;</span><span class="p">:</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="c1"># &quot;sceneFilter&quot;: scene_filter,</span>
+            <span class="s2">&quot;MetadataFilter&quot;</span><span class="p">:</span> <span class="n">scene_filter</span><span class="p">,</span>  
+            <span class="s2">&quot;maxResults&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s2">&quot;metadataType&quot;</span><span class="p">:</span> <span class="s2">&quot;full&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Request API for each dataset</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-search&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+        <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="n">prod</span><span class="o">.</span><span class="n">_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">prod</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">target</span></div>
+
+    
+    <span class="nd">@interface</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span> <span class="n">uncompress</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download a product from USGS</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            product (dict): product definition with keys &#39;id&#39; and &#39;name&#39;</span>
+<span class="sd">            dir (Path | str): Directory where to store downloaded file.</span>
+<span class="sd">            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>    
+        
+        <span class="c1"># Find product in dataset</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/download-options&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;entityIds&#39;</span><span class="p">:</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+        <span class="n">dl_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+        <span class="n">dl_opt</span> <span class="o">=</span> <span class="n">dl_opt</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Find available acquisitions</span>
+        <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">dl_opt</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;available&#39;</span><span class="p">]:</span> <span class="k">continue</span>
+                       
+            <span class="c1"># Find one available product     </span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/download-request&quot;</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span> <span class="c1"># Customized label using date time</span>
+            <span class="n">downloads</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;entityId&#39;</span><span class="p">:</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;entityId&#39;</span><span class="p">],</span> <span class="s1">&#39;productId&#39;</span><span class="p">:</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]}]</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s1">&#39;downloads&#39;</span> <span class="p">:</span> <span class="n">downloads</span><span class="p">}</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">params</span><span class="p">),</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+            <span class="n">dl</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># Collect url for download</span>
+            <span class="k">if</span> <span class="n">dl</span><span class="p">[</span><span class="s1">&#39;numInvalidScenes&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">dl</span><span class="p">[</span><span class="s1">&#39;availableDownloads&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;url&#39;</span><span class="p">]</span>
+            
+            <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Product has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">target</span>
+            
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;No product immediately available&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wrapped by filegen</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Initialize session for download</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+
+        <span class="c1"># Try to request server</span>
+        <span class="n">niter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Requesting server for </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span> <span class="ow">and</span> <span class="n">niter</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;Location&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;status code : [</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">)</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Location&#39;</span><span class="p">]</span>
+            <span class="c1"># response = self.session.get(url, allow_redirects=False)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">niter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Download file</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Start writing on device&#39;</span><span class="p">)</span>
+        <span class="n">filesize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Length&quot;</span><span class="p">])</span>
+        <span class="n">pbar</span> <span class="o">=</span> <span class="n">log</span><span class="o">.</span><span class="n">pbar</span><span class="p">(</span><span class="n">log</span><span class="o">.</span><span class="n">lvl</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">filesize</span><span class="p">,</span> <span class="n">unit_scale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span> 
+                        <span class="n">desc</span><span class="o">=</span><span class="s1">&#39;writing&#39;</span><span class="p">,</span> <span class="n">unit_divisor</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                    <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+    
+    <span class="nd">@interface</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quicklook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download a quicklook to `dir`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">assets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">product</span><span class="p">)[</span><span class="s1">&#39;Landsat Product Identifier L1&#39;</span><span class="p">]</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Skipping quicklook </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">FileNotFoundError</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;browse&#39;</span><span class="p">]:</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="s1">&#39;browsePath&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s1">&#39;type=refl&#39;</span> <span class="ow">in</span> <span class="n">url</span><span class="p">:</span> <span class="k">break</span>
+            <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Quicklook has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">target</span>    
+    
+    <span class="nd">@interface</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the product metadata including attributes and assets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]:</span> <span class="n">meta</span><span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;fieldName&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">meta</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_retrieve_collec_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">):</span>
+        <span class="n">collecs</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provider_prop</span><span class="p">,(</span><span class="s1">&#39;SAND_name&#39;</span><span class="p">,</span><span class="s1">&#39;=&#39;</span><span class="p">,</span><span class="n">collection</span><span class="p">),[</span><span class="s1">&#39;level&#39;</span><span class="p">,</span><span class="s1">&#39;collec&#39;</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span> <span class="n">collecs</span> <span class="o">=</span> <span class="n">select_cell</span><span class="p">(</span><span class="n">collecs</span><span class="p">,(</span><span class="s1">&#39;level&#39;</span><span class="p">,</span><span class="s1">&#39;=&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="p">),</span><span class="s1">&#39;collec&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span> <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Level</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="si">}</span><span class="s1"> products are not available for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">collection</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">KeyError</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">collecs</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
