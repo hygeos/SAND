@@ -12,7 +12,12 @@ dependencies = [
     "shapely", 
     "xmltodict", 
     'pillow', 
-    "pandas", "core @ git+https://github.com/hygeos/core"]
+    "pandas"]
+
+[project.optional-dependencies]
+git = [
+    "core @ git+https://github.com/hygeos/core.git"
+]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
@@ -25,7 +30,7 @@ default = { features = ["hyp", "sys"], solve-group = "default" }
 tests = "pytest tests"
 
 [tool.pixi.pypi-dependencies]
-sand = { path = ".", editable = true }
+sand = { path = ".", editable = true, extras = ["git"] }
 
 [tool.pixi.dependencies]
 numpy = "<2"
