@@ -101,10 +101,10 @@ class DownloadUSGS(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
-            cloudcover_thres: Optional[int]=None,
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
             name_contains (list): list of substrings
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str

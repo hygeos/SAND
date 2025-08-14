@@ -60,7 +60,7 @@ class DownloadCNES(BaseDownload):
         name_glob: Optional[str] = None,
         tile_number: str = None,
         venus_site: str = None,
-        other_attrs: Optional[list] = None,
+        other_attrs: Optional[list] = [],
         **kwargs
     ):
         """
@@ -68,7 +68,7 @@ class DownloadCNES(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
             cloudcover_thres: Optional[int]=None, 
@@ -108,21 +108,18 @@ class DownloadCNES(BaseDownload):
         if dtend:
             query['datetime']['gte'] = dtend.isoformat()
         
-        assert sum(v is not None for v in [geo, tile_number, venus_site]) != 0, \
-        "Please fill in at least geo or tile number or venus site"
-        assert sum(v is not None for v in [geo, tile_number, venus_site]) == 1
+        log.check(sum(v is not None for v in [geo, tile_number, venus_site])!=0,
+                  "Please fill in at least geo or tile number or venus site")
+        log.check(sum(v is not None for v in [geo, tile_number, venus_site])==1)
         if geo: data['bbox'] = geo
-        # if tile_number:
-        #     query_lines.append(f"location={tile_number}")
-        # if venus_site:
-        #     query_lines.append(f"location={venus_site}")
-
+        if tile_number: query["location"] = tile_number
+        if venus_site: query["location"] = venus_site
         if cloudcover_thres: query['eo:cloud_cover'] = {"lte":cloudcover_thres}
         
         data['query'] = query
         self.session.headers.update({"X-API-Key": self.tokens})
         self.session.headers.update({"Content-type": "application/json"})
-        response = self.session.get(server_url, data=data, verify=False)
+        response = self.session.get(server_url, data=data, verify=True)
         raise_api_error(response)
         
         # Filter products
@@ -136,7 +133,8 @@ class DownloadCNES(BaseDownload):
         else: log.info(f'{len(response)} products has been found')
 
         out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
-                 'links': d['assets'], 'time': d['properties']['datetime']}
+                 'links': d['assets'], 'time': d['properties']['datetime'],
+                 **{k: d[k] for k in other_attrs}}
                 for d in response]
         
         log.info(f'{len(out)} products has been found')

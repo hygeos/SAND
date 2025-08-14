@@ -75,8 +75,7 @@ class DownloadEumDAC(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
-        use_most_recent: bool = True,
-        other_attrs: Optional[list] = None,
+        other_attrs: Optional[list] = [],
         **kwargs
     ):
         """
@@ -84,15 +83,14 @@ class DownloadEumDAC(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
-            cloudcover_thres: Optional[int]=None, 
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
             name_contains (list): list of substrings
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
-            use_most_recent (bool): keep only the most recent processing baseline version
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -135,14 +133,16 @@ class DownloadEumDAC(BaseDownload):
                 log.error('The request led to the maximum number of results '
                         f'({len(product)})', e=ValueError)
         
+        if cloudcover_thres: log.warning("'cloudcover_thres' is not used with eumdac") 
+        
         out = [{"id": str(d), 
                 "name": d.acronym, 
                 "collection": str(d.collection), 
                 "time": d.processingTime,
                 "dl_url": d.metadata['properties']['links']['data'],
                 "meta_url": d.metadata['properties']['links']['alternates'],
-                "quicklook_url": d.metadata['properties']['links']['previews'],
-                } 
+                "quicklook_url": d.metadata['properties']['links'].get('previews'),
+                **{k: d[k] for k in other_attrs}} 
                 for d in product]
         
         log.info(f'{len(out)} products has been found')

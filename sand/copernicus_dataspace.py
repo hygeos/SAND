@@ -92,7 +92,7 @@ class DownloadCDSE(BaseDownload):
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
         use_most_recent: bool = True,
-        other_attrs: Optional[list] = None,
+        other_attrs: Optional[list] = [],
         **kwargs
     ):
         """
@@ -100,10 +100,10 @@ class DownloadCDSE(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
-            cloudcover_thres: Optional[int]=None, 
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
             name_contains (list): list of substrings
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
@@ -154,7 +154,7 @@ class DownloadCDSE(BaseDownload):
         else: json_value = response
 
         out = [{"id": d["Id"], "name": d["Name"],
-                 **{k: d[k] for k in (other_attrs or [])}}
+                 **{k: d[k] for k in other_attrs}}
                 for d in json_value
                 if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
                 ]
@@ -221,8 +221,9 @@ class DownloadCDSE(BaseDownload):
                 exp_timeout_cnt *= 2
                 self.session.close()
                 
+                import time as t
                 log.warning(log.rgb.red, f"Waiting {exp_timeout_cnt}min ...")
-                time.sleep(60 * exp_timeout_cnt)
+                t.sleep(60 * exp_timeout_cnt)
                 
                 self.session = requests.Session()
                 

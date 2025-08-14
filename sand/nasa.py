@@ -62,12 +62,12 @@ class DownloadNASA(BaseDownload):
         dtstart: Optional[date|datetime]=None,
         dtend: Optional[date|datetime]=None,
         geo=None,
-        cloudcover_thres: Optional[int]=None,
+        cloudcover_thres: Optional[float]=None,
         name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
-        other_attrs: Optional[list] = None,
+        other_attrs: Optional[list] = [],
         **kwargs
     ):
         """
@@ -75,15 +75,14 @@ class DownloadNASA(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
-            cloudcover_thres: Optional[int]=None,
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
             name_contains (list): list of substrings
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
-            use_most_recent (bool): keep only the most recent processing baseline version
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -93,7 +92,7 @@ class DownloadNASA(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        if geo: geo = flip_coords(change_lon_convention(geo))
+        if geo: geo = change_lon_convention(geo)
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
@@ -110,7 +109,7 @@ class DownloadNASA(BaseDownload):
             bbox = f"{geo.x},{geo.y},{geo.x},{geo.y}"
         elif isinstance(geo, Polygon):
             bounds = geo.bounds
-            bbox = f"{bounds[1]},{bounds[0]},{bounds[3]},{bounds[2]}"
+            bbox = f"{bounds[0]},{bounds[1]},{bounds[2]},{bounds[3]}"
         if geo: data['bounding_box'] = bbox
         
         # Define check functions
@@ -119,6 +118,9 @@ class DownloadNASA(BaseDownload):
         if name_startswith: checker.append((check_name_startswith, name_startswith))
         if name_endswith: checker.append((check_name_endswith, name_endswith))
         if name_glob: checker.append((check_name_glob, name_glob))
+        
+        # Add constraint for cloud cover
+        if cloudcover_thres: data['cloud_cover'] = f",{cloudcover_thres}"
         
         out = []
         for collec in self.api_collection:
@@ -130,7 +132,7 @@ class DownloadNASA(BaseDownload):
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
             url_encode = url + '?' + urlencode(data)
             urllib_req = Request(requote_uri(url_encode), headers=headers)
-            urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+            urllib_response = urlopen(urllib_req, timeout=100, context=self.ssl_ctx)
             response = json.load(urllib_response)['feed']['entry']   
             
             # Filter products
@@ -144,7 +146,7 @@ class DownloadNASA(BaseDownload):
             
             for d in response:
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
-                    **{k: d[k] for k in ['links','collection_concept_id']}})
+                    **{k: d[k] for k in ['links','collection_concept_id']+other_attrs}})
         
         log.info(f'{len(out)} products has been found')
         return Query(out)
