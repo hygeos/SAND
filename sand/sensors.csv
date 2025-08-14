@@ -12,9 +12,12 @@ FCI-MTG-HR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat
 FCI-MTG-NR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 GLOBAL-MOSAICS,     x,  x,           GLOBAL-MOSAICS,
 IASI,               2006-10-19,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
-LANDSAT-1-4-MSS,    x,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-4
-LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-5
-LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-7
+LANDSAT-1-MSS,      x,  x,           LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-2-MSS,      x,  x,           LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-3-MSS,      x,  x,           LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-4-MSS,      x,  x,           LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-7
 LANDSAT-8-OLI,      2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-8
 LANDSAT-9-OLI,      2021-09-27,  x,           LANDSAT-9 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-9
 MODIS-AQUA-HR,      2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
