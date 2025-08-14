@@ -2,7 +2,7 @@ import requests
 import json
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 from shapely import Point, Polygon
 from datetime import datetime, date
 
@@ -18,7 +18,6 @@ from sand.results import Query
 from sand.tinyfunc import *
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
-
 
 
 class DownloadUSGS(BaseDownload):
@@ -193,19 +192,28 @@ class DownloadUSGS(BaseDownload):
         p = get_pattern(product_id)
         self.__init__(p['Name'], get_level(product_id, p))
         
+        # Retrieve filter ID to use for this dataset
+        url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
+        params = {'datasetName': self.api_collection[0]}
+        r = self.session.get(url_data, data=json.dumps(params), headers=self.API_key)
+        for dfilter in r.json()['data']:
+            if 'Scene Identifier' in dfilter['fieldLabel']:
+                filterid = dfilter['id']
+                break
+        
+        # Compose the query 
         scene_filter = {
-            "MetadataValue": {
-                "filterType": 'value',
-                "filterId": 'displayId',
+            "metadataFilter": {
+                "filterType": "value",
+                "filterId": filterid,
                 "value": product_id,
-                "operand": "=",
+                "operand": "like",
             }
         }
         
         params = {
             "datasetName": self.api_collection[0],
-            # "sceneFilter": scene_filter,
-            "MetadataFilter": scene_filter,  
+            "sceneFilter": scene_filter,
             "maxResults": 10,
             "metadataType": "full",
         }
@@ -218,6 +226,7 @@ class DownloadUSGS(BaseDownload):
         
         target = Path(dir)/prod._id
         self._download(target, prod.url)
+        log.info(f'Product has been downloaded at : {target}')
         return target
     
     @interface
@@ -237,6 +246,7 @@ class DownloadUSGS(BaseDownload):
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
         params = {'entityIds': product['id'], "datasetName": self.api_collection[0]}
         dl_opt = self.session.get(url, data=json.dumps(params), headers=self.API_key)
+        raise_api_error(dl_opt)
         dl_opt = dl_opt.json()['data']
         
         # Find available acquisitions

@@ -5,11 +5,14 @@ from typing import Optional
 from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
 from sand.tinyfunc import *
+
 from core import log
 from core.download import get_auth
 from core.static import interface
 from core.files import filegen
 from core.table import select_cell, select
+
+import re
 
 
 # [SOURCE] https://github.com/olivierhagolle/theia_download/tree/master
@@ -135,7 +138,7 @@ class DownloadCNES(BaseDownload):
         out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
                  'links': d['assets'], 'time': d['properties']['datetime'],
                  **{k: d[k] for k in other_attrs}}
-                for d in response]
+                 for d in response]
         
         log.info(f'{len(out)} products has been found')
         return Query(out)
@@ -150,11 +153,11 @@ class DownloadCNES(BaseDownload):
             dir (Path | str): Directory where to store downloaded file.
             uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
-        search = [l for l in product['links'] if product['name']+'.' in l]
-        assert len(search) == 1
-        target = Path(dir)/search[0]
+        search = [l for l in product['links'] if re.search(product['name']+'.*.zip',l)]
+        log.check(len(search) == 1, "No download link for product found")
+        target = Path(dir)/search[0].replace('.zip','')
         dl_data = product['links'][search[0]]
-        filegen(0, if_exists=if_exists)(self._download)(target, dl_data)
+        filegen(0, if_exists=if_exists, uncompress='.zip')(self._download)(target, dl_data)
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -169,9 +172,10 @@ class DownloadCNES(BaseDownload):
         desc = url['description'].split()
         filesize = int(desc[desc.index('bytes')-1])
         self.session.headers.update({"X-API-Key": self.tokens})
-        response = self.session.get(url['href'], verify=False)
+        response = self.session.get(url['href'], verify=True)
         pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
                         desc='writing', unit_divisor=1024, leave=False)
+        raise_api_error(response)
         with open(target, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024):
                 if chunk:
@@ -204,7 +208,7 @@ class DownloadCNES(BaseDownload):
         Download a quicklook to `dir`
         """
         search = [l for l in product['links'] if 'quicklook' in l]
-        assert len(search) == 1
+        log.check(len(search) == 1, "No download link for quicklook found")
         target = Path(dir)/search[0].split('/')[-1]
         url = product['links'][search[0]]
 

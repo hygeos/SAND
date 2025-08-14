@@ -20,6 +20,10 @@ class BaseDownload:
         """
         self.level = level
         
+        # Initialize session
+        self.session = requests.Session()
+        self.ssl_ctx = get_ssl_context()
+        
         # Load provider properties
         provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
         log.check(provider_file.exists(), 'Provider properties file is missing')
@@ -35,8 +39,6 @@ class BaseDownload:
             self.api_collection = self._retrieve_collec_name(collection)
         
         # Login to API
-        self.session = requests.Session()
-        self.ssl_ctx = get_ssl_context()
         self._login()
 
     def _login(self):

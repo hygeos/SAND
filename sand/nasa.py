@@ -54,7 +54,7 @@ class DownloadNASA(BaseDownload):
         """
         Login to NASA with credentials storted in .netrc
         """
-        log.info(f'No log required for NASA API (https://cmr.earthdata.nasa.gov/)')
+        log.info(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
     @interface
     def query(
@@ -121,7 +121,7 @@ class DownloadNASA(BaseDownload):
         
         # Add constraint for cloud cover
         if cloudcover_thres: data['cloud_cover'] = f",{cloudcover_thres}"
-        
+            
         out = []
         for collec in self.api_collection:
             
@@ -163,7 +163,7 @@ class DownloadNASA(BaseDownload):
             data['granule_ur'] = product_id
             url_encode = url + '?' + urlencode(data)
             urllib_req = Request(requote_uri(url_encode), headers=headers)
-            urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
+            urllib_response = urlopen(urllib_req, timeout=100, context=self.ssl_ctx)
             response = json.load(urllib_response)['feed']['entry']
             if len(response) == 0: continue            
             
@@ -171,6 +171,7 @@ class DownloadNASA(BaseDownload):
             target = Path(dir)/Path(dl_url).name
             try: filegen(0, if_exists='skip')(self._download)(target, dl_url)
             except: continue
+            log.info(f'Product has been downloaded at : {target}')
             return target
     
     @interface

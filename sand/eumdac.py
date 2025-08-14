@@ -199,6 +199,7 @@ class DownloadEumDAC(BaseDownload):
             target = Path(dir)/prod._id
             try: self._download(target, prod.url)
             except RequestsError: continue
+            log.info(f'Product has been downloaded at : {target}')
             return target
     
     def _download(
@@ -243,6 +244,8 @@ class DownloadEumDAC(BaseDownload):
         """
         Download a quicklook to `dir`
         """
+        if product['quicklook_url'] is None:
+            log.error('No download link for quicklook')
         url = product['quicklook_url'][0]['href']      
         target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
 
