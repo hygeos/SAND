@@ -15,20 +15,20 @@
 ## What is SAND ?
 
 **SAND** is a python module that simplifies the downloading of satellite data supplied by various providers. 
-It also acts as a proxy for executing the API requests and is designed to use a minimum of dependency to facilitate its incorporation into production lines. 
+It also acts as a proxy for executing the API requests and is designed to use a minimum of dependency to facilitate its incorporation into production pipelines. 
 
 ## Registration to providers
 
 Depending on the provider or resource you want to download, you will need to add your credentials in the *.netrc* file in the home folder. To help you create your different accounts, please find below a table summarising the different registration links.
 
 
-| Provider | Registration |
-| --- | --- | 
-| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) |   
-| CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) |   
-| EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   
-| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) |   
-| USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   
+| Provider | Registration | Use tokens |
+| --- | --- | --- |
+| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) | <center>❌</center> |
+| CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) | <center>✅</center> |
+| EumDAC | [data.eumetsat.int](https://data.eumetsat.int) | <center>✅</center> |
+| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) | <center>❌</center> |
+| USGS | [usgs.gov](https://ers.cr.usgs.gov/) | <center>✅</center> |
 
 
 ## Configuration 
@@ -37,11 +37,20 @@ Once you have registered, simply enter your credentials in the *.netrc* file wit
 
 ```text
 machine [Registration link]
-    login [email address]
-    password [password]
+    login [...]
+    password [...]
 ```
 
-Note that the login field is not necessarily the e-mail address but can be a tokens provided by the registration site (cf. EumDAC). 
+Note that the login field is not necessarily the e-mail address but can be a tokens provided by the registration site (cf. following table).
+
+| Provider | login | password  |
+| --- | --- | --- |
+| CDS | email address | password |
+| CNES | email address | token secret |
+| EumDAC | token key | token secret |
+| NASA | username | password |
+| USGS | email address | token secret |
+ 
 
 
 ## Installation
@@ -74,7 +83,7 @@ ls = cache_dataframe(name_cache)(dl.query)(
 
 # Download Landsat granule
 outdir = '.'
-dl.download(ls[0], outdir)
+dl.download(ls.iloc[0], outdir)
 ```
 
 ## Providers

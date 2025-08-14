@@ -19,6 +19,7 @@ def eval_download(downloader, collec, level, **kwargs):
     with TemporaryDirectory() as tmpdir:
         name_cache = Path(tmpdir)/f'test_{dl.name}_cache.pickle'
         ls = cache_dataframe(name_cache)(dl.query)(**kwargs)
+        assert all(c in ls.columns for c in ['id', 'name'])
         dl.download(ls.iloc[0], tmpdir, uncompress=True)
         assert len(list(Path(tmpdir).iterdir())) == 2
     
