@@ -16,7 +16,7 @@ from sand.results import Query
 from core import log
 from core.files import filegen
 from core.static import interface
-from core.download import get_auth
+from core.network.auth import get_auth
 from core.table import select_cell, select
 from core.geo.product_name import get_pattern, get_level
 

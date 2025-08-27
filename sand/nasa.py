@@ -11,14 +11,20 @@ from urllib.parse import urlencode
 from datetime import datetime, date
 
 from core import log
-from core.table import *
 from core.files import filegen
 from core.static import interface
+from core.table import read_xml, select, select_cell
 from core.geo.product_name import get_pattern, get_level
 
 from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
-from sand.tinyfunc import *
+from sand.tinyfunc import (
+    change_lon_convention,
+    check_name_contains, 
+    check_name_glob,
+    check_name_endswith,
+    check_name_startswith,
+)
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 

@@ -1,13 +1,19 @@
 from datetime import datetime, date
+from shapely import Point
 from pathlib import Path
 from typing import Optional
 
 from sand.base import BaseDownload, raise_api_error
 from sand.results import Query
-from sand.tinyfunc import *
+from sand.tinyfunc import (
+    check_name_contains, 
+    check_name_glob,
+    check_name_endswith,
+    check_name_startswith,
+)
 
 from core import log
-from core.download import get_auth
+from core.network.auth import get_auth
 from core.static import interface
 from core.files import filegen
 from core.table import select_cell, select

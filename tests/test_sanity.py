@@ -1,7 +1,7 @@
 from sand.copernicus_dataspace import DownloadCDSE
 from sand.sample_product import products
 from sand.base import RequestsError
-from sand.tinyfunc import *
+from sand.tinyfunc import change_lon_convention
 
 from core.table import read_csv
 from shapely import Point, Polygon

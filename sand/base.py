@@ -5,7 +5,7 @@ from time import sleep
 
 from sand.results import Collection
 from sand.tinyfunc import end_of_day
-from core.table import *
+from core.table import read_csv, select, select_cell
 from core import log
 
 import requests

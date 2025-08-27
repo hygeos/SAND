@@ -10,12 +10,17 @@ from datetime import datetime, date
 
 from sand.base import raise_api_error, RequestsError, BaseDownload
 from sand.results import Query
-from sand.tinyfunc import *
+from sand.tinyfunc import (
+    check_name_contains, 
+    check_name_glob,
+    check_name_endswith,
+    check_name_startswith,
+)
 
 from core import log
-from core.table import *
+from core.table import select, select_cell, read_xml
 from core.static import interface
-from core.download import get_auth
+from core.network.auth import get_auth
 from core.geo.product_name import get_pattern, get_level
 from core.files import filegen, uncompress as func_uncompress
 
