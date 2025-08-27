@@ -54,7 +54,7 @@ class DownloadCNES(BaseDownload):
         """
         auth = get_auth("geodes.cnes.fr")     
         self.tokens = auth['password']
-        log.info('Log to API (https://geodes-portal.cnes.fr/)')
+        log.debug('Log to API (https://geodes-portal.cnes.fr/)')
     
     @interface
     def query(

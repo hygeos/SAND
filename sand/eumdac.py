@@ -67,7 +67,7 @@ class DownloadEumDAC(BaseDownload):
             log.error("Invalid Credentials", e=RequestsError)  
         
         self.datastore = eumdac.DataStore(self.tokens)        
-        log.info(f'Log to API (https://data.eumetsat.int/)')
+        log.debug(f'Log to API (https://data.eumetsat.int/)')
     
     @interface
     def query(

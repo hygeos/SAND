@@ -7,7 +7,7 @@ CCM,                x,  x,           Copernicus Contributing Missions,
 COP-DEM,            x,  x,           Copernicus Digital Elevation Model,	
 ECOSTRESS,          2018-06-29,  x,           ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station, https://www.eoportal.org/satellite-missions/iss-ecostress
 EMIT,               2022-07-14,  x,           Earth surface Mineral dust source InvesTigation, https://www.eoportal.org/satellite-missions/iss-emit
-ENVISAT,            2002-03-01,  x,           EnviSat (Environmental Satellite), https://www.eoportal.org/satellite-missions/envisat
+ENVISAT-MERIS,      2002-03-01,  x,           EnviSat (Environmental Satellite) Medium Resolution Imaging Spectrometer, https://www.eoportal.org/satellite-missions/envisat
 FCI-MTG-HR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 FCI-MTG-NR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 GLOBAL-MOSAICS,     x,  x,           GLOBAL-MOSAICS,

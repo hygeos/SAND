@@ -24,7 +24,7 @@ Depending on the provider or resource you want to download, you will need to add
 
 | Provider | Registration | Use tokens |
 | --- | --- | --- |
-| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) | <center>❌</center> |
+| CDSE | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) | <center>❌</center> |
 | CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) | <center>✅</center> |
 | EumDAC | [data.eumetsat.int](https://data.eumetsat.int) | <center>✅</center> |
 | NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) | <center>❌</center> |
@@ -45,7 +45,7 @@ Note that the login field is not necessarily the e-mail address but can be a tok
 
 | Provider | login | password  |
 | --- | --- | --- |
-| CDS | email address | password |
+| CDSE | email address | password |
 | CNES | email address | token secret |
 | EumDAC | token key | token secret |
 | NASA | username | password |

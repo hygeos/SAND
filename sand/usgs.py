@@ -84,7 +84,7 @@ class DownloadUSGS(BaseDownload):
             raise Exception(
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
-        log.info(f'Log to API (https://m2m.cr.usgs.gov/)')
+        log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
     @interface
     def query(

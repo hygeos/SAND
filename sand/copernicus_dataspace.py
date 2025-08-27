@@ -69,7 +69,7 @@ class DownloadCDSE(BaseDownload):
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.json()["access_token"]
-        log.info('Log to API (https://dataspace.copernicus.eu/)')
+        log.debug('Log to API (https://dataspace.copernicus.eu/)')
     
     @interface
     def change_api(self, api_name: Literal['OData', 'OpenSearch']):
@@ -163,7 +163,7 @@ class DownloadCDSE(BaseDownload):
         return Query(out)
     
     @interface
-    def download(self, product: dict, dir: Path|str, if_exists: str='skip', uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
         """
         Download a product from copernicus data space
 

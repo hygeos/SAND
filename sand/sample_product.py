@@ -6,8 +6,8 @@ products = {}
 # SENTINEL-2 Product
 products['SENTINEL-1'] = {
     'level1':{
-        'dtstart': datetime(2024, 1, 1),
-        'dtend': datetime(2024, 2, 1),
+        'dtstart': datetime(2025, 1, 1),
+        'dtend': datetime(2025, 2, 1),
         'geo': Point(10, 12),
         'product_id': 'S1A_IW_GRDH_1SDH_20250330T141400_20250330T141425_058535_073E3A_5675'
     }    
@@ -124,8 +124,8 @@ products['ECOSTRESS'] = {
 # VENUS Product
 products['VENUS'] = {
     'level1':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 6, 1),
+        'dtstart': datetime(2018, 1, 1),
+        'dtend': datetime(2018, 6, 1),
         'venus_site': 'NARYN',
         "product_id": "VENUS-XS_20231003-110220-000_L1C_VILAINE_C_V3"
     }    

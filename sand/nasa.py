@@ -60,7 +60,7 @@ class DownloadNASA(BaseDownload):
         """
         Login to NASA with credentials storted in .netrc
         """
-        log.info(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
+        log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
     @interface
     def query(
