@@ -108,27 +108,28 @@ class DownloadCNES(BaseDownload):
         if name_endswith: checker.append((check_name_endswith, name_endswith))
         if name_glob: checker.append((check_name_glob, name_glob))
         
-        server_url = f'https://geodes-portal.cnes.fr/api/stac/collections/{self.api_collection}/items'
+        server_url = "https://geodes-portal.cnes.fr/api/stac/search"
         data = {'page':1, 'limit':500}
-        query = {}
+        query = {'dataset': {'in': [self.api_collection]}}
 
         if dtstart:
-            query['datetime'] = {'lte':dtstart.isoformat()}
+            query['start_datetime'] = {'gte':dtstart.isoformat()+'Z'}
         if dtend:
-            query['datetime']['gte'] = dtend.isoformat()
+            query['end_datetime'] = {'lte':dtend.isoformat()+'Z'}
         
         log.check(sum(v is not None for v in [geo, tile_number, venus_site])!=0,
                   "Please fill in at least geo or tile number or venus site")
         log.check(sum(v is not None for v in [geo, tile_number, venus_site])==1)
-        if geo: data['bbox'] = geo
+        if isinstance(geo, Point): geo = geo.buffer(0.5)
+        if geo: data['bbox'] = list(geo.bounds)
         if tile_number: query["location"] = tile_number
-        if venus_site: query["location"] = venus_site
+        if venus_site: query["grid:code"] = {'contains': venus_site}
         if cloudcover_thres: query['eo:cloud_cover'] = {"lte":cloudcover_thres}
         
         data['query'] = query
         self.session.headers.update({"X-API-Key": self.tokens})
         self.session.headers.update({"Content-type": "application/json"})
-        response = self.session.get(server_url, data=data, verify=True)
+        response = self.session.post(server_url, json=data, verify=True)
         raise_api_error(response)
         
         # Filter products
@@ -193,11 +194,11 @@ class DownloadCNES(BaseDownload):
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
         data = {'page':1, 'limit':1}
-        data['query'] = {'identifier': {'contains':[product_id]}}
+        data['query'] = {'identifier': {'contains':product_id}}
         self.session.headers.update({"X-API-Key": self.tokens})
         self.session.headers.update({"Content-type": "application/json"})
         
-        response = self.session.get(server_url, data=data, verify=False)
+        response = self.session.post(server_url, json=data, verify=False)
         raise_api_error(response)        
         r = response.json()['features']
         log.check(len(r) > 0, f'No product named {product_id}')
