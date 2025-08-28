@@ -117,6 +117,7 @@ products['ECOSTRESS'] = {
         'dtstart': datetime(2023, 10, 20),
         'dtend': datetime(2023, 11, 14),
         'geo': Polygon.from_bounds(239.70,34.21,240.47,35.23),
+        'name_contains': ['L1C'],
         'product_id': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01'
     }
 }
