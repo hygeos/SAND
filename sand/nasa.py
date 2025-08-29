@@ -1,6 +1,3 @@
-import requests
-import json
-
 from pathlib import Path
 from typing import Optional
 from shapely import Point, Polygon
@@ -10,7 +7,6 @@ from datetime import datetime, date
 
 from core import log
 from core.files import filegen
-from core.static import interface
 from core.table import read_xml, select, select_cell
 from core.geo.product_name import get_pattern, get_level
 
@@ -60,7 +56,7 @@ class DownloadNASA(BaseDownload):
         """
         log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -205,7 +201,6 @@ class DownloadNASA(BaseDownload):
             if 'Location' not in response.headers:
                 raise ValueError(f'status code : [{response.status_code}]')
             url = response.headers['Location']
-            # response = self.session.get(url, allow_redirects=False)
             response = self.session.get(url, verify=True, allow_redirects=True)
             niter += 1
         raise_api_error(response)
@@ -221,7 +216,7 @@ class DownloadNASA(BaseDownload):
                     f.write(chunk)
                     pbar.update(1024)
     
-    @interface
+    
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -235,7 +230,7 @@ class DownloadNASA(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
     
-    @interface
+    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

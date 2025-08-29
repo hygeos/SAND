@@ -1,6 +1,5 @@
 import eumdac
 import requests
-import shutil
 
 from pathlib import Path
 from typing import Optional
@@ -19,7 +18,6 @@ from sand.tinyfunc import (
 
 from core import log
 from core.table import select, select_cell, read_xml
-from core.static import interface
 from core.network.auth import get_auth
 from core.geo.product_name import get_pattern, get_level
 from core.files import filegen
@@ -69,7 +67,7 @@ class DownloadEumDAC(BaseDownload):
         self.datastore = eumdac.DataStore(self.tokens)        
         log.debug(f'Log to API (https://data.eumetsat.int/)')
     
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime] = None,
@@ -235,7 +233,7 @@ class DownloadEumDAC(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
     
-    @interface
+    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

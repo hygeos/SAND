@@ -14,8 +14,7 @@ from sand.tinyfunc import (
 
 from core import log
 from core.network.auth import get_auth
-from core.static import interface
-from core.files import filegen
+from core.files.fileutils import filegen
 from core.table import select_cell, select
 
 import re
@@ -56,7 +55,7 @@ class DownloadCNES(BaseDownload):
         self.tokens = auth['password']
         log.debug('Log to API (https://geodes-portal.cnes.fr/)')
     
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime]=None,
@@ -180,7 +179,6 @@ class DownloadCNES(BaseDownload):
                     f.write(chunk)
                     pbar.update(1024)
     
-    @interface
     def download_file(self, product_id: str, dir, if_exists='skip'):
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
@@ -200,7 +198,6 @@ class DownloadCNES(BaseDownload):
                 for d in r]
         return self.download(Query(out).iloc[0], dir, if_exists)
         
-    @interface 
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -216,7 +213,6 @@ class DownloadCNES(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
         
-    @interface           
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets

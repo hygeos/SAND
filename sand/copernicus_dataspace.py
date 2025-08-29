@@ -1,9 +1,9 @@
-from datetime import datetime, date, time
+from datetime import datetime, date
 from requests.utils import requote_uri
 from urllib.parse import urlencode
-from pathlib import Path
 from typing import Optional
 from typing import Literal
+from pathlib import Path
 
 import re
 import fnmatch
@@ -15,7 +15,6 @@ from sand.results import Query
 
 from core import log
 from core.files import filegen
-from core.static import interface
 from core.network.auth import get_auth
 from core.table import select_cell, select
 from core.geo.product_name import get_pattern, get_level
@@ -71,7 +70,7 @@ class DownloadCDSE(BaseDownload):
         self.tokens = r.json()["access_token"]
         log.debug('Log to API (https://dataspace.copernicus.eu/)')
     
-    @interface
+    
     def change_api(self, api_name: Literal['OData', 'OpenSearch']):
         """
         To change backend Copernicus API
@@ -80,7 +79,7 @@ class DownloadCDSE(BaseDownload):
         log.debug(f'Move from {self.api} API to {api_name} API')
         self.api = api_name
     
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime] = None,
@@ -162,7 +161,7 @@ class DownloadCDSE(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    @interface
+    
     def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
         """
         Download a product from copernicus data space
@@ -225,8 +224,6 @@ class DownloadCDSE(BaseDownload):
                 t.sleep(60 * exp_timeout_cnt)
                 
                 self.session = requests.Session()
-                
-        # end while
         
         # Download file
         log.debug('Start writing on device')
@@ -251,7 +248,7 @@ class DownloadCDSE(BaseDownload):
         assert len(ls) == 1, 'Multiple products found'
         return self.download(ls.iloc[0], dir)
     
-    @interface
+    
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -268,7 +265,7 @@ class DownloadCDSE(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
     
-    @interface
+    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets

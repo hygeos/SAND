@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional
 from shapely import Point, Polygon
 from datetime import datetime, date
 
 from core import log
 from core.files import filegen
-from core.static import interface
 from core.network.auth import get_auth
 from core.table import select, select_cell
 from core.geo.product_name import get_pattern, get_level
@@ -21,7 +20,7 @@ from sand.tinyfunc import (
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
-
+# M2M API endpoints : https://m2m.cr.usgs.gov/api/docs/reference/#download-search
 class DownloadUSGS(BaseDownload):
     
     name = 'DownloadUSGS'
@@ -72,7 +71,7 @@ class DownloadUSGS(BaseDownload):
                 )
         log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime] = None,
@@ -292,7 +291,7 @@ class DownloadUSGS(BaseDownload):
                     f.write(chunk)
                     pbar.update(1024)
     
-    @interface
+    
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -311,7 +310,7 @@ class DownloadUSGS(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target    
     
-    @interface
+    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
