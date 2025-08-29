@@ -82,6 +82,7 @@ class DownloadUSGS(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
+        collections: list[str] = None, 
         other_attrs: Optional[list] = None,
         **kwargs
     ):
@@ -111,6 +112,8 @@ class DownloadUSGS(BaseDownload):
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
+        
+        collections = collections if collections else self.api_collection
         
         # Define check functions
         checker = []
@@ -174,9 +177,10 @@ class DownloadUSGS(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    def download_file(self, product_id, dir):
+    def download_file(self, product_id, dir, collections: list[str] = None):
         p = get_pattern(product_id)
         self.__init__(p['Name'], get_level(product_id, p))
+        collections = collections if collections else self.api_collection
         
         # Retrieve filter ID to use for this dataset
         url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
@@ -199,7 +203,7 @@ class DownloadUSGS(BaseDownload):
         }
         
         params = {
-            "datasetName": self.api_collection[0],
+            "datasetName": collections[0],
             "sceneFilter": scene_filter,
             "maxResults": 10,
             "metadataType": "full",

@@ -78,6 +78,7 @@ class DownloadEumDAC(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
+        collection: list[str] = None, 
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -103,9 +104,11 @@ class DownloadEumDAC(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        
+
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
+        
+        if collection is None: collection = self.api_collection
             
         # Define check functions
         checker = []
@@ -115,7 +118,7 @@ class DownloadEumDAC(BaseDownload):
         if name_glob: checker.append((check_name_glob, name_glob))
         
         product = []
-        for collec in self.api_collection:
+        for collec in collection:
             
             # Query EumDAC API
             log.debug(f'Query EumDAC API for collection {collec}')
@@ -165,11 +168,12 @@ class DownloadEumDAC(BaseDownload):
         log.info(f'Product has been downloaded at : {target}')
         return target
     
-    def download_file(self, product_id, dir):
+    def download_file(self, product_id, dir, collection: list[str] = None):
         p = get_pattern(product_id)
         self.__init__(p['Name'], get_level(product_id, p))
         
-        for c in self.api_collection:   
+        collection = collection if collection else self.api_collection
+        for c in collection:   
             collec = self.datastore.get_collection(c)
             prod = self.datastore.get_product(collec, product_id)
             target = Path(dir)/prod._id
@@ -201,31 +205,31 @@ class DownloadEumDAC(BaseDownload):
         target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
         
         def _download_qkl(target, url):# Initialize session for download
-        self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
+            self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
 
-        # Try to request server
-        niter = 0
-        response = self.session.get(url, allow_redirects=False)
-        log.debug(f'Requesting server for {target.name}')
-        while response.status_code in (301, 302, 303, 307) and niter < 5:
-            log.debug(f'Download content [Try {niter+1}/5]')
-            if 'Location' not in response.headers:
-                raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
-            response = self.session.get(url, verify=True, allow_redirects=True)
-            niter += 1
-        raise_api_error(response)
+            # Try to request server
+            niter = 0
+            response = self.session.get(url, allow_redirects=False)
+            log.debug(f'Requesting server for {target.name}')
+            while response.status_code in (301, 302, 303, 307) and niter < 5:
+                log.debug(f'Download content [Try {niter+1}/5]')
+                if 'Location' not in response.headers:
+                    raise ValueError(f'status code : [{response.status_code}]')
+                url = response.headers['Location']
+                response = self.session.get(url, verify=True, allow_redirects=True)
+                niter += 1
+            raise_api_error(response)
 
-        # Download file
-        log.debug('Start writing on device')
-        filesize = int(response.headers["Content-Length"])
-        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
-                        desc='writing', unit_divisor=1024, leave=False)
-        with open(target, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(1024)
+            # Download file
+            log.debug('Start writing on device')
+            filesize = int(response.headers["Content-Length"])
+            pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                            desc='writing', unit_divisor=1024, leave=False)
+            with open(target, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        pbar.update(1024)
 
         if not target.exists():
             filegen(0)(_download_qkl)(target, url)

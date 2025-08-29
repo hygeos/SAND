@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 def eval_login(downloader, collec, level):
     downloader(collec, level)
+    downloader()
     
 def eval_collection(downloader):
     collec = downloader().get_available_collection()

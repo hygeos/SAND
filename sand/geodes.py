@@ -141,7 +141,7 @@ class DownloadCNES(BaseDownload):
         
         log.info(f'{len(out)} products has been found')
         return Query(out)
-    
+
     def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
         Download a product from Geodes Datahub
@@ -197,7 +197,7 @@ class DownloadCNES(BaseDownload):
                  'links': d['assets'], 'time': d['properties']['datetime']}
                 for d in r]
         return self.download(Query(out).iloc[0], dir, if_exists)
-        
+
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
@@ -212,7 +212,7 @@ class DownloadCNES(BaseDownload):
         
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
-        
+          
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets

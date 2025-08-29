@@ -91,6 +91,7 @@ class DownloadCDSE(BaseDownload):
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
         use_most_recent: bool = True,
+        collection: list[str] = None,
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -108,6 +109,7 @@ class DownloadCDSE(BaseDownload):
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
             use_most_recent (bool): keep only the most recent processing baseline version
+            collection (str): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -122,6 +124,8 @@ class DownloadCDSE(BaseDownload):
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
+        
+        if collection is None: collection = self.api_collection
         
         log.debug(f'Query {self.api} API')
         params = _Request_params(collection, dtstart, dtend, geo, name_glob, 
@@ -302,11 +306,11 @@ class _Request_params:
         self.cloudcover_thres = cloudcover_thres
         
 def _query_odata(params: _Request_params):        
-        """Query the EOData Finder API"""
-        
-        query_lines = [
+    """Query the EOData Finder API"""
+    
+    query_lines = [
         f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '{params.collection}' """
-        ]
+    ]
 
     if params.dtstart:
         query_lines.append(f'ContentDate/Start gt {params.dtstart.isoformat()}Z')
@@ -320,11 +324,11 @@ def _query_odata(params: _Request_params):
         assert params.name_endswith is None
         assert params.name_contains is None
         substrings = re.split(r'\*|\?', params.name_glob)
-            if substrings[0]:
+        if substrings[0]:
             params.name_startswith = substrings[0]
-            if substrings[-1] and (len(substrings) > 1):
+        if substrings[-1] and (len(substrings) > 1):
             params.name_endswith = substrings[-1]
-            if (len(substrings) > 2):
+        if (len(substrings) > 2):
             params.name_contains = [x for x in substrings[1:-1] if x]
 
     if params.name_startswith:
@@ -333,36 +337,36 @@ def _query_odata(params: _Request_params):
     if params.name_contains:
         assert isinstance(params.name_contains, list)
         for cont in params.name_contains:
-                query_lines.append(f"contains(Name, '{cont}')")
+            query_lines.append(f"contains(Name, '{cont}')")
 
     if params.name_endswith:
         query_lines.append(f"endswith(Name, '{params.name_endswith}')")
 
     if params.cloudcover_thres:
-            query_lines.append(
-                "Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' "
+        query_lines.append(
+            "Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' "
             f"and att/OData.CSC.DoubleAttribute/Value le {params.cloudcover_thres})")
 
-        top = 1000  # maximum value of number of retrieved values
-        req = (' and '.join(query_lines))+f'&$top={top}'
-        response = requests.get(requote_uri(req), verify=True)
-        
+    top = 1000  # maximum value of number of retrieved values
+    req = (' and '.join(query_lines))+f'&$top={top}'
+    response = requests.get(requote_uri(req), verify=True)
+    
     raise_api_error(response)
     check_too_many_matches(response.json())
-        return response.json()['value']
+    return response.json()['value']
 
 def _query_opensearch(params: _Request_params):
-        """Query the OpenSearch Finder API"""
-        
-        def _get_next_page(links):
-            for link in links:
-                if link["rel"] == "next":
-                    return link["href"]
-            return False
+    """Query the OpenSearch Finder API"""
+    
+    def _get_next_page(links):
+        for link in links:
+            if link["rel"] == "next":
+                return link["href"]
+        return False
 
     query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{params.collection}/search.json?maxRecords=1000"""
-        
-        query_params = {'status': 'ALL'}
+    
+    query_params = {'status': 'ALL'}
     if params.dtstart is not None: 
         query_params["startDate"] = params.dtstart.isoformat()
         
@@ -372,16 +376,16 @@ def _query_opensearch(params: _Request_params):
     if params.geo is not None: 
         query_params["geometry"] = _parse_geometry(params.geo)
 
-        query += f"&{urlencode(query_params)}"
-        
-        query_response = []
-        while query:
-            response = requests.get(query, verify=True)
-            response.raise_for_status()
-            data = response.json()
-            for feature in data["features"]:
-                query_response.append(feature)
-            query = _get_next_page(data["properties"]["links"])
+    query += f"&{urlencode(query_params)}"
+    
+    query_response = []
+    while query:
+        response = requests.get(query, verify=True)
+        response.raise_for_status()
+        data = response.json()
+        for feature in data["features"]:
+            query_response.append(feature)
+        query = _get_next_page(data["properties"]["links"])
     
     check_too_many_matches(data)
-        return query_response
+    return query_response

@@ -67,6 +67,7 @@ class DownloadNASA(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
+        collections: list[str] = None,
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -97,6 +98,8 @@ class DownloadNASA(BaseDownload):
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
         
+        collections = collections if collections else self.api_collection
+        
         data = {}
         headers = {'Accept': 'application/json'}
         
@@ -123,7 +126,7 @@ class DownloadNASA(BaseDownload):
         if cloudcover_thres: data['cloud_cover'] = f",{cloudcover_thres}"
             
         out = []
-        for collec in self.api_collection:
+        for collec in collections:
             
             # Query NASA API
             log.debug(f'Query NASA API for collection {collec}')
@@ -136,7 +139,7 @@ class DownloadNASA(BaseDownload):
             response = response.json()['feed']['entry']   
             
             # Filter products
-            response = [p for p in response if self.check_name(p['title'], checker)]            
+            response = [p for p in response if self.check_name(p['title'], checker)]        
             
             for d in response:
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
@@ -145,20 +148,22 @@ class DownloadNASA(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    def download_file(self, product_id, dir):
+    def download_file(self, product_id, dir, collections: list[str] = None):
         p = get_pattern(product_id)
         self.__init__(p['Name'], get_level(product_id, p))
         
         data = {'page_size': 5}
         headers = {'Accept': 'application/json'}
         url = 'https://cmr.earthdata.nasa.gov/search/granules'
-        for collec in self.api_collection:   
+        
+        collections = collections if collections else self.api_collection
+        for collec in collections:   
             data['concept_id'] = collec
             data['granule_ur'] = product_id
             url_encode = url + '?' + urlencode(data)
             response = self.session.post(url_encode, headers=headers, verify=True)
             response = response.json()['feed']['entry']   
-            if len(response) == 0: continue            
+            if len(response) == 0: continue          
             
             dl_url = response[0]['links'][0]['href']
             target = Path(dir)/Path(dl_url).name
