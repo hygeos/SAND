@@ -170,13 +170,12 @@ class DownloadCDSE(BaseDownload):
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """        
         
         target = Path(dir)/(product['name'])
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
-        filegen(0, if_exists=if_exists, uncompress='.zip')(self._download)(target, url)
+        filegen(if_exists=if_exists, uncompress='.zip')(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
         return target
 

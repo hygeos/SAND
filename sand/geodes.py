@@ -43,7 +43,7 @@ class DownloadCNES(BaseDownload):
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
             )
-            cds.download(ls.iloc[0], <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'geodes'
         super().__init__(collection, level)
@@ -150,15 +150,13 @@ class DownloadCNES(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    @interface
-    def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
         Download a product from Geodes Datahub
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         search = [l for l in product['links'] if re.search(product['name']+'.*.zip',l)]
         log.check(len(search) == 1, "No download link for product found")

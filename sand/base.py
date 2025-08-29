@@ -53,19 +53,19 @@ class BaseDownload:
         """
         return NotImplemented
 
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str) -> Path:
         """
         Download a product from API server
         """
         return NotImplemented
 
-    def download_all(self, products, dir: Path|str, if_exists: str='skip', uncompress: bool=True) -> list[Path]:
+    def download_all(self, products, dir: Path|str, if_exists: str='skip') -> list[Path]:
         """
         Download all products from API server resulting from a query
         """
         out = []
         for i in range(len(products)): 
-            out.append(self.download(products.iloc[i], dir, if_exists, uncompress))
+            out.append(self.download(products.iloc[i], dir, if_exists))
         return out 
 
     def quicklook(self, product: dict, dir: Path|str):

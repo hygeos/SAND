@@ -50,7 +50,7 @@ class DownloadNASA(BaseDownload):
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750)
             )
-            cds.download(ls.iloc[0], <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'nasa'
         super().__init__(collection, level)
@@ -180,15 +180,13 @@ class DownloadNASA(BaseDownload):
             log.info(f'Product has been downloaded at : {target}')
             return target
     
-    @interface
-    def download(self, product: dict, dir: Path|str, if_exists='skip', uncompress: bool=False) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
         Download a product from NASA data space
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         url = self._get(product['links'], '.h5', 'title', 'href')
         target = Path(dir)/Path(url).name

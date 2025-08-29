@@ -46,7 +46,7 @@ class DownloadEumDAC(BaseDownload):
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
             )
-            eum.download(ls.iloc[0], <dirname>, uncompress=True)
+            eum.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'eumdac'
         super().__init__(collection, level)
@@ -153,15 +153,14 @@ class DownloadEumDAC(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    @interface
-    def download(self, product: str, dir: Path, if_exists='skip', uncompress: bool=False) -> Path:
+    
+    def download(self, product: str, dir: Path, if_exists='skip') -> Path:
         """
         Download a product to directory
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         data = self.datastore.get_product(
             product_id=product['id'],
