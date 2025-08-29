@@ -183,7 +183,13 @@ def raise_api_error(response: dict):
         log.error(msg.format(line['tag'].values[0], line['explain'].values[0]), 
                   e=RequestsError)
     return status
-    
+
+def check_too_many_matches(response: dict):
+    log.check(response['context']['returned'] == response['context']['matched'],
+              f"The query returned too many matches ({response['context']['matched']}) "
+              f"and exceeded the limit ({response['context']['returned']}) "
+              "set by the provider.", e=RequestsError)
+
 def get_ssl_context() -> ssl.SSLContext:
     """
     Returns an SSL context based on ``ssl_verify`` argument.

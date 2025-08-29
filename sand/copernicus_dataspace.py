@@ -9,8 +9,8 @@ import re
 import fnmatch
 import requests
 
+from sand.base import raise_api_error, BaseDownload, check_too_many_matches
 from sand.tinyfunc import _parse_geometry, change_lon_convention
-from sand.base import raise_api_error, BaseDownload
 from sand.results import Query
 
 from core import log
@@ -42,7 +42,7 @@ class DownloadCDSE(BaseDownload):
                 geo=Point(119.514442, -8.411750),
                 name_contains=['_MSIL1C_'],
             )
-            cds.download(ls.iloc[0], <dirname>, uncompress=True)
+            cds.download(ls.iloc[0], <dirname>)
         """
         self.api = 'OData'
         self.provider = 'cdse'
@@ -125,18 +125,18 @@ class DownloadCDSE(BaseDownload):
         name_contains = self._complete_name_contains(name_contains)
         
         log.debug(f'Query {self.api} API')
-        params = (dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres)
+        params = _Request_params(collection, dtstart, dtend, geo, name_glob, 
+                                 name_contains, name_startswith, name_endswith,
+                                 cloudcover_thres)
+        
         if self.api == 'OpenSearch':
-            response = self._query_opensearch(*params)
+            response = _query_opensearch(params)
         elif self.api == 'OData': 
-            response = self._query_odata(*params)
+            response = _query_odata(params)
         else: log.error(f'Invalid API, got {self.api}', e=ValueError)
 
         # test if maximum number of returns is reached
-        if len(response) >= 1000:
-            log.error('The request led to the maximum number of results '
-                      f'({len(response)})', e=ValueError)
-        else: log.info(f'{len(response)} products has been found')
+        log.info(f'{len(response)} products has been found')
         
         if use_most_recent and (self.api_collection == 'SENTINEL-2'):
             # remove duplicate products, take only the most recent one
@@ -286,59 +286,75 @@ class DownloadCDSE(BaseDownload):
         except AssertionError: log.error(
             f'Level{self.level} products are not available for {self.collection}', e=KeyError)
 
-    def _query_odata(self, dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres):
+
+class _Request_params:
+    
+    def __init__(self, collection, dtstart, dtend, geo, name_glob, 
+                name_contains, name_startswith, name_endswith, cloudcover_thres):
+        
+        self.collection = collection
+        self.dtstart = dtstart
+        self.dtend = dtend
+        self.geo = geo 
+        
+        self.name_glob = name_glob
+        self.name_contains = name_contains
+        self.name_startswith = name_startswith
+        self.name_endswith = name_endswith
+        
+        self.cloudcover_thres = cloudcover_thres
+        
+def _query_odata(params: _Request_params):        
         """Query the EOData Finder API"""
         
         query_lines = [
-            f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '{self.api_collection}' """
+        f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '{params.collection}' """
         ]
 
-        if dtstart:
-            query_lines.append(f'ContentDate/Start gt {dtstart.isoformat()}Z')
-        if dtend:
-            query_lines.append(f'ContentDate/Start lt {dtend.isoformat()}Z')
-        if geo:
-            query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{geo}')")
+    if params.dtstart:
+        query_lines.append(f'ContentDate/Start gt {params.dtstart.isoformat()}Z')
+    if params.dtend:
+        query_lines.append(f'ContentDate/Start lt {params.dtend.isoformat()}Z')
+    if params.geo:
+        query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo}')")
 
-        if name_glob:
-            assert name_startswith is None
-            assert name_endswith is None
-            assert name_contains is None
-            substrings = re.split(r'\*|\?', name_glob)
+    if params.name_glob:
+        assert params.name_startswith is None
+        assert params.name_endswith is None
+        assert params.name_contains is None
+        substrings = re.split(r'\*|\?', params.name_glob)
             if substrings[0]:
-                name_startswith = substrings[0]
+            params.name_startswith = substrings[0]
             if substrings[-1] and (len(substrings) > 1):
-                name_endswith = substrings[-1]
+            params.name_endswith = substrings[-1]
             if (len(substrings) > 2):
-                name_contains = [x for x in substrings[1:-1] if x]
+            params.name_contains = [x for x in substrings[1:-1] if x]
 
-        if name_startswith:
-            query_lines.append(f"startswith(Name, '{name_startswith}')")
+    if params.name_startswith:
+        query_lines.append(f"startswith(Name, '{params.name_startswith}')")
 
-        if name_contains:
-            assert isinstance(name_contains, list)
-            for cont in name_contains:
+    if params.name_contains:
+        assert isinstance(params.name_contains, list)
+        for cont in params.name_contains:
                 query_lines.append(f"contains(Name, '{cont}')")
 
-        if name_endswith:
-            query_lines.append(f"endswith(Name, '{name_endswith}')")
+    if params.name_endswith:
+        query_lines.append(f"endswith(Name, '{params.name_endswith}')")
 
-        if cloudcover_thres:
+    if params.cloudcover_thres:
             query_lines.append(
                 "Attributes/OData.CSC.DoubleAttribute/any(att:att/Name eq 'cloudCover' "
-                f"and att/OData.CSC.DoubleAttribute/Value le {cloudcover_thres})")
+            f"and att/OData.CSC.DoubleAttribute/Value le {params.cloudcover_thres})")
 
         top = 1000  # maximum value of number of retrieved values
         req = (' and '.join(query_lines))+f'&$top={top}'
-        # urllib_req = Request(requote_uri(req))
-        # urllib_response = urlopen(urllib_req, timeout=5, context=self.ssl_ctx)
-        # response = json.load(urllib_response)
         response = requests.get(requote_uri(req), verify=True)
         
-        # assert urllib_response.status == 200
+    raise_api_error(response)
+    check_too_many_matches(response.json())
         return response.json()['value']
 
-    def _query_opensearch(self, dtstart, dtend, geo, name_glob, name_contains, name_startswith, name_endswith, cloudcover_thres):
+def _query_opensearch(params: _Request_params):
         """Query the OpenSearch Finder API"""
         
         def _get_next_page(links):
@@ -347,12 +363,17 @@ class DownloadCDSE(BaseDownload):
                     return link["href"]
             return False
 
-        query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{self.api_collection}/search.json?maxRecords=1000"""
+    query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{params.collection}/search.json?maxRecords=1000"""
         
         query_params = {'status': 'ALL'}
-        if dtstart is not None: query_params["startDate"] = dtstart.isoformat()
-        if dtend is not None: query_params["completionDate"] = dtend.isoformat()
-        if geo is not None: query_params["geometry"] = _parse_geometry(geo)
+    if params.dtstart is not None: 
+        query_params["startDate"] = params.dtstart.isoformat()
+        
+    if params.dtend is not None: 
+        query_params["completionDate"] = params.dtend.isoformat()
+        
+    if params.geo is not None: 
+        query_params["geometry"] = _parse_geometry(params.geo)
 
         query += f"&{urlencode(query_params)}"
         
@@ -364,4 +385,6 @@ class DownloadCDSE(BaseDownload):
             for feature in data["features"]:
                 query_response.append(feature)
             query = _get_next_page(data["properties"]["links"])
+    
+    check_too_many_matches(data)
         return query_response

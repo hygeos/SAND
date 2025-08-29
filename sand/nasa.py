@@ -4,9 +4,7 @@ import json
 from pathlib import Path
 from typing import Optional
 from shapely import Point, Polygon
-from requests.utils import requote_uri
 from tempfile import TemporaryDirectory
-from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 from datetime import datetime, date
 
@@ -16,7 +14,7 @@ from core.static import interface
 from core.table import read_xml, select, select_cell
 from core.geo.product_name import get_pattern, get_level
 
-from sand.base import BaseDownload, raise_api_error
+from sand.base import BaseDownload, raise_api_error, check_too_many_matches
 from sand.results import Query
 from sand.tinyfunc import (
     change_lon_convention,
@@ -137,18 +135,12 @@ class DownloadNASA(BaseDownload):
             data['page_size'] = 1000
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
             url_encode = url + '?' + urlencode(data)
-            urllib_req = Request(requote_uri(url_encode), headers=headers)
-            urllib_response = urlopen(urllib_req, timeout=100, context=self.ssl_ctx)
-            response = json.load(urllib_response)['feed']['entry']   
+            response = self.session.post(url_encode, headers=headers, verify=True)
+            check_too_many_matches(response.json())
+            response = response.json()['feed']['entry']   
             
             # Filter products
             response = [p for p in response if self.check_name(p['title'], checker)]            
-            
-            # test if maximum number of returns is reached
-            top = 1000
-            if len(response) + len(out) >= top:
-                log.error('The request led to the maximum number of results '
-                        f'({len(response) + len(out)})', e=ValueError)
             
             for d in response:
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
@@ -161,24 +153,25 @@ class DownloadNASA(BaseDownload):
         p = get_pattern(product_id)
         self.__init__(p['Name'], get_level(product_id, p))
         
-        data = {'page_size': 10}
+        data = {'page_size': 5}
         headers = {'Accept': 'application/json'}
         url = 'https://cmr.earthdata.nasa.gov/search/granules'
         for collec in self.api_collection:   
             data['concept_id'] = collec
             data['granule_ur'] = product_id
             url_encode = url + '?' + urlencode(data)
-            urllib_req = Request(requote_uri(url_encode), headers=headers)
-            urllib_response = urlopen(urllib_req, timeout=100, context=self.ssl_ctx)
-            response = json.load(urllib_response)['feed']['entry']
+            response = self.session.post(url_encode, headers=headers, verify=True)
+            response = response.json()['feed']['entry']   
             if len(response) == 0: continue            
             
-            dl_url = self._get(response[0]['links'], '.h5', 'title', 'href')
+            dl_url = response[0]['links'][0]['href']
             target = Path(dir)/Path(dl_url).name
-            try: filegen(0, if_exists='skip')(self._download)(target, dl_url)
-            except: continue
+            filegen(if_exists='skip')(self._download)(target, dl_url)
             log.info(f'Product has been downloaded at : {target}')
             return target
+        
+        log.error(f'No file found with name {product_id}')
+    
     
     def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
@@ -188,7 +181,7 @@ class DownloadNASA(BaseDownload):
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
         """
-        url = self._get(product['links'], '.h5', 'title', 'href')
+        url = product['links'][0]['href']
         target = Path(dir)/Path(url).name
         filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
@@ -248,7 +241,7 @@ class DownloadNASA(BaseDownload):
         Returns the product metadata including attributes and assets
         """
         req = self._get(product['links'], '.xml', 'title', 'href')
-        meta = requests.get(req).text
+        meta = self.session.get(req).text
 
         assert len(meta) > 0
         with TemporaryDirectory() as tmpdir:

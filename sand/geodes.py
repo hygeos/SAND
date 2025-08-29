@@ -3,7 +3,7 @@ from shapely import Point
 from pathlib import Path
 from typing import Optional
 
-from sand.base import BaseDownload, raise_api_error
+from sand.base import BaseDownload, raise_api_error, check_too_many_matches
 from sand.results import Query
 from sand.tinyfunc import (
     check_name_contains, 
@@ -117,9 +117,7 @@ class DownloadCNES(BaseDownload):
         if dtend:
             query['end_datetime'] = {'lte':dtend.isoformat()+'Z'}
         
-        log.check(sum(v is not None for v in [geo, tile_number, venus_site])!=0,
-                  "Please fill in at least geo or tile number or venus site")
-        log.check(sum(v is not None for v in [geo, tile_number, venus_site])==1)
+        log.check(sum(v is not None for v in [geo, tile_number, venus_site])<2)
         if isinstance(geo, Point): geo = geo.buffer(0.5)
         if geo: data['bbox'] = list(geo.bounds)
         if tile_number: query["location"] = tile_number
@@ -133,14 +131,9 @@ class DownloadCNES(BaseDownload):
         raise_api_error(response)
         
         # Filter products
+        check_too_many_matches(response.json())
         r = response.json()['features']
         response = [p for p in r if self.check_name(p["properties"]['identifier'], checker)]   
-
-        # test if maximum number of returns is reached
-        if len(response) >= 500:
-            log.error('The request led to the maximum number of results '
-                      f'({len(response)})', e=ValueError)
-        else: log.info(f'{len(response)} products has been found')
 
         out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
                  'links': d['assets'], 'time': d['properties']['datetime'],
