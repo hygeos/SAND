@@ -51,7 +51,9 @@ Note that the login field is not necessarily the e-mail address but can be a tok
 | NASA | username | password |
 | USGS | email address | token secret |
  
-
+<aside style="background:#00000; border-left:4px solid #0077cc; padding:10px; margin:10px 0; display:block;">
+	ℹ️ <b>Note</b> : To use USGS M2M API, you need to send a request to get access their dataset. (https://ers.cr.usgs.gov/profile/access)
+</aside>
 
 ## Installation
 
