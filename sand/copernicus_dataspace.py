@@ -9,7 +9,7 @@ import re
 import fnmatch
 import requests
 
-from sand.base import raise_api_error, BaseDownload, check_too_many_matches
+from sand.base import raise_api_error, BaseDownload, RequestsError
 from sand.tinyfunc import _parse_geometry, change_lon_convention
 from sand.results import Query
 
@@ -352,7 +352,11 @@ def _query_odata(params: _Request_params):
     response = requests.get(requote_uri(req), verify=True)
     
     raise_api_error(response)
-    check_too_many_matches(response.json())
+    if len(response.json()['value']) == top: raise NotImplementedError
+    log.check(len(response.json()['value']) < top, 
+              "The number of matches has reached the API limit on the maximum " 
+              "number of items returned. This may mean that some hits are missing. "
+              "Please refine your query.", e=RequestsError)
     return response.json()['value']
 
 def _query_opensearch(params: _Request_params):
@@ -387,5 +391,4 @@ def _query_opensearch(params: _Request_params):
             query_response.append(feature)
         query = _get_next_page(data["properties"]["links"])
     
-    check_too_many_matches(data)
     return query_response

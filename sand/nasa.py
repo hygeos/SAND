@@ -10,7 +10,7 @@ from core.files import filegen
 from core.table import read_xml, select, select_cell
 from core.geo.product_name import get_pattern, get_level
 
-from sand.base import BaseDownload, raise_api_error, check_too_many_matches
+from sand.base import BaseDownload, raise_api_error, RequestsError
 from sand.results import Query
 from sand.tinyfunc import (
     change_lon_convention,
@@ -135,7 +135,10 @@ class DownloadNASA(BaseDownload):
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
             url_encode = url + '?' + urlencode(data)
             response = self.session.post(url_encode, headers=headers, verify=True)
-            check_too_many_matches(response.json())
+            log.check(len(response.json()['feed']['entry']) < data['page_size'], 
+              "The number of matches has reached the API limit on the maximum " 
+              "number of items returned. This may mean that some hits are missing. "
+              "Please refine your query.", e=RequestsError)
             response = response.json()['feed']['entry']   
             
             # Filter products

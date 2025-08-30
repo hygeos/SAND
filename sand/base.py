@@ -1,5 +1,6 @@
 from datetime import datetime, date, time
 from shapely import Point, Polygon
+from functools import reduce
 from pathlib import Path
 from time import sleep
 
@@ -184,10 +185,15 @@ def raise_api_error(response: dict):
                   e=RequestsError)
     return status
 
-def check_too_many_matches(response: dict):
-    log.check(response['context']['returned'] == response['context']['matched'],
-              f"The query returned too many matches ({response['context']['matched']}) "
-              f"and exceeded the limit ({response['context']['returned']}) "
+def check_too_many_matches(response: dict, 
+                           returned_tag: str|list[str], 
+                           hit_tag: str|list[str]):
+    returned = reduce(lambda x,k: x[k], returned_tag, response) 
+    matches = reduce(lambda x,k: x[k], hit_tag, response)
+    
+    log.check(returned == matches,
+              f"The query returned too many matches ({matches}) "
+              f"and exceeded the limit ({returned}) "
               "set by the provider.", e=RequestsError)
 
 def get_ssl_context() -> ssl.SSLContext:

@@ -161,7 +161,7 @@ class DownloadUSGS(BaseDownload):
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
         self.session.headers.update(self.API_key)
         response = self.session.post(url, json=params)
-        check_too_many_matches(response.json())
+        check_too_many_matches(response.json(), ['data','recordsReturned'], ['data','totalHits'])
         raise_api_error(response)
         r = response.json()
         if r['data'] is None: log.error(r['errorMessage'], e=Exception)

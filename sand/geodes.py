@@ -130,7 +130,7 @@ class DownloadCNES(BaseDownload):
         raise_api_error(response)
         
         # Filter products
-        check_too_many_matches(response.json())
+        check_too_many_matches(response.json(), ['context','returned'], ['context','matched'])
         r = response.json()['features']
         response = [p for p in r if self.check_name(p["properties"]['identifier'], checker)]   
 
