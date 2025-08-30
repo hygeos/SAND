@@ -52,7 +52,10 @@ class DownloadCDSE(BaseDownload):
         Login to copernicus dataspace with credentials storted in .netrc
         """
         auth = get_auth("dataspace.copernicus.eu")
-
+        self._get_tokens(auth)
+        log.debug('Log to API (https://dataspace.copernicus.eu/)')
+    
+    def _get_tokens(self, auth: dict):
         data = {
             "client_id": "cdse-public",
             "username": auth['user'],
@@ -68,8 +71,6 @@ class DownloadCDSE(BaseDownload):
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
                 )
         self.tokens = r.json()["access_token"]
-        log.debug('Log to API (https://dataspace.copernicus.eu/)')
-    
     
     def change_api(self, api_name: Literal['OData', 'OpenSearch']):
         """
@@ -211,23 +212,16 @@ class DownloadCDSE(BaseDownload):
                     if 'Location' not in response.headers:
                         raise ValueError(f'status code : [{response.status_code}]')
                     url = response.headers['Location']
-                    # response = self.session.get(url, allow_redirects=False)
                     response = self.session.get(url, verify=True, allow_redirects=True)
                     niter += 1
-                raise_api_error(response)
+                response.raise_for_status()
                 status = True
             
-            except Exception as e: # exponential wait when ecountering errors
-                log.warning(log.rgb.red, str(e))
-                
-                exp_timeout_cnt *= 2
-                self.session.close()
-                
-                import time as t
-                log.warning(log.rgb.red, f"Waiting {exp_timeout_cnt}min ...")
-                t.sleep(60 * exp_timeout_cnt)
-                
+            except Exception as e:
+                # Refresh session tokens
                 self.session = requests.Session()
+                auth = get_auth("dataspace.copernicus.eu")
+                self._get_tokens(auth)
         
         # Download file
         log.debug('Start writing on device')

@@ -2698,8 +2698,8 @@ packages:
   timestamp: 1740240332327
 - pypi: ./
   name: sand
-  version: 1.0.2
-  sha256: 5d9437e334da4461fdc8a8dd8860cee82d4e2a1cc280aec030403642ddff0e03
+  version: 1.0.3
+  sha256: 47c3bd49544f88dc8bc23bc620940d7bef1e9ed305a71b7397f108ec63c69b1b
   requires_dist:
   - numpy
   - requests
