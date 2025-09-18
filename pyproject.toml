@@ -1,6 +1,6 @@
 [project]
 name = "sand"
-version = "1.0.3"
+version = "1.0.4"
 description = "SAND - Satellite Acquisition Normative Downloader"
 authors = [{name = "HYGEOS team"}]
 requires-python = ">=3.10"
@@ -12,8 +12,12 @@ dependencies = [
     "shapely", 
     'pillow', 
     "pandas", 
-    "core @ git+https://github.com/hygeos/core@v2", 
-    ]
+]
+
+[project.optional-dependencies]
+git = [
+    "core @ git+https://github.com/hygeos/core.git"
+]
 
 [tool.pixi.project]
 channels = ["conda-forge"]
