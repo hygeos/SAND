@@ -257,3 +257,12 @@ products['MODIS-TERRA-LR'] = {
         'geo': Point(21, 8),
     }    
 }
+
+# PACE-OCI Product
+products['PACE-OCI'] = {
+    'level1':{
+        'dtstart': datetime(2024, 10, 1),
+        'dtend': datetime(2024, 10, 15),
+        'geo': Point(21, 8),
+    }    
+}

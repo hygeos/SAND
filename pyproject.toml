@@ -1,6 +1,6 @@
 [project]
 name = "sand"
-version = "1.0.4"
+version = "1.0.5"
 description = "SAND - Satellite Acquisition Normative Downloader"
 authors = [{name = "HYGEOS team"}]
 requires-python = ">=3.10"
@@ -32,7 +32,7 @@ dl = "python3 scripts/try_dl.py"
 check_product = "python3 scripts/eval_product_dl.py"
 
 [tool.pixi.pypi-dependencies]
-sand = { path = ".", editable = true }
+sand = { path = ".", editable = true, extras= ['git'] }
 
 [tool.pixi.dependencies]
 numpy = "*"

@@ -185,7 +185,8 @@ class DownloadNASA(BaseDownload):
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
         """
-        url = product['links'][0]['href']
+        title = f"Download {product['name']}"
+        url = self._get(product['links'], title, 'title', 'href')
         target = Path(dir)/Path(url).name
         filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')

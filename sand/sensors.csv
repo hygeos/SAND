@@ -25,6 +25,8 @@ MODIS-AQUA-LR,      2002-05-01,  x,           Moderate Resolution Imaging Spectr
 MODIS-TERRA-HR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
 MODIS-TERRA-LR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
 MVIRI-MFG,          1977-11-01,  2017-01-01,  Meteosat Visible Infra-Red Imager (Meteosat First Generation), https://www.eoportal.org/satellite-missions/meteosat-first-generation
+PACE-OCI,           2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Ocean Color Instrument), https://oceancolor.gsfc.nasa.gov/about/missions/pace-harp2
+PACE-HARP2,         2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Hyper-Angular Rainbow Polarimeter), https://oceancolor.gsfc.nasa.gov/about/missions/pace-harp2
 PLEIADES,           2011-12-17,  x,           Pléiades constellation from CNES, https://www.eoportal.org/satellite-missions/pleiades
 S2GLC,              x,  x,           Sentinel-2 Global Land Cover,
 SENTINEL-1,         2014-04-03,  x,           Sentinel-1, https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
