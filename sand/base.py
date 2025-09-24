@@ -60,10 +60,23 @@ class BaseDownload:
         """
         return NotImplemented
 
-    def download_all(self, products, dir: Path|str, if_exists: str='skip') -> list[Path]:
+    def download_all(self, products, dir: Path|str, if_exists: str='skip', 
+                     parallelized: bool = False) -> list[Path]:
         """
         Download all products from API server resulting from a query
         """
+        if parallelized:
+            
+            from multiprocessing import Pool
+            from functools import partial
+            
+            workers = min(1, len(products))
+            process = partial(self.download, dir=dir, if_exists=if_exists)
+            with Pool(workers) as pool:
+                tmp = pool.map(process, [p[1] for p in products.iterrows()])
+                # tmp = pool.map(process, products)
+                return tmp
+            
         out = []
         for i in range(len(products)): 
             out.append(self.download(products.iloc[i], dir, if_exists))
