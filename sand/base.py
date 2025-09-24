@@ -1,12 +1,12 @@
 from datetime import datetime, date, time
 from shapely import Point, Polygon
+from functools import reduce
 from pathlib import Path
 from time import sleep
 
 from sand.results import Collection
 from sand.tinyfunc import end_of_day
-from sand.patterns import get_pattern, get_level
-from core.table import *
+from core.table import read_csv, select, select_cell
 from core import log
 
 import requests
@@ -20,6 +20,10 @@ class BaseDownload:
         Python interface to API Server
         """
         self.level = level
+        
+        # Initialize session
+        self.session = requests.Session()
+        self.ssl_ctx = get_ssl_context()
         
         # Load provider properties
         provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
@@ -36,8 +40,6 @@ class BaseDownload:
             self.api_collection = self._retrieve_collec_name(collection)
         
         # Login to API
-        self.session = requests.Session()
-        self.ssl_ctx = get_ssl_context()
         self._login()
 
     def _login(self):
@@ -52,31 +54,33 @@ class BaseDownload:
         """
         return NotImplemented
 
-    def download(self, product: dict, dir: Path|str, uncompress: bool=True) -> Path:
+    def download(self, product: dict, dir: Path|str) -> Path:
         """
         Download a product from API server
         """
         return NotImplemented
 
-    def download_all(self, products, dir: Path|str, if_exists: str='skip', uncompress: bool=True) -> list[Path]:
+    def download_all(self, products, dir: Path|str, if_exists: str='skip', 
+                     parallelized: bool = False) -> list[Path]:
         """
         Download all products from API server resulting from a query
         """
+        if parallelized:
+            
+            from multiprocessing import Pool
+            from functools import partial
+            
+            workers = min(1, len(products))
+            process = partial(self.download, dir=dir, if_exists=if_exists)
+            with Pool(workers) as pool:
+                tmp = pool.map(process, [p[1] for p in products.iterrows()])
+                # tmp = pool.map(process, products)
+                return tmp
+            
         out = []
         for i in range(len(products)): 
-            out.append(self.download(products.iloc[i], dir, if_exists, uncompress))
+            out.append(self.download(products.iloc[i], dir, if_exists))
         return out 
-    
-    def download_file(self, product_id: str, dir: Path | str) -> Path:
-        """
-        Download product knowing is product id 
-        (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
-        """
-        p = get_pattern(product_id)
-        self.__init__(p['Name'], get_level(product_id, p))
-        ls = self.query(name_contains=[product_id])
-        assert len(ls) == 1, 'Multiple products found'
-        return self.download(ls.iloc[0], dir)
 
     def quicklook(self, product: dict, dir: Path|str):
         """
@@ -125,7 +129,8 @@ class BaseDownload:
         ref = ref[ref['Name'] == self.collection]
         
         # Check format
-        assert dtstart is not None, 'Start date could not be None'
+        if dtstart is None: 
+            dtstart = datetime.fromisoformat(ref['launch_date'].values[0])
         if isinstance(dtstart, date):
             dtstart = datetime.combine(dtstart, time(0))
         if dtend is None:
@@ -136,7 +141,7 @@ class BaseDownload:
         
         # Check time 
         launch, end = ref['launch_date'].values[0], ref['end_date'].values[0]
-        assert dtstart.date() > date.fromisoformat(launch)
+        assert dtstart.date() >= date.fromisoformat(launch)
         if end != 'x': assert dtend.date() < date.fromisoformat(end)
         
         # Check spatial
@@ -192,7 +197,18 @@ def raise_api_error(response: dict):
         log.error(msg.format(line['tag'].values[0], line['explain'].values[0]), 
                   e=RequestsError)
     return status
+
+def check_too_many_matches(response: dict, 
+                           returned_tag: str|list[str], 
+                           hit_tag: str|list[str]):
+    returned = reduce(lambda x,k: x[k], returned_tag, response) 
+    matches = reduce(lambda x,k: x[k], hit_tag, response)
     
+    log.check(returned == matches,
+              f"The query returned too many matches ({matches}) "
+              f"and exceeded the limit ({returned}) "
+              "set by the provider.", e=RequestsError)
+
 def get_ssl_context() -> ssl.SSLContext:
     """
     Returns an SSL context based on ``ssl_verify`` argument.

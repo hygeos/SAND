@@ -1,7 +1,7 @@
 from sand.copernicus_dataspace import DownloadCDSE
 from sand.sample_product import products
 from sand.base import RequestsError
-from sand.tinyfunc import *
+from sand.tinyfunc import change_lon_convention
 
 from core.table import read_csv
 from shapely import Point, Polygon
@@ -34,7 +34,7 @@ def test_latlon_convention(collec, constraint, lonlat):
 def test_latlon_change_convention(geo):
     change_lon_convention(geo)
         
-@pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','theia','usgs'])
+@pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','geodes','usgs'])
 def test_provider_file(provider):
     p = str(Path(__file__).parent.parent/'sand'/'collections'/'{}.csv')
     read_csv(p.format(provider))

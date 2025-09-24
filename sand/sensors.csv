@@ -7,14 +7,17 @@ CCM,                x,  x,           Copernicus Contributing Missions,
 COP-DEM,            x,  x,           Copernicus Digital Elevation Model,	
 ECOSTRESS,          2018-06-29,  x,           ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station, https://www.eoportal.org/satellite-missions/iss-ecostress
 EMIT,               2022-07-14,  x,           Earth surface Mineral dust source InvesTigation, https://www.eoportal.org/satellite-missions/iss-emit
-ENVISAT,            2002-03-01,  x,           EnviSat (Environmental Satellite), https://www.eoportal.org/satellite-missions/envisat
+ENVISAT-MERIS,      2002-03-01,  x,           EnviSat (Environmental Satellite) Medium Resolution Imaging Spectrometer, https://www.eoportal.org/satellite-missions/envisat
 FCI-MTG-HR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 FCI-MTG-NR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 GLOBAL-MOSAICS,     x,  x,           GLOBAL-MOSAICS,
 IASI,               2006-10-19,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
-LANDSAT-1-4-MSS,    x,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-4
-LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-5
-LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.usgs.gov/landsat-missions/landsat-7
+LANDSAT-1-MSS,      x,  x,           LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-2-MSS,      x,  x,           LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-3-MSS,      x,  x,           LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-4-MSS,      x,  x,           LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-7
 LANDSAT-8-OLI,      2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-8
 LANDSAT-9-OLI,      2021-09-27,  x,           LANDSAT-9 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-9
 MODIS-AQUA-HR,      2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
@@ -22,6 +25,8 @@ MODIS-AQUA-LR,      2002-05-01,  x,           Moderate Resolution Imaging Spectr
 MODIS-TERRA-HR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
 MODIS-TERRA-LR,     1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
 MVIRI-MFG,          1977-11-01,  2017-01-01,  Meteosat Visible Infra-Red Imager (Meteosat First Generation), https://www.eoportal.org/satellite-missions/meteosat-first-generation
+PACE-OCI,           2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Ocean Color Instrument), https://oceancolor.gsfc.nasa.gov/about/missions/pace-harp2
+PACE-HARP2,         2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Hyper-Angular Rainbow Polarimeter), https://oceancolor.gsfc.nasa.gov/about/missions/pace-harp2
 PLEIADES,           2011-12-17,  x,           Pléiades constellation from CNES, https://www.eoportal.org/satellite-missions/pleiades
 S2GLC,              x,  x,           Sentinel-2 Global Land Cover,
 SENTINEL-1,         2014-04-03,  x,           Sentinel-1, https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
@@ -36,7 +41,11 @@ SENTINEL-6-HR,      2020-11-21,  x,           Sentinel-6 at High Resolution, htt
 SENTINEL-6-LR,      2020-11-21,  x,           Sentinel-6 at Low Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
 SEVIRI-MSG,         2002-02-28,  x,           Spinning Enhanced Visible Infra-Red Imager (Meteosat Second Generation), https://www.eoportal.org/satellite-missions/meteosat-second-generation
 SMOS,               2009-12-02,  x,           Soil Moisture and Ocean Salinity, https://directory.eoportal.org/satellite-missions/smos#smos-soil-moisture-and-ocean-salinity-mission
-SPOT,               1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-5
+SPOT-1,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1
+SPOT-2,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-2
+SPOT-3,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-3
+SPOT-4,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-4
+SPOT-5,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-5
 SWH,                x,  x,           Spot World Heritage,
 VENUS,              2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite, https://www.eoportal.org/satellite-missions/venus
 VENUS-VM5,          2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite (Second phase), https://www.eoportal.org/satellite-missions/venus

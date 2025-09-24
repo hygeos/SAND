@@ -1,5 +1,5 @@
 from tempfile import TemporaryDirectory
-from core.cache import cache_dataframe
+from core.files import cache_dataframe
 from .conftest import savefig 
 from pathlib import Path
 from PIL import Image
@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 def eval_login(downloader, collec, level):
     downloader(collec, level)
+    downloader()
     
 def eval_collection(downloader):
     collec = downloader().get_available_collection()
@@ -19,7 +20,8 @@ def eval_download(downloader, collec, level, **kwargs):
     with TemporaryDirectory() as tmpdir:
         name_cache = Path(tmpdir)/f'test_{dl.name}_cache.pickle'
         ls = cache_dataframe(name_cache)(dl.query)(**kwargs)
-        dl.download(ls.iloc[0], tmpdir, uncompress=True)
+        assert all(c in ls.columns for c in ['id', 'name'])
+        dl.download(ls.iloc[0], tmpdir)
         assert len(list(Path(tmpdir).iterdir())) == 2
     
 def eval_metadata(downloader, collec, level, **kwargs):
@@ -50,4 +52,4 @@ def eval_download_file(downloader, product_id):
     with TemporaryDirectory() as tmpdir:
         quick = dl.download_file(product_id, tmpdir)
         assert Path(quick).exists()
-        assert product_id in quick
+        assert product_id in quick.name

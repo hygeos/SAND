@@ -1,0 +1,3 @@
+SAND_name,              level,  contains, collec           
+LANDSAT-5-TM,           2,      ,         Landsat57
+SENTINEL-3-OLCI-FR,     1,      OL_1,     EO:EUM:DAT:0409 EO:EUM:DAT:0577

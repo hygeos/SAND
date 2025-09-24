@@ -28,7 +28,7 @@ def Collection(selection: list, collec_table: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Filtered table containing selected collections
     """
     assert all(c in collec_table['Name'].values for c in selection), \
-    f'Some collection in {selection} does not exists in {collec_table['Name']}'
+    f'Some collection in {selection} does not exists in {collec_table["Name"]}'
     
     # Filter reference table
     filt = [c in selection for c in collec_table['Name']]

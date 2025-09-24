@@ -15,20 +15,20 @@
 ## What is SAND ?
 
 **SAND** is a python module that simplifies the downloading of satellite data supplied by various providers. 
-It also acts as a proxy for executing the API requests and is designed to use a minimum of dependency to facilitate its incorporation into production lines. 
+It also acts as a proxy for executing the API requests and is designed to use a minimum of dependency to facilitate its incorporation into production pipelines. 
 
 ## Registration to providers
 
 Depending on the provider or resource you want to download, you will need to add your credentials in the *.netrc* file in the home folder. To help you create your different accounts, please find below a table summarising the different registration links.
 
 
-| Provider | Registration |
-| --- | --- | 
-| CDS | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) |   
-| CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) |   
-| EumDAC | [data.eumetsat.int](https://eoportal.eumetsat.int) |   
-| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) |   
-| USGS | [usgs.gov](https://ers.cr.usgs.gov/) |   
+| Provider | Registration | Use tokens |
+| --- | --- | --- |
+| CDSE | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) | <center>❌</center> |
+| CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) | <center>✅</center> |
+| EumDAC | [data.eumetsat.int](https://data.eumetsat.int) | <center>✅</center> |
+| NASA | [nasa.gov](https://cmr.earthdata.nasa.gov/search) | <center>❌</center> |
+| USGS | [usgs.gov](https://ers.cr.usgs.gov/) | <center>✅</center> |
 
 
 ## Configuration 
@@ -37,20 +37,29 @@ Once you have registered, simply enter your credentials in the *.netrc* file wit
 
 ```text
 machine [Registration link]
-    login [email address]
-    password [password]
+    login [...]
+    password [...]
 ```
 
-Note that the login field is not necessarily the e-mail address but can be a character string provided by the registration site (cf. EumDAC). 
+Note that the login field is not necessarily the e-mail address but can be a tokens provided by the registration site (cf. following table).
 
-
-In addition, some providers such as Creodias require double authentication to download the data. Please enter your TOTP key in the file to finalise the configuration of these providers.
+| Provider | login | password  |
+| --- | --- | --- |
+| CDSE | email address | password |
+| CNES | email address | token secret |
+| EumDAC | token key | token secret |
+| NASA | username | password |
+| USGS | email address | token secret |
+ 
+<aside style="background:#00000; border-left:4px solid #0077cc; padding:10px; margin:10px 0; display:block;">
+	ℹ️ <b>Note</b> : To use USGS M2M API, you need to send a request to get access their dataset. (https://ers.cr.usgs.gov/profile/access)
+</aside>
 
 ## Installation
 
 The package can be installed with the command:
 ```sh
-pip install git+ssh://git@github.com:hygeos/SAND.git
+pip install https://github.com/hygeos/SAND.git
 ```
 
 ## Get Started
@@ -66,18 +75,17 @@ from shapely import Point
 # Login to USGS API
 dl = DownloadUSGS('LANDSAT-5-TM', level=1)
 
-# Search for appropriated acquistions
+# Search for appropriated acquisitions
 name_cache = './cache.pickle'
 ls = cache_dataframe(name_cache)(dl.query)(
     dtstart = datetime(2000, 12, 10),
     dtend = datetime(2005, 12, 10),
     geo = Point(119.514442, -8.411750),
-    name_contains = ['LT05_L1TP_114066_20051115_20201008_02_T1']
 )
 
 # Download Landsat granule
 outdir = '.'
-dl.download(ls[0], outdir, uncompress=True)
+dl.download(ls.iloc[0], outdir)
 ```
 
 ## Providers

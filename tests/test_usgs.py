@@ -16,6 +16,9 @@ def level(request):
 @pytest.fixture
 def constraint(collec):
     return products[collec]['level1']
+    
+@pytest.fixture
+def product_id(constraint): return constraint['product_id']
 
 
 def test_login(collec, level):
@@ -32,3 +35,6 @@ def test_metadata(collec, level, constraint):
     
 def test_quicklook(request, collec, level, constraint):
     eval_quicklook(request, DownloadUSGS, collec, level, **constraint)
+            
+def test_download_file(product_id):
+    eval_download_file(DownloadUSGS, product_id)

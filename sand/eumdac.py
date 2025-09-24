@@ -1,24 +1,26 @@
 import eumdac
 import requests
-import shutil
 
 from pathlib import Path
 from typing import Optional
 from shapely import to_wkt
-from xmltodict import parse
 from tempfile import TemporaryDirectory
 from datetime import datetime, date
 
 from sand.base import raise_api_error, RequestsError, BaseDownload
 from sand.results import Query
-from sand.tinyfunc import *
+from sand.tinyfunc import (
+    check_name_contains, 
+    check_name_glob,
+    check_name_endswith,
+    check_name_startswith,
+)
 
 from core import log
-from core.ftp import get_auth
-from core.fileutils import filegen
-from core.static import interface
-from core.table import select_cell, select
-from core.uncompress import uncompress as func_uncompress
+from core.table import select, select_cell, read_xml
+from core.network.auth import get_auth
+from core.geo.product_name import get_pattern, get_level
+from core.files import filegen
 
 
 class DownloadEumDAC(BaseDownload):
@@ -42,7 +44,7 @@ class DownloadEumDAC(BaseDownload):
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
             )
-            eum.download(ls.iloc[0], <dirname>, uncompress=True)
+            eum.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'eumdac'
         super().__init__(collection, level)
@@ -63,9 +65,9 @@ class DownloadEumDAC(BaseDownload):
             log.error("Invalid Credentials", e=RequestsError)  
         
         self.datastore = eumdac.DataStore(self.tokens)        
-        log.info(f'Log to API (https://data.eumetsat.int/)')
+        log.debug(f'Log to API (https://data.eumetsat.int/)')
     
-    @interface
+    
     def query(
         self,
         dtstart: Optional[date|datetime] = None,
@@ -76,8 +78,8 @@ class DownloadEumDAC(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
-        use_most_recent: bool = True,
-        other_attrs: Optional[list] = None,
+        collection: list[str] = None, 
+        other_attrs: Optional[list] = [],
         **kwargs
     ):
         """
@@ -85,15 +87,14 @@ class DownloadEumDAC(BaseDownload):
 
         Args:
             dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry. Examples:
+            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
                 Polygon(...)
-            cloudcover_thres: Optional[int]=None, 
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
             name_contains (list): list of substrings
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
-            use_most_recent (bool): keep only the most recent processing baseline version
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -103,9 +104,11 @@ class DownloadEumDAC(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        
+
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)
+        
+        if collection is None: collection = self.api_collection
             
         # Define check functions
         checker = []
@@ -115,7 +118,7 @@ class DownloadEumDAC(BaseDownload):
         if name_glob: checker.append((check_name_glob, name_glob))
         
         product = []
-        for collec in self.api_collection:
+        for collec in collection:
             
             # Query EumDAC API
             log.debug(f'Query EumDAC API for collection {collec}')
@@ -131,10 +134,7 @@ class DownloadEumDAC(BaseDownload):
             # Filter products
             product += [p for p in prod if self.check_name(str(p), checker)]
         
-            # test if maximum number of returns is reached
-            if len(product) >= 1000:
-                log.error('The request led to the maximum number of results '
-                        f'({len(product)})', e=ValueError)
+        if cloudcover_thres: log.warning("'cloudcover_thres' is not used with eumdac") 
         
         out = [{"id": str(d), 
                 "name": d.acronym, 
@@ -142,106 +142,102 @@ class DownloadEumDAC(BaseDownload):
                 "time": d.processingTime,
                 "dl_url": d.metadata['properties']['links']['data'],
                 "meta_url": d.metadata['properties']['links']['alternates'],
-                "quicklook_url": d.metadata['properties']['links']['previews'],
-                } 
+                "quicklook_url": d.metadata['properties']['links'].get('previews'),
+                **{k: d[k] for k in other_attrs}} 
                 for d in product]
         
-        log.info(f'{len(product)} products has been found')
+        log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    @interface
-    def download(self, product: str, dir: Path, if_exists='skip', uncompress: bool=False) -> Path:
+    
+    def download(self, product: str, dir: Path, if_exists='skip') -> Path:
         """
         Download a product to directory
 
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-            uncompress (bool, optional): If True, uncompress file if needed. Defaults to True.
         """
         data = self.datastore.get_product(
             product_id=product['id'],
             collection_id=product['collection'],
         )
 
-        @filegen(if_exists=if_exists)
-        def _download(target: Path):
-            with TemporaryDirectory() as tmpdir:
-                target_compressed = Path(tmpdir)/(product['id'] + '.zip')
-                with data.open() as fsrc, open(target_compressed, mode='wb') as fdst:
-                    pbar = log.pbar(log.lvl.INFO, total=data.size*1e3, unit="B",
-                        unit_scale=True, initial=0, unit_divisor=1024, leave=False)
-                    pbar.set_description(f"Downloading {product['id'][:8]}...")
-                    while True:
-                        chunk = fsrc.read(1024)
-                        if not chunk:
-                            break
-                        fdst.write(chunk)
-                        pbar.update(len(chunk))
-                log.info(f"Download of product {product['id']} finished.")
-                
-                # Uncompress file if needed
-                if uncompress: func_uncompress(target_compressed, target.parent)
-                else: shutil.move(target_compressed, target.parent)
-
-        target = Path(dir)/(product['id'] if uncompress else (product['id'] + '.zip'))
-
-        _download(target)
+        target = Path(dir)/product['id']
+        filegen(if_exists=if_exists, uncompress='.zip')(self._download)(target, data)
         log.info(f'Product has been downloaded at : {target}')
         return target
     
-    def _download(
-        self,
-        target: Path,
-        url: str,
-    ):
-        """
-        Wrapped by filegen
-        """
-
-        # Initialize session for download
-        self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
-
-        # Try to request server
-        niter = 0
-        response = self.session.get(url, allow_redirects=False)
-        log.debug(f'Requesting server for {target.name}')
-        while response.status_code in (301, 302, 303, 307) and niter < 5:
-            log.debug(f'Download content [Try {niter+1}/5]')
-            if 'Location' not in response.headers:
-                raise ValueError(f'status code : [{response.status_code}]')
-            url = response.headers['Location']
-            # response = self.session.get(url, allow_redirects=False)
-            response = self.session.get(url, verify=True, allow_redirects=True)
-            niter += 1
-        raise_api_error(response)
-
-        # Download file
-        log.debug('Start writing on device')
-        filesize = int(response.headers["Content-Length"])
-        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
-                        desc='writing', unit_divisor=1024, leave=False)
-        with open(target, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(1024)
+    def download_file(self, product_id, dir, collection: list[str] = None):
+        p = get_pattern(product_id)
+        self.__init__(p['Name'], get_level(product_id, p))
+        
+        collection = collection if collection else self.api_collection
+        for c in collection:   
+            collec = self.datastore.get_collection(c)
+            prod = self.datastore.get_product(collec, product_id)
+            target = Path(dir)/prod._id
+            filegen(if_exists='skip', uncompress='.zip')(self._download)(target, prod)
+            log.info(f'Product has been downloaded at : {target}')
+            return target
     
-    @interface
+    def _download(self, target: Path, data):
+        """Wrapped by filegen"""
+        with data.open() as fsrc, open(target, mode='wb') as fdst:
+            pbar = log.pbar(log.lvl.INFO, total=data.size*1e3, unit="B",
+                unit_scale=True, initial=0, unit_divisor=1024, leave=False)
+            pbar.set_description(f"Downloading {data._id[:8]}...")
+            while True:
+                chunk = fsrc.read(1024)
+                if not chunk:
+                    break
+                fdst.write(chunk)
+                pbar.update(len(chunk))
+    
+    
     def quicklook(self, product: dict, dir: Path|str):
         """
         Download a quicklook to `dir`
         """
+        if product['quicklook_url'] is None:
+            log.error('No download link for quicklook')
         url = product['quicklook_url'][0]['href']      
         target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
+        
+        def _download_qkl(target, url):# Initialize session for download
+            self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
+
+            # Try to request server
+            niter = 0
+            response = self.session.get(url, allow_redirects=False)
+            log.debug(f'Requesting server for {target.name}')
+            while response.status_code in (301, 302, 303, 307) and niter < 5:
+                log.debug(f'Download content [Try {niter+1}/5]')
+                if 'Location' not in response.headers:
+                    raise ValueError(f'status code : [{response.status_code}]')
+                url = response.headers['Location']
+                response = self.session.get(url, verify=True, allow_redirects=True)
+                niter += 1
+            raise_api_error(response)
+
+            # Download file
+            log.debug('Start writing on device')
+            filesize = int(response.headers["Content-Length"])
+            pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
+                            desc='writing', unit_divisor=1024, leave=False)
+            with open(target, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        f.write(chunk)
+                        pbar.update(1024)
 
         if not target.exists():
-            filegen(0)(self._download)(target, url)
+            filegen(0)(_download_qkl)(target, url)
 
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
     
-    @interface
+    
     def metadata(self, product):
         """
         Returns the product metadata including attributes and assets
@@ -251,7 +247,10 @@ class DownloadEumDAC(BaseDownload):
         meta = requests.get(req).text
 
         assert len(meta) > 0
-        return parse(meta)
+        with TemporaryDirectory() as tmpdir:
+            with open(Path(tmpdir)/'meta.xml', 'w') as f:
+                f.writelines(meta.split('\n'))
+            return read_xml(Path(tmpdir)/'meta.xml')
     
     def _retrieve_collec_name(self, collection):
         collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
