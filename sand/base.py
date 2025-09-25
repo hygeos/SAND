@@ -2,11 +2,10 @@ from datetime import datetime, date, time
 from shapely import Point, Polygon
 from functools import reduce
 from pathlib import Path
-from time import sleep
 
 from sand.results import Collection
 from sand.tinyfunc import end_of_day, change_lon_convention
-from core.table import read_csv, select, select_cell
+from core.table import read_csv
 from core import log
 
 import requests
@@ -14,56 +13,131 @@ import ssl
 
 
 class BaseDownload:
+    """
+    Base class for satellite data providers API access and download functionality.
     
-    def __init__(self, collection: str = None, level: int = 1):
-        """
-        Python interface to API Server
-        """
-        self.level = level
-        
-        # Initialize session
-        self.session = requests.Session()
-        self.ssl_ctx = get_ssl_context()
-        
-        # Load provider properties
-        provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
-        log.check(provider_file.exists(), 'Provider properties file is missing')
-        self.provider_prop = read_csv(provider_file)
-        self.available_collection = list(self.provider_prop['SAND_name'])
-        
-        # Check collection validity
-        self.collection = collection
-        if collection is not None:
-            log.check(collection in self.available_collection,
-                f"Collection '{collection}' does not exist for this downloader,"
-                " please use get_available_collection methods", e=ValueError)
-            self.api_collection = self._retrieve_collec_name(collection)
-        
-        # Login to API
-        self._login()
+    This class provides a common interface for interacting with different satellite data
+    providers. It handles authentication, querying products, downloading data and metadata
+    retrieval. Child classes must implement the abstract methods for specific provider APIs.
 
+    Attributes:
+        session (requests.Session): HTTP session for making API requests
+        ssl_ctx (ssl.SSLContext): SSL context for secure connections
+        available_collection (list): List of available collections from the provider
+        api_collection (str): Name of the collection in provider's API format
+        name_contains (list): List of naming constraints for products
+    """
+    
+    # Main functions to implement for each provider
+    
     def _login(self):
         """
-        Login to API server with credentials storted in .netrc
+        Login to API server with credentials stored in .netrc file.
+        
+        This method should be implemented by child classes to handle provider-specific
+        authentication. It typically uses credentials from a .netrc file.
+        
+        Returns:
+            NotImplemented: Base class does not implement this method
         """
         return NotImplemented
 
     def query(self, dtstart=None, dtend=None, geo=None) -> dict:
         """
-        Product query on the API server
+        Query products from the API server based on temporal and spatial constraints.
+
+        Args:
+            dtstart (datetime|date, optional): Start date for the query period. 
+                If None, uses collection's launch date.
+            dtend (datetime|date, optional): End date for the query period.
+                If None, uses current date.
+            geo (Shapely.geometry, optional): Spatial constraint as a Shapely geometry
+                (Point or Polygon) with coordinates in (lon, lat) format.
+                Longitude must be in [-180, 360) and latitude in [-90, 90].
+
+        Returns:
+            dict: Query results containing matching products
+
+        Raises:
+            RequestsError: If the spatial constraints are invalid
+            ValueError: If the temporal constraints are outside collection availability
         """
         return NotImplemented
 
     def download(self, product: dict, dir: Path|str) -> Path:
         """
-        Download a product from API server
+        Download a product from the API server.
+
+        Args:
+            product (dict): Product metadata obtained from query results
+            dir (Path|str): Directory where to save the downloaded product
+
+        Returns:
+            Path: Path to the downloaded product file
+
+        Raises:
+            RequestsError: If download fails due to API or network issues
         """
         return NotImplemented
 
+    def quicklook(self, product: dict, dir: Path|str):
+        """
+        Download a quicklook preview image for a product.
+
+        Args:
+            product (dict): Product metadata obtained from query results 
+            dir (Path|str): Directory where to save the quicklook image
+
+        Returns:
+            Path: Path to the downloaded quicklook image
+
+        Raises:
+            RequestsError: If quicklook download fails
+            ValueError: If quicklook is not available for the product
+        """
+        return NotImplemented
+
+    def metadata(self, product: dict):
+        """
+        Retrieve detailed metadata for a product.
+
+        Args:
+            product (dict): Basic product metadata obtained from query results
+
+        Returns:
+            dict: Detailed product metadata including:
+                - attributes: Product attributes (e.g., cloud cover, quality flags)
+                - assets: Available product assets (e.g., bands, ancillary data)
+
+        Raises:
+            RequestsError: If metadata retrieval fails
+        """
+        return NotImplemented
+    
+    # Visible functions already implemented
+    
     def download_all(self, products, dir: Path|str, if_exists: str='skip', 
                      parallelized: bool = False) -> list[Path]:
         """
-        Download all products from API server resulting from a query
+        Download all products from API server resulting from a query.
+
+        Args:
+            products (list[dict]): List of product metadata from query results
+            dir (Path|str): Directory where to save downloaded products
+            if_exists (str, optional): Action to take if product exists:
+                - 'skip': Skip download if file exists (default)
+                - 'overwrite': Replace existing file
+                - 'raise': Raise an error if file exists
+            parallelized (bool, optional): If True, downloads products in parallel
+                using multiple threads. Default is False.
+
+        Returns:
+            list[Path]: List of paths to downloaded product files
+
+        Raises:
+            RequestsError: If any download fails
+            ValueError: If if_exists has invalid value
+            OSError: If directory creation or file operations fail
         """
         if parallelized:
             
@@ -81,39 +155,81 @@ class BaseDownload:
         for i in range(len(products)): 
             out.append(self.download(products.iloc[i], dir, if_exists))
         return out 
-
-    def quicklook(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook to `dir`
-        """
-        return NotImplemented
-
-    def metadata(self, product: dict):
-        """
-        Returns the product metadata including attributes and assets
-        """
-        return NotImplemented  
     
-    def _retrieve_collec_name(self, collection):
-        """
-        Returns the collection name used by API
-        """
-        return NotImplemented 
-
     def get_available_collection(self) -> dict:
         """
         Every downloadable collections
         """
+        # Get list of available collections if not already done
+        if not hasattr(self, 'available_collection'):
+            self._load_provider_properties()
+        
+        # Join with global information contained
         current_dir = Path(__file__).parent
         sensor = read_csv(current_dir/'sensors.csv')
         sensor['launch_date'] = sensor['launch_date'].astype(str)
         sensor['end_date'] = sensor['end_date'].astype(str)
         return Collection(self.available_collection , sensor)
     
-    def check_name(self, name, check_funcs):
+    # Private functions 
+    
+    def _load_provider_properties(self):
+        """
+        Load properties of the provider (collections, levels, etc)
+        """
+        provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
+        log.check(provider_file.exists(), 'Provider properties file is missing')
+        provider_prop = read_csv(provider_file)
+        self.available_collection = list(provider_prop['SAND_name'])
+        return provider_prop
+        
+    def _load_sand_collection_properties(self, collection: str, level: int):
+        """
+        Retrieve properties for a specific SAND collection
+        """
+        props = self._load_provider_properties()
+        self._get_collec_properties(collection, level, props)
+        self.api_collection = self._retrieve_api_collec()
+        self.name_contains = self._set_name_constraint()
+    
+    def _set_session(self): 
+        self.session = requests.Session()
+        self.ssl_ctx = get_ssl_context()
+    
+    def _get_collec_properties(self, collection, level, properties):
+        """
+        Returns SAND collection properties
+        """
+        # Find SAND collection name 
+        log.check(collection in self.available_collection,
+            f"Collection '{collection}' does not exist for this downloader,"
+            " please use get_available_collection methods", e=ValueError)
+        collecs = properties[properties['SAND_name']==collection]
+        
+        # Try to find specific level
+        try: 
+            self.sand_props = collecs[collecs['level']==level]
+        except AssertionError: 
+            log.error(f'Level{level} products are not available for {collection}',
+                      e=KeyError)
+    
+    def _retrieve_api_collec(self):
+        """
+        Returns collection names used by API
+        """
+        return self.sand_props['collec'].values[0].split(' ')
+    
+    def _set_name_constraint(self):
+        """
+        Function to add name constraint to list of user constraint
+        """
+        to_add = self.sand_props['contains'].values[0]
+        return [] if str(to_add) == 'nan' else to_add.split(' ')
+    
+    def _check_name(self, name, check_funcs):
         return all(c[0](name, c[1]) for c in check_funcs)
     
-    def _format_input_query(self, dtstart, dtend, geo):
+    def _format_input_query(self, collection, dtstart, dtend, geo):
         """
         Function to check and format main arguments of query method
 
@@ -126,7 +242,7 @@ class BaseDownload:
         # Open reference file
         ref_file = Path(__file__).parent/'sensors.csv'
         ref = read_csv(ref_file)
-        ref = ref[ref['Name'] == self.collection]
+        ref = ref[ref['Name'] == collection]
         
         # Check format
         if dtstart is None: 
@@ -162,31 +278,23 @@ class BaseDownload:
         
         return dtstart, dtend, geo
     
-    def _complete_name_contains(self, name_contains: list):
-        """
-        Function to add name constraint to list of user constraint
-        """
-        collecs = select(self.provider_prop,('SAND_name','=',self.collection),['level','contains'])
-        to_add = select_cell(collecs, ('level','=',self.level), 'contains')
-        if str(to_add) == 'nan': return name_contains
-        return name_contains + to_add.split(' ')
-    
     def __del__(self):
         self.session.close()
-    
-    
-def request_get(session, url, nb_loop=5, **kwargs):
-    r = session.get(url, **kwargs)
-    for _ in range(nb_loop):
-        try:
-            raise_api_error(r)
-        except RequestsError as e:
-            if 'Too Many Requests' in e:
-                sleep(3)
-                r = session.get(url, **kwargs)
-    return r
 
 def raise_api_error(response: dict):
+    """
+    Check HTTP response status code and raise appropriate error if needed.
+    
+    Args:
+        response (dict): HTTP response object with status_code attribute
+    
+    Returns:
+        int: Status code if response is successful (status < 300)
+        
+    Raises:
+        Exception: If response has no status code
+        RequestsError: If response status code indicates an error (>= 300)
+    """
     log.check(hasattr(response,'status_code'), 'No status code in response', e=Exception)
     ref = read_csv(Path(__file__).parent/'html_status_code.csv')
     
@@ -201,6 +309,17 @@ def raise_api_error(response: dict):
 def check_too_many_matches(response: dict, 
                            returned_tag: str|list[str], 
                            hit_tag: str|list[str]):
+    """
+    Check if an API query returned more matches than it can return in one response.
+    
+    Args:
+        response (dict): API response containing result counts
+        returned_tag (str|list[str]): Path to the number of returned results in response
+        hit_tag (str|list[str]): Path to the total number of matches in response
+    
+    Raises:
+        RequestsError: If there are more total matches than returned results
+    """
     returned = reduce(lambda x,k: x[k], returned_tag, response) 
     matches = reduce(lambda x,k: x[k], hit_tag, response)
     

@@ -27,8 +27,8 @@ def test_invalid_level(collec):
 def test_latlon_convention(collec, constraint, lonlat):
     constraint['geo'] = Point(*lonlat)
     with pytest.raises(RequestsError):
-        dl = DownloadCDSE(collec,1)
-        dl.query(**constraint)
+        dl = DownloadCDSE()
+        dl.query(collection_sand=collec, **constraint)
 
 @pytest.mark.parametrize('center',[0, 180])
 @pytest.mark.parametrize('a, b',[

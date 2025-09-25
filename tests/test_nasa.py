@@ -5,6 +5,10 @@ from sand.sample_product import products
 from sand.nasa import DownloadNASA
 
 
+@pytest.fixture
+def downloader():
+    return DownloadNASA()
+
 @pytest.fixture(params=['ECOSTRESS'])
 def collec(request):
     return request.param
@@ -21,21 +25,21 @@ def constraint(collec):
 def product_id(constraint): return constraint['product_id']
 
 
-def test_login(collec, level):
-    eval_login(DownloadNASA, collec, level)
+def test_login(downloader):
+    eval_login(downloader)
 
-def test_collection():
-    eval_collection(DownloadNASA)
+def test_collection(downloader):
+    eval_collection(downloader)
 
-def test_download(collec, level, constraint):
-    eval_download(DownloadNASA, collec, level, **constraint)
+def test_download(downloader, collec, level, constraint):
+    eval_download(downloader, collec, level, **constraint)
 
-def test_metadata(collec, level, constraint):
-    eval_metadata(DownloadNASA, collec, level, **constraint)
+def test_metadata(downloader, collec, level, constraint):
+    eval_metadata(downloader, collec, level, **constraint)
 
-def test_quicklook(request, collec, level, constraint):
-    eval_quicklook(request, DownloadNASA, collec, level, **constraint)
+def test_quicklook(request, downloader, collec, level, constraint):
+    eval_quicklook(request, downloader, collec, level, **constraint)
             
-def test_download_file(product_id):
-    eval_download_file(DownloadNASA, product_id)
+def test_download_file(downloader, product_id):
+    eval_download_file(downloader, product_id)
     

@@ -1,7 +1,7 @@
 from datetime import datetime, date
 from shapely import Point
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 from sand.base import BaseDownload, raise_api_error, check_too_many_matches
 from sand.results import Query
@@ -15,7 +15,6 @@ from sand.tinyfunc import (
 from core import log
 from core.network.auth import get_auth
 from core.files.fileutils import filegen
-from core.table import select_cell, select
 
 import re
 
@@ -24,9 +23,7 @@ import re
 # https://geodes.cnes.fr/support/api/
 class DownloadCNES(BaseDownload):
     
-    name = 'DownloadCNES'
-    
-    def __init__(self, collection: str = None, level: int = 1):
+    def __init__(self):
         """
         Python interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)
 
@@ -45,12 +42,15 @@ class DownloadCNES(BaseDownload):
             cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'geodes'
-        super().__init__(collection, level)
 
     def _login(self):
         """
         Login to copernicus dataspace with credentials storted in .netrc
         """
+        # Check if session is already set and set it up if not 
+        if not hasattr(self, "session"):
+            self._set_session()
+            
         auth = get_auth("geodes.cnes.fr")     
         self.tokens = auth['password']
         log.debug('Log to API (https://geodes-portal.cnes.fr/)')
@@ -58,16 +58,19 @@ class DownloadCNES(BaseDownload):
     
     def query(
         self,
+        collection_sand: str = None,
+        level: Literal[1,2,3] = 1,
         dtstart: Optional[date|datetime]=None,
         dtend: Optional[date|datetime]=None,
         geo=None,
         cloudcover_thres: Optional[int]=None,
-        name_contains: Optional[list] = None,
+        name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
         tile_number: str = None,
         venus_site: str = None,
+        api_collections: list[str] = None,
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -95,10 +98,18 @@ class DownloadCNES(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        self._login()
+        
+        # Retrieve api collections based on SAND collections
+        if api_collections is None:
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
+            
+        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
         
         # Add provider constraint
-        name_contains = self._complete_name_contains(name_contains)
+        self.name_contains += name_contains
         
         # Define check functions
         checker = []
@@ -109,7 +120,7 @@ class DownloadCNES(BaseDownload):
         
         server_url = "https://geodes-portal.cnes.fr/api/stac/search"
         data = {'page':1, 'limit':500}
-        query = {'dataset': {'in': [self.api_collection]}}
+        query = {'dataset': {'in': self.api_collection}}
 
         if dtstart:
             query['start_datetime'] = {'gte':dtstart.isoformat()+'Z'}
@@ -132,7 +143,7 @@ class DownloadCNES(BaseDownload):
         # Filter products
         check_too_many_matches(response.json(), ['context','returned'], ['context','matched'])
         r = response.json()['features']
-        response = [p for p in r if self.check_name(p["properties"]['identifier'], checker)]   
+        response = [p for p in r if self._check_name(p["properties"]['identifier'], checker)]   
 
         out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
                  'links': d['assets'], 'time': d['properties']['datetime'],
@@ -173,7 +184,11 @@ class DownloadCNES(BaseDownload):
         with open(target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
     
-    def download_file(self, product_id: str, dir, if_exists='skip'):
+    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+        self._login()
+        
+        log.warning('no api collection is required with new GEODES API')
+            
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
         data = {'page':1, 'limit':1}
@@ -190,7 +205,7 @@ class DownloadCNES(BaseDownload):
         out =  [{"id": d["id"], "name": d["properties"]["identifier"], 
                  'links': d['assets'], 'time': d['properties']['datetime']}
                 for d in r]
-        return self.download(Query(out).iloc[0], dir, if_exists)
+        return self.download(Query(out).iloc[0], dir, 'skip')
 
     def quicklook(self, product: dict, dir: Path|str):
         """
@@ -212,13 +227,6 @@ class DownloadCNES(BaseDownload):
         Returns the product metadata including attributes and assets
         """
         raise NotImplementedError
-    
-    def _retrieve_collec_name(self, collection):
-        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
-        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
-        except AssertionError: log.error(
-            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
-        return collecs.split(' ')[0]
     
     def _get(self, liste, name, in_key, out_key):
         for col in liste:

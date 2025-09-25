@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 from shapely import Point, Polygon
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode
@@ -25,10 +25,8 @@ from sand.tinyfunc import (
 
 
 class DownloadNASA(BaseDownload):
-    
-    name = 'DownloadNASA'
 
-    def __init__(self, collection: str = None, level: int = 1):
+    def __init__(self):
         """
         Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)
 
@@ -47,27 +45,32 @@ class DownloadNASA(BaseDownload):
             cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'nasa'
-        super().__init__(collection, level)
         
 
     def _login(self):
         """
         Login to NASA with credentials storted in .netrc
         """
-        log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
         
+        # Check if session is already set and set it up if not 
+        if not hasattr(self, "session"):
+            self._set_session()
+        
+        log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
     
     def query(
         self,
+        collection_sand: str = None,
+        level: Literal[1,2,3] = 1,
         dtstart: Optional[date|datetime]=None,
         dtend: Optional[date|datetime]=None,
-        geo=None,
+        geo: Optional[Point|Polygon]=None,
         cloudcover_thres: Optional[float]=None,
         name_contains: Optional[list] = [],
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
-        collections: list[str] = None,
+        api_collections: list[str] = None,
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -92,14 +95,22 @@ class DownloadNASA(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        self._login()
+        
+        # Retrieve api collections based on SAND collections
+        if api_collections is None:
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
+            
+        # Check provided constraints
+        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
         if geo: geo = change_lon_convention(geo, 0)
         
         # Add provider constraint
-        name_contains = self._complete_name_contains(name_contains)
+        self.name_contains += name_contains
         
-        collections = collections if collections else self.api_collection
-        
+        # Initialise data dictionary
         data = {}
         headers = {'Accept': 'application/json'}
         
@@ -117,7 +128,7 @@ class DownloadNASA(BaseDownload):
         
         # Define check functions
         checker = []
-        if name_contains: checker.append((check_name_contains, name_contains))
+        if name_contains: checker.append((check_name_contains, self.name_contains))
         if name_startswith: checker.append((check_name_startswith, name_startswith))
         if name_endswith: checker.append((check_name_endswith, name_endswith))
         if name_glob: checker.append((check_name_glob, name_glob))
@@ -126,7 +137,7 @@ class DownloadNASA(BaseDownload):
         if cloudcover_thres: data['cloud_cover'] = f",{cloudcover_thres}"
             
         out = []
-        for collec in collections:
+        for collec in self.api_collection:
             
             # Query NASA API
             log.debug(f'Query NASA API for collection {collec}')
@@ -142,7 +153,7 @@ class DownloadNASA(BaseDownload):
             response = response.json()['feed']['entry']   
             
             # Filter products
-            response = [p for p in response if self.check_name(p['title'], checker)]        
+            response = [p for p in response if self._check_name(p['title'], checker)]        
             
             for d in response:
                 out.append({"id": d["id"], "name": d["producer_granule_id"],
@@ -151,16 +162,23 @@ class DownloadNASA(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    def download_file(self, product_id, dir, collections: list[str] = None):
-        p = get_pattern(product_id)
-        self.__init__(p['Name'], get_level(product_id, p))
+    def download_file(self, product_id, dir, api_collections: list[str] = None):
+        
+        self._login()
+        
+        # Retrieve api collections based on SAND collections        
+        if api_collections is None:
+            p = get_pattern(product_id)
+            collection_sand, level = p['Name'], get_level(product_id, p)
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
         
         data = {'page_size': 5}
         headers = {'Accept': 'application/json'}
         url = 'https://cmr.earthdata.nasa.gov/search/granules'
         
-        collections = collections if collections else self.api_collection
-        for collec in collections:   
+        for collec in self.api_collection:   
             data['concept_id'] = collec
             data['granule_ur'] = product_id
             url_encode = url + '?' + urlencode(data)
@@ -247,13 +265,6 @@ class DownloadNASA(BaseDownload):
             with open(Path(tmpdir)/'meta.xml', 'w') as f:
                 f.writelines(meta.split('\n'))
             return read_xml(Path(tmpdir)/'meta.xml')
-    
-    def _retrieve_collec_name(self, collection):
-        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
-        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
-        except AssertionError: log.error(
-            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
-        return collecs.split(' ')
     
     def _get(self, liste, name, in_key, out_key):
         for col in liste:

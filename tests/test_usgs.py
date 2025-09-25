@@ -5,6 +5,10 @@ from sand.sample_product import products
 from sand.usgs import DownloadUSGS
 
 
+@pytest.fixture
+def downloader():
+    return DownloadUSGS()
+
 @pytest.fixture(params=['LANDSAT-5-TM'])
 def collec(request):
     return request.param
@@ -21,20 +25,20 @@ def constraint(collec):
 def product_id(constraint): return constraint['product_id']
 
 
-def test_login(collec, level):
-    eval_login(DownloadUSGS, collec, level)
+def test_login(downloader):
+    eval_login(downloader)
 
-def test_collection():
-    eval_collection(DownloadUSGS)
+def test_collection(downloader):
+    eval_collection(downloader)
 
-def test_download(collec, level, constraint):
-    eval_download(DownloadUSGS, collec, level, **constraint)
-    
-def test_metadata(collec, level, constraint):
-    eval_metadata(DownloadUSGS, collec, level, **constraint)
-    
-def test_quicklook(request, collec, level, constraint):
-    eval_quicklook(request, DownloadUSGS, collec, level, **constraint)
+def test_download(downloader, collec, level, constraint):
+    eval_download(downloader, collec, level, **constraint)
+
+def test_metadata(downloader, collec, level, constraint):
+    eval_metadata(downloader, collec, level, **constraint)
+
+def test_quicklook(request, downloader, collec, level, constraint):
+    eval_quicklook(request, downloader, collec, level, **constraint)
             
-def test_download_file(product_id):
-    eval_download_file(DownloadUSGS, product_id)
+def test_download_file(downloader, product_id):
+    eval_download_file(downloader, product_id)

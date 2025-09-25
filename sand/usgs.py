@@ -1,12 +1,11 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 from shapely import Point, Polygon
 from datetime import datetime, date
 
 from core import log
 from core.files import filegen
 from core.network.auth import get_auth
-from core.table import select, select_cell
 from core.geo.product_name import get_pattern, get_level
 
 from sand.base import raise_api_error, BaseDownload, check_too_many_matches
@@ -22,10 +21,8 @@ from sand.tinyfunc import (
 
 # M2M API endpoints : https://m2m.cr.usgs.gov/api/docs/reference/#download-search
 class DownloadUSGS(BaseDownload):
-    
-    name = 'DownloadUSGS'
 
-    def __init__(self, collection: str = None, level: int = 1):
+    def __init__(self):
         """
         Python interface to the USGS API (https://data.usgs.gov/)
 
@@ -44,13 +41,16 @@ class DownloadUSGS(BaseDownload):
             cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'usgs'
-        super().__init__(collection, level)
         
 
     def _login(self):
         """
         Login to USGS with credentials storted in .netrc
         """
+        # Check if session is already set and set it up if not 
+        if not hasattr(self, "session"):
+            self._set_session()
+            
         auth = get_auth("usgs.gov")
 
         data = {
@@ -74,6 +74,8 @@ class DownloadUSGS(BaseDownload):
     
     def query(
         self,
+        collection_sand: str = None,
+        level: Literal[1,2,3] = 1,
         dtstart: Optional[date|datetime] = None,
         dtend: Optional[date|datetime] = None,
         geo = None,
@@ -82,7 +84,7 @@ class DownloadUSGS(BaseDownload):
         name_startswith: Optional[str] = None,
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
-        collections: list[str] = None, 
+        api_collections: list[str] = None,
         other_attrs: Optional[list] = None,
         **kwargs
     ):
@@ -108,12 +110,18 @@ class DownloadUSGS(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
-        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        self._login()
+        
+        # Retrieve api collections based on SAND collections
+        if api_collections is None:
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
+        
+        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
         
         # Add provider constraint
-        name_contains = self._complete_name_contains(name_contains)
-        
-        collections = collections if collections else self.api_collection
+        self.name_contains += name_contains
         
         # Define check functions
         checker = []
@@ -168,7 +176,7 @@ class DownloadUSGS(BaseDownload):
         r = r['data']['results']
         
         # Filter products
-        response = [p for p in r if self.check_name(p['displayId'], checker)]
+        response = [p for p in r if self._check_name(p['displayId'], checker)]
 
         out = [{"id": d["entityId"], "name": d["displayId"],
                  **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
@@ -177,14 +185,21 @@ class DownloadUSGS(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return Query(out)
     
-    def download_file(self, product_id, dir, collections: list[str] = None):
-        p = get_pattern(product_id)
-        self.__init__(p['Name'], get_level(product_id, p))
-        collections = collections if collections else self.api_collection
+    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+        
+        self._login()
+        
+        # Retrieve api collections based on SAND collections        
+        if api_collections is None:
+            p = get_pattern(product_id)
+            collection_sand, level = p['Name'], get_level(product_id, p)
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
         
         # Retrieve filter ID to use for this dataset
         url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
-        params = {'datasetName': collections[0]}
+        params = {'datasetName': self.api_collection[0]}
         self.session.headers.update(self.API_key)
         r = self.session.get(url_data, json=params)
         for dfilter in r.json()['data']:
@@ -203,7 +218,7 @@ class DownloadUSGS(BaseDownload):
         }
         
         params = {
-            "datasetName": collections[0],
+            "datasetName": self.api_collection[0],
             "sceneFilter": scene_filter,
             "maxResults": 10,
             "metadataType": "full",
@@ -317,10 +332,3 @@ class DownloadUSGS(BaseDownload):
         meta = {}
         for m in product['metadata']: meta[m['fieldName']] = m['value']
         return meta
-    
-    def _retrieve_collec_name(self, collection):
-        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
-        try: collecs = select_cell(collecs,('level','=',self.level),'collec')
-        except AssertionError: log.error(
-            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
-        return collecs.split(' ')

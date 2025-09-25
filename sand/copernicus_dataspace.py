@@ -1,9 +1,9 @@
 from datetime import datetime, date
 from requests.utils import requote_uri
 from urllib.parse import urlencode
-from typing import Optional
-from typing import Literal
+from typing import Optional, Literal
 from pathlib import Path
+from shapely import Point, Polygon
 
 import re
 import fnmatch
@@ -16,26 +16,25 @@ from sand.results import Query
 from core import log
 from core.files import filegen
 from core.network.auth import get_auth
-from core.table import select_cell, select
 from core.geo.product_name import get_pattern, get_level
 
 
 class DownloadCDSE(BaseDownload):
     
-    name = 'DownloadCDSE'
-    
-    def __init__(self, collection: str = None, level: int = 1):
+    def __init__(self):
         """
         Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
 
-        Args:
-            collection (str): collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+        This class implements the BaseDownload interface for accessing and downloading 
+        satellite data from Copernicus Data Space. It supports both OData and OpenSearch APIs.
 
         Example:
-            cds = DownloadCDS('SENTINEL-2-MSI')
+            cds = DownloadCDSE()
             # retrieve the list of products
             # using a pickle cache file to avoid reconnection
             ls = cache_dataframe('query-S2.pickle')(cds.query)(
+                collection_sand='SENTINEL-2-MSI',
+                level=1,
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
@@ -45,17 +44,30 @@ class DownloadCDSE(BaseDownload):
         """
         self.api = 'OData'
         self.provider = 'cdse'
-        super().__init__(collection, level)
 
     def _login(self):
         """
         Login to copernicus dataspace with credentials storted in .netrc
         """
+        # Check if session is already set and set it up if not 
+        if not hasattr(self, "session"):
+            self._set_session()
+            
         auth = get_auth("dataspace.copernicus.eu")
         self._get_tokens(auth)
         log.debug('Log to API (https://dataspace.copernicus.eu/)')
     
-    def _get_tokens(self, auth: dict):
+    def _get_tokens(self, auth: dict) -> None:
+        """
+        Get authentication tokens from Copernicus Data Space using provided credentials.
+
+        Args:
+            auth (dict): Authentication credentials with 'user' and 'password' keys
+                obtained from .netrc file
+
+        Raises:
+            Exception: If token creation fails or server response is invalid
+        """
         data = {
             "client_id": "cdse-public",
             "username": auth['user'],
@@ -74,7 +86,17 @@ class DownloadCDSE(BaseDownload):
     
     def change_api(self, api_name: Literal['OData', 'OpenSearch']):
         """
-        To change backend Copernicus API
+        Change the backend API used for querying Copernicus Data Space.
+
+        The Copernicus Data Space provides two APIs:
+        - OData: Modern REST API with rich querying capabilities
+        - OpenSearch: Legacy API maintained for compatibility
+
+        Args:
+            api_name (Literal['OData', 'OpenSearch']): Name of the API to use
+
+        Raises:
+            ValueError: If api_name is not 'OData' or 'OpenSearch'
         """
         assert api_name in ['OData', 'OpenSearch']
         log.debug(f'Move from {self.api} API to {api_name} API')
@@ -83,6 +105,8 @@ class DownloadCDSE(BaseDownload):
     
     def query(
         self,
+        collection_sand: str = None,
+        level: Literal[1,2,3] = 1,
         dtstart: Optional[date|datetime] = None,
         dtend: Optional[date|datetime] = None,
         geo = None,
@@ -92,7 +116,7 @@ class DownloadCDSE(BaseDownload):
         name_endswith: Optional[str] = None,
         name_glob: Optional[str] = None,
         use_most_recent: bool = True,
-        collection: list[str] = None,
+        api_collections: list[str] = None,
         other_attrs: Optional[list] = [],
         **kwargs
     ):
@@ -100,6 +124,8 @@ class DownloadCDSE(BaseDownload):
         Product query on the Copernicus Data Space
 
         Args:
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
             dtstart and dtend (datetime): start and stop datetimes
             geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
@@ -110,7 +136,7 @@ class DownloadCDSE(BaseDownload):
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
             use_most_recent (bool): keep only the most recent processing baseline version
-            collection (str): name of deserved collection in API standard
+            api_collections (list[str]): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -119,18 +145,24 @@ class DownloadCDSE(BaseDownload):
             Example:
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
+        self._login()
+        
+        # Retrieve api collections based on SAND collections
+        if api_collections is None:
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
+         
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
-        dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
+        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
         if geo: geo = change_lon_convention(geo, 0)
         
         # Add provider constraint
-        name_contains = self._complete_name_contains(name_contains)
-        
-        if collection is None: collection = self.api_collection
+        self.name_contains += name_contains
         
         log.debug(f'Query {self.api} API')
-        params = _Request_params(collection, dtstart, dtend, geo, name_glob, 
-                                 name_contains, name_startswith, name_endswith,
+        params = _Request_params(self.api_collection[0], dtstart, dtend, geo, name_glob, 
+                                 self.name_contains, name_startswith, name_endswith,
                                  cloudcover_thres)
         
         if self.api == 'OpenSearch':
@@ -142,7 +174,7 @@ class DownloadCDSE(BaseDownload):
         # test if maximum number of returns is reached
         log.info(f'{len(response)} products has been found')
         
-        if use_most_recent and (self.api_collection == 'SENTINEL-2'):
+        if use_most_recent and (collection_sand == 'SENTINEL-2-MSI'):
             # remove duplicate products, take only the most recent one
             mp = {}  # maps a single_id to a list of lines
             for args in response:
@@ -187,18 +219,25 @@ class DownloadCDSE(BaseDownload):
         self,
         target: Path,
         url: str,
-    ):
+    ) -> None:
         """
-        Wrapped by filegen
-        """
-        status = False
-        exp_timeout_cnt = 1
+        Internal method to download a file from Copernicus Data Space.
         
+        This method is wrapped by filegen decorator for file management.
+        It handles token refresh and retry logic for failed downloads.
+
+        Args:
+            target (Path): Path where the file should be saved
+            url (str): URL to download the file from
+
+        Raises:
+            ValueError: If response status code is invalid
+            RequestsError: If download fails after retries
+            OSError: If file writing fails
+        """
+        status = False        
         while not status:
-            
-            if exp_timeout_cnt >= 16:
-                log.error("The server error bypass method failed", e=RuntimeError)
-                
+                            
             try:
                 # Initialize session for download
                 self.session.headers.update({'Authorization': f'Bearer {self.tokens}'})
@@ -230,14 +269,22 @@ class DownloadCDSE(BaseDownload):
             [f.write(chunk) for chunk in pbar if chunk]
     
     
-    def download_file(self, product_id: str, dir: Path | str) -> Path:
+    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
         """
         Download product knowing is product id 
         (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
         """
-        p = get_pattern(product_id)
-        self.__init__(p['Name'], get_level(product_id, p))
-        ls = self.query(name_contains=[product_id])
+        self._login()
+        
+        # Retrieve api collections based on SAND collections        
+        if api_collections is None:
+            p = get_pattern(product_id)
+            collection_sand, level = p['Name'], get_level(product_id, p)
+            self._load_sand_collection_properties(collection_sand, level)
+        else:
+            self.api_collection = api_collections
+            
+        ls = self.query(collection_sand=collection_sand, level=level, name_contains=[product_id])
         assert len(ls) == 1, 'Multiple products found'
         return self.download(ls.iloc[0], dir)
     
@@ -269,12 +316,6 @@ class DownloadCDSE(BaseDownload):
 
         assert len(json['value']) == 1
         return json['value'][0]
-    
-    def _retrieve_collec_name(self, collection):
-        collecs = select(self.provider_prop,('SAND_name','=',collection),['level','collec'])
-        try: return select_cell(collecs,('level','=',self.level),'collec')
-        except AssertionError: log.error(
-            f'Level{self.level} products are not available for {self.collection}', e=KeyError)
 
 
 class _Request_params:
