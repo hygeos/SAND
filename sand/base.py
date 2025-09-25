@@ -5,7 +5,7 @@ from pathlib import Path
 from time import sleep
 
 from sand.results import Collection
-from sand.tinyfunc import end_of_day
+from sand.tinyfunc import end_of_day, change_lon_convention
 from core.table import read_csv, select, select_cell
 from core import log
 
@@ -145,20 +145,20 @@ class BaseDownload:
         if end != 'x': assert dtend.date() < date.fromisoformat(end)
         
         # Check spatial
+        msg = "Geospatial constraint should be a shapely object of (lon, lat) "\
+              "and -180<=lon<360 and -90<lat<90, got bounds at ({})"
         if isinstance(geo, Polygon): 
             bounds = geo.bounds
-            log.check(0 <= bounds[0] < 360 and 0 <= bounds[2] < 360 and \
+            log.check(-180 <= bounds[0] < 360 and -180 <= bounds[2] < 360 and \
                       -90 <= bounds[1] <= 90 and -90 <= bounds[3] <= 90,
-                      "Polygon constraint should be a shapely object of (lon, lat) "
-                      f"and 0<=lon<360 and -90<lat<90, got bounds at ({bounds})",
-                      e=RequestsError)
+                      msg.format(bounds), e=RequestsError)
         elif isinstance(geo, Point): 
-            log.check(0 <= geo.x < 360 and -90 <= geo.y <= 90,
-                      "Point constraint should be a shapely object of (lon, lat) "
-                      f"and 0<=lon<360 and -90<lat<90, got point at ({geo.x},{geo.y})",
-                      e=RequestsError)
+            log.check(-180 <= geo.x < 360 and -90 <= geo.y <= 90,
+                      msg.format(f"{geo.x},{geo.y}"), e=RequestsError)
         elif geo is None: pass
         else: log.error(f'Invalid type for geo argmuent, got {type(geo)}', e=ValueError)
+        
+        if geo: geo = change_lon_convention(geo, 180)
         
         return dtstart, dtend, geo
     

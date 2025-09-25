@@ -1,6 +1,7 @@
 from shapely.geometry import shape
 from shapely.ops import transform
 from datetime import timedelta
+from typing import Literal
 import re
 
 def check_name_contains(name: str, elements: list[str]):
@@ -21,9 +22,12 @@ def end_of_day(date):
         return date
     return date
 
-def change_lon_convention(geo):
-    """Change longitude convention to (-180,180), assuming geo has coords as (lon,lat)"""
-    return transform(lambda x,y: ([(a+180)%360-180 for a in x],y), geo)
+def change_lon_convention(geo, center: Literal[0,180]):
+    """Change longitude convention, assuming geo has coords as (lon,lat)"""
+    if center == 0:
+        return transform(lambda x,y: ([(a+180)%360-180 for a in x],y), geo)
+    if center == 180:
+        return transform(lambda x,y: ([a%360 for a in x],y), geo)
 
 def flip_coords(geo):
     """Flips the x and y coordinate values"""

@@ -121,7 +121,7 @@ class DownloadCDSE(BaseDownload):
         """
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        if geo: geo = change_lon_convention(geo)
+        if geo: geo = change_lon_convention(geo, 0)
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)

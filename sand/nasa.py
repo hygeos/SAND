@@ -93,7 +93,7 @@ class DownloadNASA(BaseDownload):
                 cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         dtstart, dtend, geo = self._format_input_query(dtstart, dtend, geo)
-        if geo: geo = change_lon_convention(geo)
+        if geo: geo = change_lon_convention(geo, 0)
         
         # Add provider constraint
         name_contains = self._complete_name_contains(name_contains)

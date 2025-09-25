@@ -23,16 +23,21 @@ def test_invalid_level(collec):
     with pytest.raises(KeyError):
         DownloadCDSE(collec,2)
 
-@pytest.mark.parametrize('lonlat', [(-100,-30), (-30,-100)])
+@pytest.mark.parametrize('lonlat', [(-200,-30), (-30,-100)])
 def test_latlon_convention(collec, constraint, lonlat):
     constraint['geo'] = Point(*lonlat)
     with pytest.raises(RequestsError):
         dl = DownloadCDSE(collec,1)
         dl.query(**constraint)
 
-@pytest.mark.parametrize('geo',[Point(200,30), Polygon.from_bounds(200,30,210,40)])
-def test_latlon_change_convention(geo):
-    change_lon_convention(geo)
+@pytest.mark.parametrize('center',[0, 180])
+@pytest.mark.parametrize('a, b',[
+    (Point(200,30), Point(-160,30)), 
+    (Polygon.from_bounds(200,30,210,40), Polygon.from_bounds(-160,30,-150,40))
+])
+def test_latlon_change_convention(center, a, b):
+    inputs, output = (a,b) if center == 0 else (b,a)
+    assert change_lon_convention(inputs, center) == output
         
 @pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','geodes','usgs'])
 def test_provider_file(provider):
