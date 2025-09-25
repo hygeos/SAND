@@ -183,16 +183,12 @@ class DownloadEumDAC(BaseDownload):
     
     def _download(self, target: Path, data):
         """Wrapped by filegen"""
+        log.debug(f"Downloading {data._id} ...")
         with data.open() as fsrc, open(target, mode='wb') as fdst:
-            pbar = log.pbar(log.lvl.INFO, total=data.size*1e3, unit="B",
-                unit_scale=True, initial=0, unit_divisor=1024, leave=False)
-            pbar.set_description(f"Downloading {data._id[:8]}...")
             while True:
                 chunk = fsrc.read(1024)
-                if not chunk:
-                    break
+                if not chunk: break
                 fdst.write(chunk)
-                pbar.update(len(chunk))
     
     
     def quicklook(self, product: dict, dir: Path|str):
@@ -222,14 +218,9 @@ class DownloadEumDAC(BaseDownload):
 
             # Download file
             log.debug('Start writing on device')
-            filesize = int(response.headers["Content-Length"])
-            pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
-                            desc='writing', unit_divisor=1024, leave=False)
+            pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
             with open(target, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-                        pbar.update(1024)
+                [f.write(chunk) for chunk in pbar if chunk]
 
         if not target.exists():
             filegen(0)(_download_qkl)(target, url)

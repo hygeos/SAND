@@ -166,18 +166,12 @@ class DownloadCNES(BaseDownload):
         """
         Wrapped by filegen
         """
-        desc = url['description'].split()
-        filesize = int(desc[desc.index('bytes')-1])
         self.session.headers.update({"X-API-Key": self.tokens})
         response = self.session.get(url['href'], verify=True)
-        pbar = log.pbar(log.lvl.INFO, total=filesize, unit_scale=True, unit="B", 
-                        desc='writing', unit_divisor=1024, leave=False)
         raise_api_error(response)
+        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
         with open(target, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-                    pbar.update(1024)
+            [f.write(chunk) for chunk in pbar if chunk]
     
     def download_file(self, product_id: str, dir, if_exists='skip'):
         # Query and check if product exists

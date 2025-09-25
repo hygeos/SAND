@@ -1,6 +1,6 @@
 [project]
 name = "sand"
-version = "1.0.5"
+version = "1.0.6"
 description = "SAND - Satellite Acquisition Normative Downloader"
 authors = [{name = "HYGEOS team"}]
 requires-python = ">=3.10"
@@ -11,7 +11,8 @@ dependencies = [
     "eumdac", 
     "shapely", 
     'pillow', 
-    "pandas"]
+    "pandas"
+]
 
 [project.optional-dependencies]
 git = [
@@ -34,16 +35,11 @@ check_product = "python3 scripts/eval_product_dl.py"
 sand = { path = ".", editable = true, extras = ["git"] }
 
 [tool.pixi.dependencies]
-numpy = "*"
-eumdac = "*"
-shapely = "*"
 pytest = "*"
 pytest-html = "*"
 pytest-xdist = "*"
 ipykernel = "*"
-pillow = "*"
 matplotlib = "*"
-ipywidgets = "*"
 
 [tool.pixi.feature.hyp.dependencies]
 [tool.pixi.feature.sys.dependencies]
