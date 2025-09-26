@@ -7,7 +7,7 @@ from datetime import datetime, date
 
 from core import log
 from core.files import filegen
-from core.table import read_xml, select, select_cell
+from core.table import read_xml
 from core.geo.product_name import get_pattern, get_level
 
 from sand.base import BaseDownload, raise_api_error, RequestsError
@@ -102,6 +102,7 @@ class DownloadNASA(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
             
         # Check provided constraints
         dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
@@ -173,14 +174,15 @@ class DownloadNASA(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
         
         data = {'page_size': 5}
         headers = {'Accept': 'application/json'}
         url = 'https://cmr.earthdata.nasa.gov/search/granules'
         
         for collec in self.api_collection:   
-            data['concept_id'] = collec
-            data['granule_ur'] = product_id
+            data['collection_concept_id'] = collec
+            data['producer_granule_id'] = product_id
             url_encode = url + '?' + urlencode(data)
             response = self.session.post(url_encode, headers=headers, verify=True)
             response = response.json()['feed']['entry']   

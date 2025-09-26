@@ -116,6 +116,7 @@ class DownloadEumDAC(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
             
         dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
 
@@ -191,6 +192,7 @@ class DownloadEumDAC(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
         
         for c in self.api_collection:
             collec = self.datastore.get_collection(c)

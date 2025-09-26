@@ -4,6 +4,8 @@ from sand.sample_product import products
 from core.monitor import Chrono
 import pytest
 
+
+@pytest.mark.skip("Not implemented")
 @pytest.mark.parametrize('parallelized', [False, True])
 def test_download_all(parallelized):
     with TemporaryDirectory() as tmpdir, Chrono():

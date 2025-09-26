@@ -152,6 +152,7 @@ class DownloadCDSE(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
          
         # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
         dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
@@ -283,6 +284,7 @@ class DownloadCDSE(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
             
         ls = self.query(collection_sand=collection_sand, level=level, name_contains=[product_id])
         assert len(ls) == 1, 'Multiple products found'

@@ -117,6 +117,7 @@ class DownloadUSGS(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
         
         dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
         
@@ -196,6 +197,7 @@ class DownloadUSGS(BaseDownload):
             self._load_sand_collection_properties(collection_sand, level)
         else:
             self.api_collection = api_collections
+            self.name_contains = []
         
         # Retrieve filter ID to use for this dataset
         url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
