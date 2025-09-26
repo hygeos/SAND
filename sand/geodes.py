@@ -225,8 +225,16 @@ class DownloadCNES(BaseDownload):
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets
-        """
-        raise NotImplementedError
+        server_url = "https://geodes-portal.cnes.fr/api/stac/search"
+        data = {'page':1, 'limit':5}
+        data['query'] = {'identifier': {'contains':product['name']}}
+
+        self.session.headers.update({"X-API-Key": self.tokens})
+        self.session.headers.update({"Content-type": "application/json"})
+        response = self.session.post(server_url, json=data, verify=True)
+        raise_api_error(response)
+
+        return response.json()['features'][0]['properties']
     
     def _get(self, liste, name, in_key, out_key):
         for col in liste:
