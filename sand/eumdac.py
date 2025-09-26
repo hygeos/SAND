@@ -92,6 +92,8 @@ class DownloadEumDAC(BaseDownload):
         Product query on Eumetsat datahub
 
         Args:
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
             dtstart and dtend (datetime): start and stop datetimes
             geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
@@ -101,6 +103,7 @@ class DownloadEumDAC(BaseDownload):
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
+            api_collections (list[str]): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -182,6 +185,21 @@ class DownloadEumDAC(BaseDownload):
         return target
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+        """
+        Download a specific product from EumDAC by its product identifier
+        
+        Args:
+            product_id (str): The identifier of the product to download
+            dir (Path | str): Directory where to store the downloaded file
+            api_collections (list[str], optional): List of API collection names. 
+                If None, will determine from product_id pattern.
+                
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If product cannot be found or downloaded
+        """
         
         self._login()
         

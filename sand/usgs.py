@@ -25,15 +25,16 @@ class DownloadUSGS(BaseDownload):
     def __init__(self):
         """
         Python interface to the USGS API (https://data.usgs.gov/)
-
-        Args:
-            collection (str): collection name ('LANDSAT-5-TM', 'LANDSAT-7-ET', etc.)
+        
+        This class implements the BaseDownload interface for accessing and downloading 
+        satellite data from USGS API.
 
         Example:
-            usgs = DownloadUSGS('LANDSAT-5-TM')
+            usgs = DownloadUSGS()
             # retrieve the list of products
             # using a pickle cache file to avoid reconnection
             ls = cache_dataframe('query-S2.pickle')(cds.query)(
+                collection_sand='LANDSAT-5-TM',
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
@@ -45,7 +46,11 @@ class DownloadUSGS(BaseDownload):
 
     def _login(self):
         """
-        Login to USGS with credentials storted in .netrc
+        Login to USGS using the M2M API with credentials stored in .netrc
+        The authentication uses a token-based system following the USGS M2M API requirements.
+        
+        Raises:
+            Exception: If token creation fails or authentication is unsuccessful
         """
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
@@ -92,6 +97,8 @@ class DownloadUSGS(BaseDownload):
         Product query on the USGS
 
         Args:
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
             dtstart and dtend (datetime): start and stop datetimes
             geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
@@ -102,6 +109,7 @@ class DownloadUSGS(BaseDownload):
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
             use_most_recent (bool): keep only the most recent processing baseline version
+            api_collections (list[str]): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -187,7 +195,21 @@ class DownloadUSGS(BaseDownload):
         return Query(out)
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+        """
+        Download a specific product from USGS by its product identifier
         
+        Args:
+            product_id (str): The identifier of the product to download
+            dir (Path | str): Directory where to store the downloaded file
+            api_collections (list[str], optional): List of API collection names. 
+                If None, will determine from product_id pattern.
+                
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If product cannot be found or downloaded
+        """
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -284,7 +306,17 @@ class DownloadUSGS(BaseDownload):
         url: str,
     ):
         """
-        Wrapped by filegen
+        Internal method to handle the actual download of files from USGS servers
+        
+        Args:
+            target (Path): Path where the file should be saved
+            url (str): URL to download from
+            
+        Notes:
+            - This method is wrapped by filegen decorator
+            - Handles redirects (up to 5 attempts)
+            - Downloads in chunks to support large files
+            - Shows a progress bar during download
         """
 
         # Initialize session for download
@@ -310,7 +342,20 @@ class DownloadUSGS(BaseDownload):
     
     def quicklook(self, product: dict, dir: Path|str):
         """
-        Download a quicklook to `dir`
+        Download a quicklook (preview image) of the product
+        
+        Args:
+            product (dict): Product dictionary containing metadata and browse info
+            dir (Path|str): Directory where to save the quicklook
+            
+        Returns:
+            Path: Path to the downloaded quicklook image file
+            
+        Notes:
+            - Downloads the reflectance quicklook if available
+            - Image is saved as PNG
+            - Uses product name as filename with .png extension
+            - Skips download if file already exists
         """
         
         target = Path(dir)/(product['name'] + '.png')
@@ -329,7 +374,13 @@ class DownloadUSGS(BaseDownload):
     
     def metadata(self, product):
         """
-        Returns the product metadata including attributes and assets
+        Extract metadata from a product's metadata field
+        
+        Args:
+            product (dict): Product dictionary containing a 'metadata' field
+            
+        Returns:
+            dict: Dictionary of metadata field names and their values
         """
         meta = {}
         for m in product['metadata']: meta[m['fieldName']] = m['value']

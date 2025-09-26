@@ -266,3 +266,75 @@ products['PACE-OCI'] = {
         'geo': Point(21, 8),
     }    
 }
+
+# PACE-HARP2 Product
+products['PACE-HARP2'] = {
+    'level1':{
+        'dtstart': datetime(2024, 10, 1),
+        'dtend': datetime(2024, 10, 15),
+        'geo': Point(21, 8),
+    }    
+}
+
+# ENVISAT-MERIS Product
+products['ENVISAT-MERIS'] = {
+    'level1':{
+        'dtstart': datetime(2002, 3, 1),
+        'dtend': datetime(2002, 4, 1),
+        'geo': Point(10, 12),
+    }    
+}
+
+# IASI Product
+products['IASI'] = {
+    'level1':{
+        'dtstart': datetime(2006, 10, 19),
+        'dtend': datetime(2006, 11, 19),
+        'geo': Point(10, 12),
+    }    
+}
+
+# ASCAT-METOP-FR Product
+products['ASCAT-METOP-FR'] = {
+    'level1':{
+        'dtstart': datetime(2006, 10, 19),
+        'dtend': datetime(2006, 11, 19),
+        'geo': Point(10, 12),
+    }    
+}
+
+# ASCAT-METOP-RES Product
+products['ASCAT-METOP-RES'] = {
+    'level1':{
+        'dtstart': datetime(2006, 10, 19),
+        'dtend': datetime(2006, 11, 19),
+        'geo': Point(10, 12),
+    }    
+}
+
+# SMOS Product
+products['SMOS'] = {
+    'level1':{
+        'dtstart': datetime(2009, 12, 2),
+        'dtend': datetime(2010, 1, 2),
+        'geo': Point(10, 12),
+    }    
+}
+
+# ASTER Product
+products['ASTER'] = {
+    'level1':{
+        'dtstart': datetime(1999, 12, 18),
+        'dtend': datetime(2000, 1, 18),
+        'geo': Point(10, 12),
+    }    
+}
+
+# AMSU Product
+products['AMSU'] = {
+    'level1':{
+        'dtstart': datetime(2002, 5, 4),
+        'dtend': datetime(2002, 6, 4),
+        'geo': Point(10, 12),
+    }    
+}

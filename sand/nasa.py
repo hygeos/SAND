@@ -78,6 +78,8 @@ class DownloadNASA(BaseDownload):
         Product query on the CMR NASA
 
         Args:
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
             dtstart and dtend (datetime): start and stop datetimes
             geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
@@ -87,6 +89,7 @@ class DownloadNASA(BaseDownload):
             name_startswith (str): search for name starting with this str
             name_endswith (str): search for name ending with this str
             name_glob (str): match name with this string
+            api_collections (list[str]): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -164,6 +167,21 @@ class DownloadNASA(BaseDownload):
         return Query(out)
     
     def download_file(self, product_id, dir, api_collections: list[str] = None):
+        """
+        Download a specific product from NASA by its product identifier
+        
+        Args:
+            product_id (str): The identifier of the product to download
+            dir (Path | str): Directory where to store the downloaded file
+            api_collections (list[str], optional): List of API collection names. 
+                If None, will determine from product_id pattern.
+                
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If product cannot be found or downloaded
+        """
         
         self._login()
         
@@ -218,7 +236,17 @@ class DownloadNASA(BaseDownload):
         url: str,
     ):
         """
-        Wrapped by filegen
+        Internal method to handle the actual download of files from NASA servers
+        
+        Args:
+            target (Path): Path where the file should be saved
+            url (str): URL to download from
+            
+        Notes:
+            - This method is wrapped by filegen decorator
+            - Handles redirects (up to 5 attempts)
+            - Downloads in chunks to support large files
+            - Shows a progress bar during download
         """
 
         # Try to request server
@@ -243,7 +271,20 @@ class DownloadNASA(BaseDownload):
     
     def quicklook(self, product: dict, dir: Path|str):
         """
-        Download a quicklook to `dir`
+        Download a quicklook (preview image) of the product
+        
+        Args:
+            product (dict): Product dictionary containing metadata and browse info
+            dir (Path|str): Directory where to save the quicklook
+            
+        Returns:
+            Path: Path to the downloaded quicklook image file
+            
+        Notes:
+            - Downloads the reflectance quicklook if available
+            - Image is saved as PNG
+            - Uses product name as filename with .png extension
+            - Skips download if file already exists
         """
         target = Path(dir)/(product['name'] + '.jpeg')
         url = self._get(product['links'], '.png', 'title', 'href')
@@ -257,7 +298,13 @@ class DownloadNASA(BaseDownload):
     
     def metadata(self, product):
         """
-        Returns the product metadata including attributes and assets
+        Extract metadata from a product's metadata field
+        
+        Args:
+            product (dict): Product dictionary containing a 'metadata' field
+            
+        Returns:
+            dict: Dictionary of metadata field names and their values
         """
         req = self._get(product['links'], '.xml', 'title', 'href')
         meta = self.session.get(req).text
@@ -269,6 +316,9 @@ class DownloadNASA(BaseDownload):
             return read_xml(Path(tmpdir)/'meta.xml')
     
     def _get(self, liste, name, in_key, out_key):
+        """
+        Internal helper to find a value in a list of dictionaries by matching keys
+        """
         for col in liste:
             if in_key not in col: continue
             if name in col[in_key]:

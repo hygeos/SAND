@@ -31,10 +31,11 @@ class DownloadCNES(BaseDownload):
             collection (str): collection name ('LANDSAT-5-TM', 'VENUS', etc.)
 
         Example:
-            cds = DownloadCNES('VENUS')
+            cds = DownloadCNES()
             # retrieve the list of products
             # using a pickle cache file to avoid reconnection
             ls = cache_dataframe('query-S2.pickle')(cds.query)(
+                collection_sand = 'VENUS',
                 dtstart=datetime(2024, 1, 1),
                 dtend=datetime(2024, 2, 1),
                 geo=Point(119.514442, -8.411750),
@@ -45,7 +46,13 @@ class DownloadCNES(BaseDownload):
 
     def _login(self):
         """
-        Login to copernicus dataspace with credentials storted in .netrc
+        Login to CNES Geodes Data Center using credentials stored in .netrc
+        
+        Note:
+            Uses X-API-Key authentication scheme for the STAC API
+            
+        Raises:
+            Exception: If authentication fails or credentials are missing
         """
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
@@ -78,6 +85,8 @@ class DownloadCNES(BaseDownload):
         Product query on the Geodes Data Center
 
         Args:
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
             dtstart and dtend (datetime): start and stop datetimes
             geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
                 Point(lon, lat)
@@ -90,6 +99,7 @@ class DownloadCNES(BaseDownload):
             use_most_recent (bool): keep only the most recent processing baseline version
             tile_number (str): Tile number (ex: T31TCJ), Sentinel2 only
             venus_site (str): Venµs Site name, Venµs only
+            api_collections (list[str]): name of deserved collection in API standard
             other_attrs (list): list of other attributes to include in the output
                 (ex: ['ContentDate', 'Footprint'])
 
@@ -159,8 +169,18 @@ class DownloadCNES(BaseDownload):
         Download a product from Geodes Datahub
 
         Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
+            product (dict): Product definition with keys 'id', 'name', and 'links'
+            dir (Path | str): Directory where to store downloaded file
+            if_exists (str, optional): Action to take if file exists. Defaults to 'skip'
+            
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If no download link is found for the product
+            
+        Note:
+            Files are downloaded as ZIP archives and automatically uncompressed
         """
         search = [l for l in product['links'] if re.search(product['name']+'.*.zip',l)]
         log.check(len(search) == 1, "No download link for product found")
@@ -176,7 +196,17 @@ class DownloadCNES(BaseDownload):
         url: str,
     ):
         """
-        Wrapped by filegen
+        Internal method to handle the actual download of files from Geodes servers
+        
+        Args:
+            target (Path): Path where the file should be saved
+            url (dict): URL information containing 'href' key for the download link
+            
+        Note:
+            - This method is wrapped by filegen decorator
+            - Downloads in chunks to support large files
+            - Shows a progress bar during download
+            - Requires valid X-API-Key in session headers
         """
         self.session.headers.update({"X-API-Key": self.tokens})
         response = self.session.get(url['href'], verify=True)
@@ -186,6 +216,25 @@ class DownloadCNES(BaseDownload):
             [f.write(chunk) for chunk in pbar if chunk]
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+        """
+        Download a specific product from Geodes by its identifier
+        
+        Args:
+            product_id (str): The identifier of the product to download
+            dir (Path | str): Directory where to store the downloaded file
+            api_collections (list[str], optional): List of API collection names.
+                Not required with new GEODES API.
+                
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If product cannot be found or downloaded
+            
+        Note:
+            This method first queries the API to find the product by ID,
+            then uses the download() method to retrieve it
+        """
         self._login()
         
         log.warning('no api collection is required with new GEODES API')
@@ -210,7 +259,21 @@ class DownloadCNES(BaseDownload):
 
     def quicklook(self, product: dict, dir: Path|str):
         """
-        Download a quicklook to `dir`
+        Download a quicklook (preview image) of the product
+        
+        Args:
+            product (dict): Product dictionary containing metadata and links
+            dir (Path|str): Directory where to save the quicklook
+            
+        Returns:
+            Path: Path to the downloaded quicklook image file
+            
+        Raises:
+            Exception: If no quicklook link is found for the product
+            
+        Note:
+            - Skips download if file already exists
+            - Uses original filename from the quicklook URL
         """
         search = [l for l in product['links'] if 'quicklook' in l]
         log.check(len(search) == 1, "No download link for quicklook found")
@@ -226,6 +289,13 @@ class DownloadCNES(BaseDownload):
     def metadata(self, product: dict):
         """
         Returns the product metadata including attributes and assets
+        
+        Args:
+            product (dict): Product dictionary containing metadata
+            
+        Returns:
+            dict: Dictionary of metadata attributes and their values
+        """
         server_url = "https://geodes-portal.cnes.fr/api/stac/search"
         data = {'page':1, 'limit':5}
         data['query'] = {'identifier': {'contains':product['name']}}
@@ -238,6 +308,9 @@ class DownloadCNES(BaseDownload):
         return response.json()['features'][0]['properties']
     
     def _get(self, liste, name, in_key, out_key):
+        """
+        Internal helper to find a value in a list of dictionaries by matching keys
+        """
         for col in liste:
             if in_key not in col: continue
             if name in col[in_key]:

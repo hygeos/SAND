@@ -272,8 +272,20 @@ class DownloadCDSE(BaseDownload):
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
         """
-        Download product knowing is product id 
-        (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
+        Download a specific product from Copernicus Data Space by its product identifier
+        
+        Args:
+            product_id (str): The identifier of the product to download
+                (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
+            dir (Path | str): Directory where to store the downloaded file
+            api_collections (list[str], optional): List of API collection names. 
+                If None, will determine from product_id pattern.
+                
+        Returns:
+            Path: Path to the downloaded file
+            
+        Raises:
+            Exception: If product cannot be found or downloaded
         """
         self._login()
         
@@ -293,8 +305,22 @@ class DownloadCDSE(BaseDownload):
     
     def quicklook(self, product: dict, dir: Path|str):
         """
-        Download a quicklook to `dir`
+        Download a quicklook (preview image) of the product
+        
+        Args:
+            product (dict): Product dictionary containing metadata and browse info
+            dir (Path|str): Directory where to save the quicklook
+            
+        Returns:
+            Path: Path to the downloaded quicklook image file
+            
+        Notes:
+            - Downloads the reflectance quicklook if available
+            - Image is saved as PNG
+            - Uses product name as filename with .png extension
+            - Skips download if file already exists
         """
+        
         target = Path(dir)/(product['name'] + '.jpeg')
 
         if not target.exists():
@@ -310,8 +336,15 @@ class DownloadCDSE(BaseDownload):
     
     def metadata(self, product):
         """
-        Returns the product metadata including attributes and assets
+        Extract metadata from a product's metadata field
+        
+        Args:
+            product (dict): Product dictionary containing a 'metadata' field
+            
+        Returns:
+            dict: Dictionary of metadata field names and their values
         """
+        
         req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
                f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")
         json = requests.get(req).json()

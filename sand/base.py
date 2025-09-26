@@ -57,10 +57,6 @@ class BaseDownload:
 
         Returns:
             dict: Query results containing matching products
-
-        Raises:
-            RequestsError: If the spatial constraints are invalid
-            ValueError: If the temporal constraints are outside collection availability
         """
         return NotImplemented
 
@@ -74,9 +70,6 @@ class BaseDownload:
 
         Returns:
             Path: Path to the downloaded product file
-
-        Raises:
-            RequestsError: If download fails due to API or network issues
         """
         return NotImplemented
 
@@ -90,10 +83,6 @@ class BaseDownload:
 
         Returns:
             Path: Path to the downloaded quicklook image
-
-        Raises:
-            RequestsError: If quicklook download fails
-            ValueError: If quicklook is not available for the product
         """
         return NotImplemented
 
@@ -108,9 +97,6 @@ class BaseDownload:
             dict: Detailed product metadata including:
                 - attributes: Product attributes (e.g., cloud cover, quality flags)
                 - assets: Available product assets (e.g., bands, ancillary data)
-
-        Raises:
-            RequestsError: If metadata retrieval fails
         """
         return NotImplemented
     
@@ -133,11 +119,6 @@ class BaseDownload:
 
         Returns:
             list[Path]: List of paths to downloaded product files
-
-        Raises:
-            RequestsError: If any download fails
-            ValueError: If if_exists has invalid value
-            OSError: If directory creation or file operations fail
         """
         if parallelized:
             
@@ -290,10 +271,6 @@ def raise_api_error(response: dict):
     
     Returns:
         int: Status code if response is successful (status < 300)
-        
-    Raises:
-        Exception: If response has no status code
-        RequestsError: If response status code indicates an error (>= 300)
     """
     log.check(hasattr(response,'status_code'), 'No status code in response', e=Exception)
     ref = read_csv(Path(__file__).parent/'html_status_code.csv')
@@ -316,9 +293,6 @@ def check_too_many_matches(response: dict,
         response (dict): API response containing result counts
         returned_tag (str|list[str]): Path to the number of returned results in response
         hit_tag (str|list[str]): Path to the total number of matches in response
-    
-    Raises:
-        RequestsError: If there are more total matches than returned results
     """
     returned = reduce(lambda x,k: x[k], returned_tag, response) 
     matches = reduce(lambda x,k: x[k], hit_tag, response)
