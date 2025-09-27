@@ -181,8 +181,7 @@ class DownloadNASA(BaseDownload):
             
         Raises:
             Exception: If product cannot be found or downloaded
-        """
-        
+        """        
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -223,6 +222,8 @@ class DownloadNASA(BaseDownload):
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
         """
+        self._login()
+        
         title = f"Download {product['name']}"
         url = self._get(product['links'], title, 'title', 'href')
         target = Path(dir)/Path(url).name
@@ -286,6 +287,8 @@ class DownloadNASA(BaseDownload):
             - Uses product name as filename with .png extension
             - Skips download if file already exists
         """
+        self._login()
+        
         target = Path(dir)/(product['name'] + '.jpeg')
         url = self._get(product['links'], '.png', 'title', 'href')
 
@@ -306,6 +309,8 @@ class DownloadNASA(BaseDownload):
         Returns:
             dict: Dictionary of metadata field names and their values
         """
+        self._login()
+        
         req = self._get(product['links'], '.xml', 'title', 'href')
         meta = self.session.get(req).text
 

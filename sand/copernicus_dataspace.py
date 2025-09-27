@@ -207,7 +207,8 @@ class DownloadCDSE(BaseDownload):
         Args:
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
-        """        
+        """
+        self._login()  
         
         target = Path(dir)/(product['name'])
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
@@ -320,6 +321,7 @@ class DownloadCDSE(BaseDownload):
             - Uses product name as filename with .png extension
             - Skips download if file already exists
         """
+        self._login()
         
         target = Path(dir)/(product['name'] + '.jpeg')
 
@@ -344,6 +346,7 @@ class DownloadCDSE(BaseDownload):
         Returns:
             dict: Dictionary of metadata field names and their values
         """
+        self._login()
         
         req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
                f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")

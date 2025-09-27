@@ -182,6 +182,8 @@ class DownloadCNES(BaseDownload):
         Note:
             Files are downloaded as ZIP archives and automatically uncompressed
         """
+        self._login()
+        
         search = [l for l in product['links'] if re.search(product['name']+'.*.zip',l)]
         log.check(len(search) == 1, "No download link for product found")
         target = Path(dir)/search[0].replace('.zip','')
@@ -275,6 +277,8 @@ class DownloadCNES(BaseDownload):
             - Skips download if file already exists
             - Uses original filename from the quicklook URL
         """
+        self._login()
+        
         search = [l for l in product['links'] if 'quicklook' in l]
         log.check(len(search) == 1, "No download link for quicklook found")
         target = Path(dir)/search[0].split('/')[-1]
@@ -296,6 +300,8 @@ class DownloadCNES(BaseDownload):
         Returns:
             dict: Dictionary of metadata attributes and their values
         """
+        self._login()
+        
         server_url = "https://geodes-portal.cnes.fr/api/stac/search"
         data = {'page':1, 'limit':5}
         data['query'] = {'identifier': {'contains':product['name']}}

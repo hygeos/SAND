@@ -174,6 +174,8 @@ class DownloadEumDAC(BaseDownload):
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
         """
+        self._login()
+        
         data = self.datastore.get_product(
             product_id=product['id'],
             collection_id=product['collection'],
@@ -199,8 +201,7 @@ class DownloadEumDAC(BaseDownload):
             
         Raises:
             Exception: If product cannot be found or downloaded
-        """
-        
+        """        
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -261,6 +262,8 @@ class DownloadEumDAC(BaseDownload):
             ValueError: If quicklook is not available
             OSError: If file operations fail
         """
+        self._login()
+        
         if product['quicklook_url'] is None:
             log.error('No download link for quicklook')
         url = product['quicklook_url'][0]['href']      
@@ -306,6 +309,7 @@ class DownloadEumDAC(BaseDownload):
         Returns:
             dict: Parsed XML metadata containing detailed product information
         """
+        self._login()
         
         req = (product['meta_url'][0]['href'])
         meta = requests.get(req).text

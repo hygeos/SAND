@@ -268,6 +268,7 @@ class DownloadUSGS(BaseDownload):
             product (dict): product definition with keys 'id' and 'name'
             dir (Path | str): Directory where to store downloaded file.
         """
+        self._login()
         
         target = Path(dir)/(product['name'])    
         
@@ -357,6 +358,7 @@ class DownloadUSGS(BaseDownload):
             - Uses product name as filename with .png extension
             - Skips download if file already exists
         """
+        self._login()
         
         target = Path(dir)/(product['name'] + '.png')
 
@@ -382,6 +384,8 @@ class DownloadUSGS(BaseDownload):
         Returns:
             dict: Dictionary of metadata field names and their values
         """
+        self._login()
+        
         meta = {}
         for m in product['metadata']: meta[m['fieldName']] = m['value']
         return meta
