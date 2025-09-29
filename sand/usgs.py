@@ -187,7 +187,7 @@ class DownloadUSGS(BaseDownload):
         # Filter products
         response = [p for p in r if self._check_name(p['displayId'], checker)]
 
-        out = [{"id": d["entityId"], "name": d["displayId"],
+        out = [{"id": d["entityId"], "name": d["displayId"], "collection": self.api_collection[0],
                  **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
                 for d in response]
         
@@ -274,7 +274,7 @@ class DownloadUSGS(BaseDownload):
         
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
-        params = {'entityIds': product['id'], "datasetName": self.api_collection[0]}
+        params = {'entityIds': product['id'], "datasetName": product["collection"]}
         self.session.headers.update(self.API_key)
         dl_opt = self.session.get(url, json=params)
         raise_api_error(dl_opt)
