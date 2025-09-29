@@ -282,6 +282,9 @@ class DownloadUSGS(BaseDownload):
         # Find available acquisitions
         for product in dl_opt.json()['data']:
             if not product['available']: continue
+            
+            # Determine if file is compressed
+            ext = '.tar' if product['downloadSystem'] == 'ls_zip' else None   
                        
             # Find one available product     
             url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-request"
@@ -295,7 +298,7 @@ class DownloadUSGS(BaseDownload):
             if dl['numInvalidScenes'] != 0: continue
             url = dl['availableDownloads'][0]['url']
             
-            filegen(0, if_exists=if_exists)(self._download)(target, url)
+            filegen(0, uncompress=ext, if_exists=if_exists)(self._download)(target, url)
             log.info(f'Product has been downloaded at : {target}')
             return target
             
