@@ -199,7 +199,13 @@ products['LANDSAT-5-TM'] = {
         'dtend': datetime(2005, 12, 10),
         'geo': Point(119.514442, -8.411750),
         'product_id': 'LT05_L1TP_114066_20030721_20200904_02_T1'
-    }    
+    },
+    'level1':{
+        'dtstart': datetime(2000, 12, 10),
+        'dtend': datetime(2005, 12, 10),
+        'geo': Point(119.514442, -8.411750),
+        'product_id': 'LT05_L2SP_114066_20030721_20200904_02_T1'
+    }  
 }
 
 # LANDSAT-8 Product

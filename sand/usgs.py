@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Optional, Literal
 from shapely import Point, Polygon
 from datetime import datetime, date
+from random import choice
+from string import ascii_lowercase
 
 from core import log
 from core.files import filegen
@@ -221,11 +223,17 @@ class DownloadUSGS(BaseDownload):
             self.api_collection = api_collections
             self.name_contains = []
         
+        # Retrieve entity_id based on display_id 
+        entity_id = self._get_entity_id(product_id, self.api_collection[0])
+        
         # Retrieve filter ID to use for this dataset
         url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
         params = {'datasetName': self.api_collection[0]}
         self.session.headers.update(self.API_key)
         r = self.session.get(url_data, json=params)
+        raise_api_error(r)
+        
+        filterid = None
         for dfilter in r.json()['data']:
             if 'Scene Identifier' in dfilter['fieldLabel']:
                 filterid = dfilter['id']
@@ -236,7 +244,7 @@ class DownloadUSGS(BaseDownload):
             "metadataFilter": {
                 "filterType": "value",
                 "filterId": filterid,
-                "value": product_id,
+                "value": entity_id,
                 "operand": "like",
             }
         }
@@ -254,10 +262,17 @@ class DownloadUSGS(BaseDownload):
         raise_api_error(response)
         r = response.json()
         
-        target = Path(dir)/prod._id
-        self._download(target, prod.url)
-        log.info(f'Product has been downloaded at : {target}')
-        return target
+        if not r['data']['results']:
+            log.error(f'No product found in collection {self.api_collection[0]} '
+                      f'for {product_id}')
+        
+        # Format product to use download function
+        product = r['data']['results'][0]
+        product = {"id": product["entityId"], "name": product["displayId"], 
+                   "collection": self.api_collection[0],
+                   **{k: product[k] for k in ['metadata','publishDate','browse']}}
+
+        return self.download(product, dir)
     
     
     def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
@@ -392,3 +407,62 @@ class DownloadUSGS(BaseDownload):
         meta = {}
         for m in product['metadata']: meta[m['fieldName']] = m['value']
         return meta
+    
+    def _get_entity_id(self, display_id: str, dataset: str = None) -> str:
+        """
+        Convert display ID (Product ID) to entity ID (Scene ID)
+        
+        Example: 'LT05_L1TP_114066_20030721_20200904_02_T1' → 'LT51140662003202ASA01'
+        
+        Args:
+            display_id (str): Product ID (display ID) like 'LT05_L1TP_114066_20030721_20200904_02_T1'
+            dataset (str, optional): Dataset name. If None, will auto-detect from display_id
+            
+        Returns:
+            str: Entity ID (Scene ID) like 'LT51140662003202ASA01'
+            
+        Raises:
+            Exception: If conversion fails or product not found
+        """
+        self._login()
+        
+        # Use scene-list-add and scene-list-get to convert display ID to entity ID
+        # This is the recommended approach since the lookup endpoint was deprecated
+        
+        list_id = "".join(choice(ascii_lowercase) for i in range(10))
+        
+        try:
+            # Add the display ID to a temporary scene list
+            url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-add"
+            params = {
+                "listId": list_id,
+                "datasetName": dataset,
+                "idField": "displayId",
+                "entityId": display_id,
+            }
+            self.session.headers.update(self.API_key)
+            response = self.session.get(url, json=params)
+            raise_api_error(response)
+            
+            # Get the scene list to retrieve entity ID
+            url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-get"
+            params = {"listId": list_id}
+            response = self.session.get(url, json=params)
+            raise_api_error(response)
+            
+            scenes = response.json().get('data', [])
+            if not scenes:
+                raise Exception(f"No entity ID found for display ID: {display_id}")
+            
+            entity_id = scenes[0]['entityId']
+            log.debug(f"Converted {display_id} → {entity_id}")
+            return entity_id
+            
+        finally:
+            # Always clean up the temporary scene list
+            try:
+                url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-remove"
+                params = {"listId": list_id}
+                self.session.get(url, json=params)
+            except:
+                pass  # Ignore cleanup errors
