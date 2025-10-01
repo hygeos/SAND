@@ -51,22 +51,6 @@ sand.nasa
    :show-inheritance:
    :undoc-members:
 
-sand.nextcloud
----------------------
-
-.. automodule:: sand.nextcloud
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-sand.patterns
---------------------
-
-.. automodule:: sand.patterns
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 sand.results
 -------------------
 

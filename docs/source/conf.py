@@ -13,8 +13,8 @@ project = 'sand'
 copyright = '2025, HYGEOS'
 author = 'HYGEOS'
 
-version = '0.4.0'
-release = '0.4.0'
+version = '2.0.4'
+release = '2.0.4'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

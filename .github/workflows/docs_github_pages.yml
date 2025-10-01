@@ -20,21 +20,17 @@ jobs:
  
       - name: Install dependencies
         run: |
-          python -m pip install -U sphinx
-          python -m pip install sphinx-rtd-theme
-          python -m pip install nbsphinx
-          python -m pip install sphinxcontrib-napoleon
-          python -m pip install ghp-import
           python -m pip install uv
+          python -m uv pip install sphinx sphinx-rtd-theme sphinxcontrib-napoleon
+          python -m uv pip install nbsphinx numpydoc
+          python -m uv pip install ghp-import
           python -m uv pip install -r pyproject.toml
-          python -m uv pip install .
-          python -m pip install numpydoc
+          python -m uv pip install .[git]
 
       - name: Generate the docs
         run: |
-          make -C docs clean 
-          make -C docs html
+          sphinx-build docs/source docs/build -b html -q
         
       - name: Run ghp-import
         run: |
-          ghp-import -n -p -f docs/build/html
+          ghp-import -n -p -f docs/build
