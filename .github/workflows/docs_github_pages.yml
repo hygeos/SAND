@@ -32,8 +32,7 @@ jobs:
 
       - name: Generate the docs
         run: |
-          make -C docs clean 
-          make -C docs html
+          python -m sphinx docs/source docs/build/html -b html -q
         
       - name: Run ghp-import
         run: |
