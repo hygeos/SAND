@@ -132,22 +132,11 @@ products['VENUS'] = {
     }    
 }
 
-# VENUS-VM5 Product
-products['VENUS-VM5'] = {
-    'level1':{
-        'dtstart': datetime(2024, 7, 10),
-        'dtend': datetime(2024, 7, 20),
-        'venus_site': 'RIOBRANC',
-        "product_id": "VENUS-XS_20240716-135647-000_L1C_RIOBRANC_D_V3-1"
-    }    
-}
-
 # SPOT-1 Product
 products['SPOT-1'] = {
     'level1':{
         'dtstart': datetime(2003, 9, 1),
         'dtend': datetime(2003, 9, 20),
-        'tile_number': '051-251-0',
         "product_id": "SPOT1-HRV1-XS_20030918-103500-347_L1C_046-265-0_D_V1-0"
     }    
 }
@@ -157,7 +146,6 @@ products['SPOT-2'] = {
     'level1':{
         'dtstart': datetime(2009, 6, 15),
         'dtend': datetime(2009, 7, 1),
-        'tile_number': '026-253-0',
         "product_id": "SPOT2-HRV2-XS_20090629-112812-214_L1C_026-253-0_D"
     }    
 }
@@ -167,7 +155,6 @@ products['SPOT-3'] = {
     'level1':{
         'dtstart': datetime(1996, 11, 10),
         'dtend': datetime(1996, 11, 20),
-        'tile_number': '046-333-0',
         "product_id": "SPOT3-HRV1-XS_19961113-104800-180_L1C_046-333-0_D"
     }    
 }
@@ -177,7 +164,6 @@ products['SPOT-4'] = {
     'level1':{
         'dtstart': datetime(2013, 6, 10),
         'dtend': datetime(2013, 6, 20),
-        'tile_number': '049-262-4',
         "product_id": "SPOT4-HRVIR2-XS_20130618-090822-826_L1C_049-262-4_D"
     }    
 }
@@ -187,7 +173,6 @@ products['SPOT-5'] = {
     'level1':{
         'dtstart': datetime(2015, 8, 10),
         'dtend': datetime(2015, 8, 30),
-        'tile_number': '186-392-1',
         "product_id": "SPOT5-HRG2-XS_20150827-050516-710_L1C_186-392-1_D"
     }    
 }

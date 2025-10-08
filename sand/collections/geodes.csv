@@ -12,9 +12,6 @@ SPOT-2,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT2_L1C
 SPOT-3,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT3_L1C
 SPOT-4,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT4_L1C
 SPOT-5,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT5_L1C
-VENUS,                  1,      ,         MUSCATE_VENUS_VM1_L1C
-VENUS,                  2,      ,         MUSCATE_VENUS_VM1_L2A   
-VENUS,                  3,      ,         MUSCATE_VENUS_VM1_L3A   
-VENUS-VM5,              1,      ,         MUSCATE_VENUSVM05_VM5_L1C
-VENUS-VM5,              2,      ,         MUSCATE_VENUSVM05_VM5_L2A   
-VENUS-VM5,              3,      ,         MUSCATE_VENUSVM05_VM5_L3A   
+VENUS,                  1,      ,         MUSCATE_VENUS_VM1_L1C MUSCATE_VENUSVM05_VM5_L1C
+VENUS,                  2,      ,         MUSCATE_VENUS_VM1_L2A MUSCATE_VENUSVM05_VM5_L2A
+VENUS,                  3,      ,         MUSCATE_VENUS_VM1_L3A MUSCATE_VENUSVM05_VM5_L3A

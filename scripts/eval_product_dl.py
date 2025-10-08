@@ -32,7 +32,8 @@ with TemporaryDirectory() as tmpdir:
     for name, provider in dl.items():
         
         log.info(log.rgb.cyan, '-'*5,f' Provider : {name} ','-'*5)
-        collec_df = provider().get_available_collection()
+        dl = provider()
+        collec_df = dl.get_available_collection()
         
         error_msg_end = ' failed at {} with this message : {}'
         for collec in collec_df['Name']:
@@ -42,14 +43,12 @@ with TemporaryDirectory() as tmpdir:
                 
                 msg_start = f'Download of {collec} {level} with provider {name}'
                 error_msg = msg_start + error_msg_end
-                try: dl = provider(collec, int(level[-1]))
-                except Exception as e:
-                    if "products are not available" in str(e): continue
-                    else: raise e
                 
                 # Query
                 try: 
-                    ls = dl.query(**products[collec][level])
+                    l = int(level[5])
+                    ls = dl.query(collection_sand=collec, level=l,
+                                  **products[collec][level])
                 except Exception as e: 
                     log.info(log.rgb.red, error_msg.format('query',e))
                     continue

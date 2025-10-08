@@ -30,6 +30,7 @@ default = { features = ["hyp", "sys"], solve-group = "default" }
 tests = "pytest tests"
 dl = "python3 scripts/try_dl.py"
 check_product = "python3 scripts/eval_product_dl.py"
+build_docs = "sphinx-build -b html /home/nathan/proj/sand/docs/source /home/nathan/proj/sand/docs/build -q"
 
 [tool.pixi.pypi-dependencies]
 sand = { path = ".", editable = true, extras = ["git"] }
