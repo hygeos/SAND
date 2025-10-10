@@ -214,7 +214,7 @@ class DownloadCDSE(BaseDownload):
         target = Path(dir)/product['name']
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
-        filegen(if_exists=if_exists)(self._download)(target, url)
+        filegen(if_exists=if_exists)(self._download)(target, url, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
 
