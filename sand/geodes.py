@@ -15,6 +15,7 @@ from sand.tinyfunc import (
 from core import log
 from core.network.auth import get_auth
 from core.files.fileutils import filegen
+from core.files.uncompress import uncompress
 
 import re
 
@@ -43,6 +44,7 @@ class DownloadCNES(BaseDownload):
             cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'geodes'
+        self.safe_product = ['S1A']
 
     def _login(self):
         """
@@ -184,11 +186,19 @@ class DownloadCNES(BaseDownload):
         """
         self._login()
         
+        # Extract download url
         search = [l for l in product['links'] if re.search(product['name']+'.*.zip',l)]
         log.check(len(search) == 1, "No download link for product found")
-        target = Path(dir)/search[0].replace('.zip','')
+        
+        # Check if product is a SAFE folder
+        is_safe = any(product['name'].startswith(p) for p in self.safe_product)
+        if is_safe: 
+            target = Path(dir)/search[0].replace('.zip','.SAFE')
+        else:
+            target = Path(dir)/search[0].replace('.zip','')
+        
         dl_data = product['links'][search[0]]
-        filegen(0, if_exists=if_exists, uncompress='.zip')(self._download)(target, dl_data)
+        filegen(0, if_exists=if_exists)(self._download)(target, dl_data, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -196,6 +206,7 @@ class DownloadCNES(BaseDownload):
         self,
         target: Path,
         url: str,
+        compression_ext: str = None
     ):
         """
         Internal method to handle the actual download of files from Geodes servers
@@ -203,6 +214,8 @@ class DownloadCNES(BaseDownload):
         Args:
             target (Path): Path where the file should be saved
             url (dict): URL information containing 'href' key for the download link
+            compression_ext (str, optional): Compression format of the file to download 
+                (e.g. '.zip'). If not None, file will be uncompress after downloading 
             
         Note:
             - This method is wrapped by filegen decorator
@@ -210,12 +223,23 @@ class DownloadCNES(BaseDownload):
             - Shows a progress bar during download
             - Requires valid X-API-Key in session headers
         """
+        
+        # Compression file path
+        dl_target = Path(str(target)+'.zip') if compression_ext else target
+        
+        # Download compressed file
         self.session.headers.update({"X-API-Key": self.tokens})
         response = self.session.get(url['href'], verify=True)
         raise_api_error(response)
         pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
-        with open(target, 'wb') as f:
+        with open(dl_target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
+            
+        # Uncompress archive
+        if compression_ext:
+            log.debug('Uncompress archive')
+            assert target == uncompress(dl_target, target.parent)
+            dl_target.unlink() 
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
         """

@@ -16,6 +16,7 @@ from sand.results import Query
 from core import log
 from core.files import filegen
 from core.network.auth import get_auth
+from core.files.uncompress import uncompress
 from core.geo.product_name import get_pattern, get_level
 
 
@@ -210,10 +211,10 @@ class DownloadCDSE(BaseDownload):
         """
         self._login()  
         
-        target = Path(dir)/(product['name'])
+        target = Path(dir)/product['name']
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
                f"Products({product['id']})/$value")
-        filegen(if_exists=if_exists, uncompress='.zip')(self._download)(target, url)
+        filegen(if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -221,6 +222,7 @@ class DownloadCDSE(BaseDownload):
         self,
         target: Path,
         url: str,
+        compression_ext: str = None
     ) -> None:
         """
         Internal method to download a file from Copernicus Data Space.
@@ -231,12 +233,18 @@ class DownloadCDSE(BaseDownload):
         Args:
             target (Path): Path where the file should be saved
             url (str): URL to download the file from
+            compression_ext (str, optional): Compression format of the file to download 
+                (e.g. '.zip'). If not None, file will be uncompress after downloading 
 
         Raises:
             ValueError: If response status code is invalid
             RequestsError: If download fails after retries
             OSError: If file writing fails
         """
+        
+        # Compression file path
+        dl_target = Path(str(target)+'.zip') if compression_ext else target
+        
         status = False        
         while not status:
                             
@@ -264,12 +272,17 @@ class DownloadCDSE(BaseDownload):
                 auth = get_auth("dataspace.copernicus.eu")
                 self._get_tokens(auth)
         
-        # Download file
+        # Download compressed file
         log.debug('Start writing on device')
         pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
-        with open(target, 'wb') as f:
+        with open(dl_target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
-    
+            
+        # Uncompress archive
+        if compression_ext:
+            log.debug('Uncompress archive')
+            assert target == uncompress(dl_target, target.parent)
+            dl_target.unlink() 
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
         """

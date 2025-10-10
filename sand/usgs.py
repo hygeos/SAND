@@ -6,8 +6,8 @@ from random import choice
 from string import ascii_lowercase
 
 from core import log
-from core.files import filegen
 from core.network.auth import get_auth
+from core.files import filegen, uncompress
 from core.geo.product_name import get_pattern, get_level
 
 from sand.base import raise_api_error, BaseDownload, check_too_many_matches
@@ -313,7 +313,7 @@ class DownloadUSGS(BaseDownload):
             if dl['numInvalidScenes'] != 0: continue
             url = dl['availableDownloads'][0]['url']
             
-            filegen(0, uncompress=ext, if_exists=if_exists)(self._download)(target, url)
+            filegen(0, if_exists=if_exists)(self._download)(target, url, ext)
             log.info(f'Product has been downloaded at : {target}')
             return target
             
@@ -323,6 +323,7 @@ class DownloadUSGS(BaseDownload):
         self,
         target: Path,
         url: str,
+        compression_ext: str = None
     ):
         """
         Internal method to handle the actual download of files from USGS servers
@@ -330,6 +331,8 @@ class DownloadUSGS(BaseDownload):
         Args:
             target (Path): Path where the file should be saved
             url (str): URL to download from
+            compression_ext (str, optional): Compression format of the file to download 
+                (e.g. '.zip'). If not None, file will be uncompress after downloading 
             
         Notes:
             - This method is wrapped by filegen decorator
@@ -338,6 +341,9 @@ class DownloadUSGS(BaseDownload):
             - Shows a progress bar during download
         """
 
+        # Compression file path
+        dl_target = Path(str(target)+'.tar') if compression_ext else target
+        
         # Initialize session for download
         self.session.headers.update(self.API_key)
 
@@ -355,8 +361,14 @@ class DownloadUSGS(BaseDownload):
         # Download file
         log.debug('Start writing on device')
         pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
-        with open(target, 'wb') as f:
+        with open(dl_target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
+            
+        # Uncompress archive
+        if compression_ext:
+            log.debug('Uncompress archive')
+            assert target == uncompress(dl_target, target.parent)
+            dl_target.unlink() 
     
     
     def quicklook(self, product: dict, dir: Path|str):

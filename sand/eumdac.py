@@ -20,7 +20,7 @@ from core import log
 from core.table import read_xml
 from core.network.auth import get_auth
 from core.geo.product_name import get_pattern, get_level
-from core.files import filegen
+from core.files import filegen, uncompress
 
 
 class DownloadEumDAC(BaseDownload):
@@ -182,7 +182,7 @@ class DownloadEumDAC(BaseDownload):
         )
 
         target = Path(dir)/product['id']
-        filegen(if_exists=if_exists, uncompress='.zip')(self._download)(target, data)
+        filegen(if_exists=if_exists)(self._download)(target, data, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
     
@@ -217,11 +217,16 @@ class DownloadEumDAC(BaseDownload):
             collec = self.datastore.get_collection(c)
             prod = self.datastore.get_product(collec, product_id)
             target = Path(dir)/prod._id
-            filegen(if_exists='skip', uncompress='.zip')(self._download)(target, prod)
+            filegen(if_exists='skip')(self._download)(target, prod, '.zip')
             log.info(f'Product has been downloaded at : {target}')
             return target
     
-    def _download(self, target: Path, data) -> None:
+    def _download(
+        self, 
+        target: Path, 
+        data,
+        compression_ext: str = None
+    ) -> None:
         """
         Internal method to download a file from EUMETSAT Data Store.
 
@@ -231,17 +236,29 @@ class DownloadEumDAC(BaseDownload):
         Args:
             target (Path): Path where the file should be saved
             data: EUMETSAT data object containing the file to download
+            compression_ext (str, optional): Compression format of the file to download 
+                (e.g. '.zip'). If not None, file will be uncompress after downloading 
 
         Raises:
             OSError: If file writing fails
             eumdac.collection.CollectionError: If data access fails
         """
+        
+        # Compression file path
+        dl_target = Path(str(target)+'.zip') if compression_ext else target
+        
         log.debug(f"Downloading {data._id} ...")
-        with data.open() as fsrc, open(target, mode='wb') as fdst:
+        with data.open() as fsrc, open(dl_target, mode='wb') as fdst:
             while True:
                 chunk = fsrc.read(1024)
                 if not chunk: break
                 fdst.write(chunk)
+            
+        # Uncompress archive
+        if compression_ext:
+            log.debug('Uncompress archive')
+            assert target == uncompress(dl_target, target.parent)
+            dl_target.unlink() 
     
     
     def quicklook(self, product: dict, dir: Path|str) -> Path:
