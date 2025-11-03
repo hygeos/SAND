@@ -215,7 +215,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
       - pypi: https://files.pythonhosted.org/packages/db/d3/9dcc0f5797f070ec8edf30fbadfb200e71d9db6b84d211e3b2085a7589a0/click-8.3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/core.git#65dec058ac6cab05f527c1f0323433ec9a88f072
+      - pypi: git+https://github.com/hygeos/core.git#0488cf4eb9d5c9a532cf9834b7034c029afbbc59
       - pypi: https://files.pythonhosted.org/packages/25/60/3fcd548bed6d25016933e4b2984c9b82e4c1e760380e03d4100b1b4726e0/dask-2025.9.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ed/1d/409e819e00aed51f3e23df570e219621c0d64c458c9b8df4e7ae1c27e23d/eumdac-3.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/47/71/70db47e4f6ce3e5c37a607355f80da8860a33226be640226ac52cb05ef2e/fsspec-2025.9.0-py3-none-any.whl
@@ -494,7 +494,7 @@ packages:
   - pkg:pypi/contourpy?source=hash-mapping
   size: 296706
   timestamp: 1756544800085
-- pypi: git+https://github.com/hygeos/core.git#65dec058ac6cab05f527c1f0323433ec9a88f072
+- pypi: git+https://github.com/hygeos/core.git#0488cf4eb9d5c9a532cf9834b7034c029afbbc59
   name: core
   version: 1.1.0
   requires_dist:

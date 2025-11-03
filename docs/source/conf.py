@@ -1,6 +1,9 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -34,6 +37,8 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
+html_logo = '_static/logo.svg'
+html_css_files = ['custom.css']
 html_logo = '_static/logo.svg'
 html_css_files = ['custom.css']
 html_static_path = ['_static']
