@@ -1,3 +1,0 @@
-sand.collections package
-========================
-
