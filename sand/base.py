@@ -193,6 +193,9 @@ class BaseDownload:
         except AssertionError: 
             log.error(f'Level{level} products are not available for {collection}',
                       e=KeyError)
+        
+        log.check(len(self.sand_props)>0, 'It is not possible to download '
+                  f'level-{level} product for {collection}', e=ReferenceError)
     
     def _retrieve_api_collec(self):
         """

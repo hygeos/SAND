@@ -1,17 +1,19 @@
 SAND_name,              level,  contains, collec           
-LANDSAT-5-TM,           2,      ,         MUSCATE_Landsat57_LANDSAT5_N2A
-LANDSAT-7-ET,           2,      ,         MUSCATE_Landsat57_LANDSAT5_N2A
-LANDSAT-8-OLI,          2,      ,         MUSCATE_LANDSAT_LANDSAT8_L2A
+LANDSAT-5-TM,           2,      ,         THEIA_REFLECTANCE_LANDSAT5_L2A
+LANDSAT-7-ET,           2,      ,         THEIA_REFLECTANCE_LANDSAT7_L2A
+LANDSAT-8-OLI,          2,      ,         THEIA_REFLECTANCE_LANDSAT8_L2A
 PLEIADES,               1,      ,         MUSCATE_PLEIADES_PLEIADES_ORTHO
 SENTINEL-1,             1,      ,         PEPS_S1_L1
 SENTINEL-2-MSI,         1,      ,         PEPS_S2_L1C
-SENTINEL-2-MSI,         2,      ,         MUSCATE_SENTINEL2_SENTINEL2_L2A
-SENTINEL-2-MSI,         3,      ,         MUSCATE_SENTINEL2_SENTINEL2_L3A
-SPOT-1,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT1_L1C
-SPOT-2,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT2_L1C
-SPOT-3,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT3_L1C
-SPOT-4,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT4_L1C
-SPOT-5,                 1,      ,         MUSCATE_SPOTWORLDHERITAGE_SPOT5_L1C
-VENUS,                  1,      ,         MUSCATE_VENUS_VM1_L1C MUSCATE_VENUSVM05_VM5_L1C
-VENUS,                  2,      ,         MUSCATE_VENUS_VM1_L2A MUSCATE_VENUSVM05_VM5_L2A
-VENUS,                  3,      ,         MUSCATE_VENUS_VM1_L3A MUSCATE_VENUSVM05_VM5_L3A
+SENTINEL-2-MSI,         2,      ,         THEIA_REFLECTANCE_SENTINEL2_L2A
+SENTINEL-2-MSI,         3,      ,         THEIA_REFLECTANCE_SENTINEL2_L3A
+SPOT-1,                 1,      ,         THEIA_SWH-PHASE1_SPOT1_L1C 
+SPOT-2,                 1,      ,         THEIA_SWH-PHASE1_SPOT2_L1C
+SPOT-3,                 1,      ,         THEIA_SWH-PHASE1_SPOT3_L1C
+SPOT-4,                 1,      ,         THEIA_SWH-PHASE1_SPOT4_L1C THEIA_SPOT4_TAKE5_L1C
+SPOT-5,                 1,      ,         THEIA_SWH-PHASE1_SPOT5_L1C THEIA_SPOT5_TAKE5_L1C
+SPOT-4,                 2,      ,         THEIA_REFLECTANCE_SPOT4_TAKE5_L2A
+SPOT-5,                 2,      ,         THEIA_REFLECTANCE_SPOT5_TAKE5_L2A
+VENUS,                  1,      ,         THEIA_VENUS_VM1_L1C THEIA_VENUS_VM5_L1C
+VENUS,                  2,      ,         THEIA_REFLECTANCE_VENUS_VM1_L2A THEIA_REFLECTANCE_VENUS_VM5_L2A
+VENUS,                  3,      ,         THEIA_REFLECTANCE_VENUS_VM1_L3A THEIA_REFLECTANCE_VENUS_VM5_L3A

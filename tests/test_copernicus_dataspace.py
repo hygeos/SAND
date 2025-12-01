@@ -19,10 +19,10 @@ def level(request):
     
 @pytest.fixture
 def constraint(collec):
-    return products[collec]['level1']
-    
+    return products[collec]['constraint']
+
 @pytest.fixture
-def product_id(constraint): return constraint['product_id']
+def product_id(collec): return products[collec]['l1_product']
 
 
 def test_login(downloader):

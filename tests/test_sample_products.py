@@ -7,4 +7,5 @@ def test_product_collection_name():
     ref_file = Path(__file__).parent.parent/'sand'/'sensors.csv'
     sensors = read_csv(ref_file)['Name'].values
     collecs = list(products)
-    assert all(c in sensors for c in collecs)
+    difference = set(sensors).difference(collecs).intersection(collecs)
+    assert len(difference) == 0, f'Following collections in sample product are wrong: {difference}'

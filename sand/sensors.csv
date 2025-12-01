@@ -1,7 +1,7 @@
 Name,               launch_date, end_date,   longname,  url
-AMSU,               2002-05-04,  x,           Advanced Microwave Sounding Unit, https://nwp-saf.eumetsat.int/site/software/aapp/aapp-overview/amsu-a/
-ASCAT-METOP-FR,     2006-10-19,  x,           Advanced Scatterometer on Metop at Full Resolution, https://www.eoportal.org/satellite-missions/metop#summary
-ASCAT-METOP-RES,    2006-10-19,  x,           Advanced Scatterometer on Metop resampled, https://www.eoportal.org/satellite-missions/metop#summary
+AMSU-A,             2008-03-01,  x,           Advanced Microwave Sounding Unit, https://nwp-saf.eumetsat.int/site/software/aapp/aapp-overview/amsu-a/
+ASCAT-METOP-FR,     2007-01-21,  x,           Advanced Scatterometer on Metop at Full Resolution, https://www.eoportal.org/satellite-missions/metop#summary
+ASCAT-METOP-RES,    2007-01-21,  x,           Advanced Scatterometer on Metop resampled, https://www.eoportal.org/satellite-missions/metop#summary
 ASTER,              1999-12-18,  x,           Advanced Spaceborne Thermal Emission and Reflection, https://www.satimagingcorp.com/satellite-sensors/other-satellite-sensors/aster/
 CCM,                x,  x,           Copernicus Contributing Missions,
 COP-DEM,            x,  x,           Copernicus Digital Elevation Model,	
@@ -11,11 +11,13 @@ ENVISAT-MERIS,      2002-03-01,  x,           EnviSat (Environmental Satellite) 
 FCI-MTG-HR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 FCI-MTG-NR,         2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
 GLOBAL-MOSAICS,     x,  x,           GLOBAL-MOSAICS,
-IASI,               2006-10-19,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
-LANDSAT-1-MSS,      x,  x,           LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
-LANDSAT-2-MSS,      x,  x,           LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
-LANDSAT-3-MSS,      x,  x,           LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
-LANDSAT-4-MSS,      x,  x,           LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+IASI,               2007-07-10,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
+LANDSAT-1-MSS,      1972-07-23,  1978-01-01,  LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-2-MSS,      1975-01-22,  1982-02-25,  LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-3-MSS,      1978-03-05,  1983-03-31,  LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3#spacecraft
+LANDSAT-4-MSS,      1982-07-16,  x,           LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-4-TM,       1982-07-16,  x,           LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-5-MSS,      1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
 LANDSAT-5-TM,       1984-03-01,  x,           LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
 LANDSAT-7-ET,       1999-04-15,  x,           LANDSAT-7 Enhanced Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-7
 LANDSAT-8-OLI,      2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.usgs.gov/landsat-missions/landsat-8
@@ -50,5 +52,4 @@ SPOT-6,             1986-02-22,  x,           Satellite Pour l'Observation de la
 SPOT-7,             1986-02-22,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-6-7
 SWH,                x,  x,           Spot World Heritage,
 VENUS,              2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite, https://www.eoportal.org/satellite-missions/venus
-VENUS-VM5,          2017-08-02,  x,           Vegetation and Environment monitoring on a New Micro-Satellite (Second phase), https://www.eoportal.org/satellite-missions/venus
-VIIRS,              2011-11-28,  x,           Visible Infrared Imaging Radiometer Suite, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/
+VIIRS,              2013-11-07,  x,           Visible Infrared Imaging Radiometer Suite, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/

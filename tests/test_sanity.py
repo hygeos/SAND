@@ -16,7 +16,7 @@ def collec(request):
 
 @pytest.fixture
 def constraint(collec):
-    return products[collec]['level1']
+    return products[collec]['constraint']
 
 @pytest.mark.skip('Find another sensor')
 def test_invalid_level(collec):

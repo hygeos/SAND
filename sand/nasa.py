@@ -265,7 +265,7 @@ class DownloadNASA(BaseDownload):
 
         # Download file
         log.debug('Start writing on device')
-        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
+        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
         with open(target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
     

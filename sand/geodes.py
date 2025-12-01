@@ -44,7 +44,7 @@ class DownloadCNES(BaseDownload):
             cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'geodes'
-        self.safe_product = ['S1A']
+        self.safe_product = ['S1A','S2A','S2B']
 
     def _login(self):
         """
@@ -231,14 +231,17 @@ class DownloadCNES(BaseDownload):
         self.session.headers.update({"X-API-Key": self.tokens})
         response = self.session.get(url['href'], verify=True)
         raise_api_error(response)
-        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing')
+        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
         with open(dl_target, 'wb') as f:
             [f.write(chunk) for chunk in pbar if chunk]
             
         # Uncompress archive
         if compression_ext:
             log.debug('Uncompress archive')
-            assert target == uncompress(dl_target, target.parent)
+            path = uncompress(dl_target, target.parent)
+            log.check(_name_difference(target.name, path.name) < 2, 
+            f'target ({target}) is different from uncompressed file ({path})')
+            path.rename(target)
             dl_target.unlink() 
     
     def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
@@ -346,3 +349,27 @@ class DownloadCNES(BaseDownload):
             if name in col[in_key]:
                 return col[out_key]
         log.error(f'{name} has not been found', e=KeyError)
+    
+def _name_difference(str1, str2) -> int:
+    """
+    Calculate the number of character differences between two strings.
+    Compares position by position.
+    """
+    # Handle edge cases
+    if str1 == str2:
+        return 0
+    
+    max_len = max(len(str1), len(str2))
+    diff_count = 0
+    
+    # Compare character by character
+    for i in range(max_len):
+        # Get character at position i, or None if index out of range
+        char1 = str1[i] if i < len(str1) else None
+        char2 = str2[i] if i < len(str2) else None
+        
+        if char1 != char2:
+            diff_count += 1
+    
+    return diff_count
+

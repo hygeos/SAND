@@ -1,9 +1,9 @@
 SAND_name,              level,  contains, collec   
-AMSU,                   1,      ,         EO:EUM:DAT:METOP:AMSUL1
+AMSU-A,                 1,      ,         EO:EUM:DAT:METOP:AMSUL1 EO:EUM:DAT:METOP:AMSU-AHRPT
 ASCAT-METOP-FR,         1,      ,         EO:EUM:DAT:METOP:ASCSZF1B
-ASCAT-METOP-RES,        1,      ,         EO:EUM:DAT:METOP:ASCSZR1B EO:EUM:DAT:METOP:ASCSZO1B
+ASCAT-METOP-RES,        1,      ,         EO:EUM:DAT:METOP:ASCSZO1B
 ASCAT-METOP-RES,        2,      ,         EO:EUM:DAT:METOP:OSI-150-A EO:EUM:DAT:METOP:OSI-150-B
-IASI,                   1,      ,         EO:EUM:DAT:METOP:IASIL1C-ALL
+IASI,                   1,      ,         EO:EUM:DAT:METOP:IASIL1C-ALL EO:EUM:DAT:0590
 MVIRI-MFG,              1,      ,         EO:EUM:DAT:0080 EO:EUM:DAT:0081 EO:EUM:DAT:0082  
 MVIRI-MFG,              2,      ,         EO:EUM:DAT:0300 EO:EUM:DAT:0301 EO:EUM:DAT:0302  
 SEVIRI-MSG,             1,      ,         EO:EUM:DAT:MSG:HRSEVIRI EO:EUM:DAT:MSG:HRSEVIRI-IODC EO:EUM:DAT:0962
@@ -20,4 +20,4 @@ SENTINEL-5P-TROPOMI,    1,      ,         EO:EUM:DAT:0069 EO:EUM:DAT:0070 EO:EUM
 SENTINEL-5P-TROPOMI,    2,      ,         EO:EUM:DAT:0072 EO:EUM:DAT:0073 EO:EUM:DAT:0074 EO:EUM:DAT:0075 EO:EUM:DAT:0076 EO:EUM:DAT:0077EO:EUM:DAT:0078 EO:EUM:DAT:0602 EO:EUM:DAT:0103
 FCI-MTG-HR,             1,      ,         EO:EUM:DAT:0665
 FCI-MTG-NR,             1,      ,         EO:EUM:DAT:0662
-VIIRS,                  1,      ,         EO:EUM:DAT:MULT:EARS-VIIRS
+VIIRS,                  1,      ,         EO:EUM:DAT:MULT:EARS-VIIRS EO:EUM:DAT:0919

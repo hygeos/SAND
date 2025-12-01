@@ -2,8 +2,8 @@ from sand.sample_product import products
 from tempfile import TemporaryDirectory
 from core import log
 import argparse
-
 import sand
+
 log.silence(sand)
 log.set_lvl(log.lvl.INFO)
 
@@ -25,8 +25,8 @@ parser.add_argument('-p', '--provider',
 
 args = parser.parse_args()
 
-if args.provider: dl = {args.provider: dl[args.provider]}
-# dl = {'CDSE': dl['CDSE']}
+if args.provider: 
+    dl = {args.provider: dl[args.provider]}
 
 with TemporaryDirectory() as tmpdir:
     for name, provider in dl.items():
@@ -38,17 +38,20 @@ with TemporaryDirectory() as tmpdir:
         error_msg_end = ' failed at {} with this message : {}'
         for collec in collec_df['Name']:
             
-            if collec not in products: continue
-            for level in products[collec]:
+            if collec not in products: 
+                continue
+            
+            params = products[collec]['constraint']
+            for level in [1,2,3]:
                 
                 msg_start = f'Download of {collec} {level} with provider {name}'
                 error_msg = msg_start + error_msg_end
                 
                 # Query
                 try: 
-                    l = int(level[5])
-                    ls = dl.query(collection_sand=collec, level=l,
-                                  **products[collec][level])
+                    ls = dl.query(collection_sand=collec, level=level, **params)
+                except ReferenceError as e:
+                    continue
                 except Exception as e: 
                     log.info(log.rgb.red, error_msg.format('query',e))
                     continue
