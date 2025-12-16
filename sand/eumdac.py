@@ -2,19 +2,14 @@ import eumdac
 import requests
 
 from pathlib import Path
-from typing import Optional, Literal
-from shapely import to_wkt
+from typing import Literal
 from tempfile import TemporaryDirectory
-from datetime import datetime, date
+from datetime import datetime
 
+from sand.constraint import Time, Geo, Name
 from sand.base import raise_api_error, RequestsError, BaseDownload
-from sand.results import Query
-from sand.tinyfunc import (
-    check_name_contains, 
-    check_name_glob,
-    check_name_endswith,
-    check_name_startswith,
-)
+from sand.results import SandQuery, SandProduct
+from sand.utils import write
 
 from core import log
 from core.table import read_xml
@@ -24,34 +19,18 @@ from core.files import filegen, uncompress
 
 
 class DownloadEumDAC(BaseDownload):
-        
+    """
+    Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)
+    """
+    
+    provider = 'eumdac'
+    
     def __init__(self):
-        """
-        Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)
-
-        Example:
-            eum = DownloadEumDAC()
-            # retrieve the list of products
-            # using a pickle cache file to avoid reconnection
-            ls = cache_dataframe('query-S2.pickle')(cds.query)(
-                collection_sand='MVIRI-MFG',
-                dtstart=datetime(2024, 1, 1),
-                dtend=datetime(2024, 2, 1),
-                geo=Point(119.514442, -8.411750),
-            )
-            eum.download(ls.iloc[0], <dirname>)
-        """
-        self.provider = 'eumdac'
+        super().__init__()
         
-    def _login(self):
+    def _log(self):
         """
         Login to EUMETSAT Data Access API with credentials from .netrc.
-
-        This method:
-        1. Sets up a new session if needed
-        2. Gets credentials from .netrc file
-        3. Creates an access token
-        4. Initializes the data store connection
         """
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
@@ -72,66 +51,33 @@ class DownloadEumDAC(BaseDownload):
         log.debug(f'Log to API (https://data.eumetsat.int/)')
     
     
-    def query(
+    def _query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
-        dtstart: Optional[date|datetime] = None,
-        dtend: Optional[date|datetime] = None,
-        geo = None,
-        cloudcover_thres: Optional[int] = None,
-        name_contains: Optional[list] = [],
-        name_startswith: Optional[str] = None,
-        name_endswith: Optional[str] = None,
-        name_glob: Optional[str] = None,
-        api_collections: list[str] = None,
-        other_attrs: Optional[list] = [],
-        **kwargs
+        time: Time = None,
+        geo: Geo = None,
+        name: Name = None,
+        cloudcover_thres: int = None,
+        api_collection: list[str] = None
     ):
         """
         Product query on Eumetsat datahub
-
-        Args:
-            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
-            level (int): Processing level (1, 2, or 3)
-            dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
-                Point(lon, lat)
-                Polygon(...)
-            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
-            name_contains (list): list of substrings
-            name_startswith (str): search for name starting with this str
-            name_endswith (str): search for name ending with this str
-            name_glob (str): match name with this string
-            api_collections (list[str]): name of deserved collection in API standard
-            other_attrs (list): list of other attributes to include in the output
-                (ex: ['ContentDate', 'Footprint'])
-
-        Note:
-            This method can be decorated by cache_dataframe for storing the outputs.
-            Example:
-                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         self._login()
         
         # Retrieve api collections based on SAND collections
-        if api_collections is None:
-            self._load_sand_collection_properties(collection_sand, level)
-        else:
-            self.api_collection = api_collections
-            self.name_contains = []
+        if api_collection is None:
+            name_constraint = self._load_sand_collection_properties(collection_sand, level)
+            api_collection = self.api_collection[0]
             
-        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
+        time = self._format_time(collection_sand, time)
 
-        # Add provider constraint
-        self.name_contains += name_contains
-            
-        # Define check functions
-        checker = []
-        if name_contains: checker.append((check_name_contains, name_contains))
-        if name_startswith: checker.append((check_name_startswith, name_startswith))
-        if name_endswith: checker.append((check_name_endswith, name_endswith))
-        if name_glob: checker.append((check_name_glob, name_glob))
+        # Define or complement constraint on naming
+        if name:
+            name.add_contains(name_constraint)
+        else:
+            name = Name(contains=name_constraint)
         
         product = []
         for collec in self.api_collection:
@@ -141,76 +87,57 @@ class DownloadEumDAC(BaseDownload):
             self.selected_collection = self.datastore.get_collection(collec)
             try:
                 prod = list(self.selected_collection.search(
-                    geo = to_wkt(geo),
-                    dtstart = dtstart,
-                    dtend = dtend
+                    geo = geo.to_wkt() if geo else None,
+                    dtstart = time.start,
+                    dtend = time.end
                 ))
-            except eumdac.collection.CollectionError: continue
+            except eumdac.collection.CollectionError: 
+                continue
             
             # Filter products
-            product += [p for p in prod if self._check_name(str(p), checker)]
+            product += [p for p in prod if name.apply(str(p))]
         
-        if cloudcover_thres: log.warning("'cloudcover_thres' is not used with eumdac") 
+        if cloudcover_thres: 
+            log.warning("'cloudcover_thres' is not used with eumdac") 
         
-        out = [{"id": str(d), 
-                "name": d.acronym, 
-                "collection": str(d.collection), 
-                "time": d.processingTime,
-                "dl_url": d.metadata['properties']['links']['data'],
-                "meta_url": d.metadata['properties']['links']['alternates'],
-                "quicklook_url": d.metadata['properties']['links'].get('previews'),
-                **{k: d[k] for k in other_attrs}} 
-                for d in product]
+        out = [
+            SandProduct(product_id=str(d), date=d.sensing_start.isoformat(), metadata=d)    
+            for d in product
+        ]
         
         log.info(f'{len(out)} products has been found')
-        return Query(out)
+        return SandQuery(out)
     
     
-    def download(self, product: str, dir: Path, if_exists='skip') -> Path:
+    def _dl(self, product: str, dir: Path, if_exists='skip') -> Path:
         """
         Download a product from EUMETSAT Data Store.
-
-        Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
         """
         self._login()
         
         data = self.datastore.get_product(
-            product_id=product['id'],
-            collection_id=product['collection'],
+            product_id=product.product_id,
+            collection_id=product.metadata.collection
         )
 
-        target = Path(dir)/product['id']
+        target = Path(dir)/product.product_id
         filegen(if_exists=if_exists)(self._download)(target, data, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
     
-    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
         """
         Download a specific product from EumDAC by its product identifier
-        
-        Args:
-            product_id (str): The identifier of the product to download
-            dir (Path | str): Directory where to store the downloaded file
-            api_collections (list[str], optional): List of API collection names. 
-                If None, will determine from product_id pattern.
-                
-        Returns:
-            Path: Path to the downloaded file
-            
-        Raises:
-            Exception: If product cannot be found or downloaded
         """        
         self._login()
         
         # Retrieve api collections based on SAND collections        
-        if api_collections is None:
+        if api_collection is None:
             p = get_pattern(product_id)
             collection_sand, level = p['Name'], get_level(product_id, p)
             self._load_sand_collection_properties(collection_sand, level)
         else:
-            self.api_collection = api_collections
+            self.api_collection = api_collection
             self.name_contains = []
         
         for c in self.api_collection:
@@ -261,7 +188,7 @@ class DownloadEumDAC(BaseDownload):
             dl_target.unlink() 
     
     
-    def quicklook(self, product: dict, dir: Path|str) -> Path:
+    def _qkl(self, product: dict, dir: Path|str) -> Path:
         """
         Download a quicklook preview image for a product.
 
@@ -281,9 +208,10 @@ class DownloadEumDAC(BaseDownload):
         """
         self._login()
         
-        if product['quicklook_url'] is None:
+        quicklook_url = product.metadata.metadata['properties']['links'].get('previews')
+        if quicklook_url is None:
             log.error('No download link for quicklook')
-        url = product['quicklook_url'][0]['href']      
+        url = quicklook_url[0]['href']      
         target = Path(dir)/(url.split('/')[-2].split('.')[0] + '.jpeg')
         
         def _download_qkl(target, url):# Initialize session for download
@@ -303,10 +231,7 @@ class DownloadEumDAC(BaseDownload):
             raise_api_error(response)
 
             # Download file
-            log.debug('Start writing on device')
-            pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
-            with open(target, 'wb') as f:
-                [f.write(chunk) for chunk in pbar if chunk]
+            write(response, target)
 
         if not target.exists():
             filegen(0)(_download_qkl)(target, url)
@@ -315,7 +240,7 @@ class DownloadEumDAC(BaseDownload):
         return target
     
     
-    def metadata(self, product: dict) -> dict:
+    def _metadata(self, product: dict) -> dict:
         """
         Retrieve detailed metadata for a product from EUMETSAT.
 
@@ -328,7 +253,8 @@ class DownloadEumDAC(BaseDownload):
         """
         self._login()
         
-        req = (product['meta_url'][0]['href'])
+        meta_url = product.metadata.metadata['properties']['links']['alternates']
+        req = (meta_url[0]['href'])
         meta = requests.get(req).text
 
         assert len(meta) > 0

@@ -1,16 +1,13 @@
-from IPython.display import display
 from sand.copernicus_dataspace import DownloadCDSE
-from datetime import datetime
-from shapely import Point
+from sand.constraint import Time, Geo, Name
 
 
 def test_query_results():
     dl = DownloadCDSE()
     ls = dl.query(
         collection_sand='SENTINEL-2-MSI',
-        dtstart = datetime(2024, 1, 1), 
-        dtend = datetime(2024, 2, 1),
-        geo = Point(119.514442, -8.411750),
-        name_contains = ['_MSIL1C_']
+        time = Time('2024-01-01', '2024-02-01'),
+        geo = Geo.Point(-8.5, 119),
+        name = Name(contains=['_MSIL1C_'])
     )
-    display(ls)
+    print(ls)

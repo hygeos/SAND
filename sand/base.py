@@ -1,10 +1,11 @@
 from datetime import datetime, date, time
-from shapely import Point, Polygon
 from functools import reduce
+from typing import Literal
 from pathlib import Path
 
-from sand.results import Collection
-from sand.tinyfunc import end_of_day, change_lon_convention
+from sand.constraint import Time, Geo, Name
+from sand.results import Collection, SandQuery
+from sand.utils import end_of_day
 from core.table import read_csv
 from core import log
 
@@ -33,34 +34,45 @@ class BaseDownload:
     def _login(self):
         """
         Login to API server with credentials stored in .netrc file.
-        
-        This method should be implemented by child classes to handle provider-specific
-        authentication. It typically uses credentials from a .netrc file.
-        
-        Returns:
-            NotImplemented: Base class does not implement this method
         """
-        return NotImplemented
+        self._log()
 
-    def query(self, dtstart=None, dtend=None, geo=None) -> dict:
+    def query(
+        self,
+        collection_sand: str = None,
+        level: Literal[1,2,3] = 1,
+        time: Time = None,
+        geo: Geo = None,
+        name: Name = None,
+        cloudcover_thres: int = None,
+        api_collection: list[str] = None
+    ) -> SandQuery:
         """
         Query products from the API server based on temporal and spatial constraints.
 
         Args:
-            dtstart (datetime|date, optional): Start date for the query period. 
-                If None, uses collection's launch date.
-            dtend (datetime|date, optional): End date for the query period.
-                If None, uses current date.
-            geo (Shapely.geometry, optional): Spatial constraint as a Shapely geometry
-                (Point or Polygon) with coordinates in (lon, lat) format.
-                Longitude must be in [-180, 360) and latitude in [-90, 90].
+            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
+            level (int): Processing level (1, 2, or 3)
+            time (Time, optional): Time constraint. 
+            geo (Geo, optional): Spatial constraint.
+            name (Name, optional): Constraints over product name.
+            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
+            api_collection (list[str]): Name of deserved collection in API standard
 
         Returns:
-            dict: Query results containing matching products
+            SandQuery: Query results containing matching products
         """
-        return NotImplemented
+        return self._query(
+            collection_sand=collection_sand,
+            level=level,
+            time=time,
+            geo=geo,
+            name=name,
+            cloudcover_thres=cloudcover_thres,
+            api_collection=api_collection
+        )
 
-    def download(self, product: dict, dir: Path|str) -> Path:
+    def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
         """
         Download a product from the API server.
 
@@ -71,9 +83,9 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded product file
         """
-        return NotImplemented
+        return self._dl(product=product, dir=dir, if_exists=if_exists)
 
-    def quicklook(self, product: dict, dir: Path|str):
+    def quicklook(self, product: dict, dir: Path|str) -> Path:
         """
         Download a quicklook preview image for a product.
 
@@ -84,9 +96,9 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded quicklook image
         """
-        return NotImplemented
+        return self._qkl(product=product, dir=dir)
 
-    def metadata(self, product: dict):
+    def metadata(self, product: dict) -> dict:
         """
         Retrieve detailed metadata for a product.
 
@@ -98,10 +110,25 @@ class BaseDownload:
                 - attributes: Product attributes (e.g., cloud cover, quality flags)
                 - assets: Available product assets (e.g., bands, ancillary data)
         """
-        return NotImplemented
+        return self._metadata(product=product)
     
-    # Visible functions already implemented
-    
+    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+        """
+        Download a specific product from API server by its product identifier
+        
+        Args:
+            product_id (str): The identifier of the product to download
+                (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
+            dir (Path | str): Directory where to store the downloaded file
+            api_collection (str, optional): Name of the API collection to query. 
+                If None, will determine from product_id pattern.
+                
+        Returns:
+            Path: Path to the downloaded file
+        """
+        return self._dl_file(product_id=product_id, dir=dir, api_collection=api_collection)
+        
+    # Visible functions already implemented    
     def download_all(self, products, dir: Path|str, if_exists: str='skip', 
                      parallelized: bool = False) -> list[Path]:
         """
@@ -139,7 +166,7 @@ class BaseDownload:
     
     def get_available_collection(self) -> dict:
         """
-        Every downloadable collections
+        Return every downloadable collections for selected provider
         """
         # Get list of available collections if not already done
         if not hasattr(self, 'available_collection'):
@@ -148,8 +175,6 @@ class BaseDownload:
         # Join with global information contained
         current_dir = Path(__file__).parent
         sensor = read_csv(current_dir/'sensors.csv')
-        sensor['launch_date'] = sensor['launch_date'].astype(str)
-        sensor['end_date'] = sensor['end_date'].astype(str)
         return Collection(self.available_collection , sensor)
     
     # Private functions 
@@ -171,7 +196,7 @@ class BaseDownload:
         props = self._load_provider_properties()
         self._get_collec_properties(collection, level, props)
         self.api_collection = self._retrieve_api_collec()
-        self.name_contains = self._set_name_constraint()
+        return self._set_name_constraint()
     
     def _set_session(self): 
         self.session = requests.Session()
@@ -210,18 +235,19 @@ class BaseDownload:
         to_add = self.sand_props['contains'].values[0]
         return [] if str(to_add) == 'nan' else to_add.split(' ')
     
-    def _check_name(self, name, check_funcs):
+    def _check_name(self, name, check_funcs) -> bool:
         return all(c[0](name, c[1]) for c in check_funcs)
     
-    def _format_input_query(self, collection, dtstart, dtend, geo):
+    def _format_time(self, collection: str, t: Time) -> Time:
         """
         Function to check and format main arguments of query method
 
         Args:
-            dtstart (datetime, optional): Start date.
-            dtend (datetime, optional): End date.
-            geo (Shapely object, optional): Spatial constraint.
+            t (Time, optional): Time constraint.
         """
+        # Check if void
+        if t is None:
+            return t
         
         # Open reference file
         ref_file = Path(__file__).parent/'sensors.csv'
@@ -229,43 +255,29 @@ class BaseDownload:
         ref = ref[ref['Name'] == collection]
         
         # Check format
-        if dtstart is None: 
-            dtstart = datetime.fromisoformat(ref['launch_date'].values[0])
-        if isinstance(dtstart, date):
-            dtstart = datetime.combine(dtstart, time(0))
-        if dtend is None:
-            dtend = datetime.now()
-        elif isinstance(dtend, date):
-            dtend = end_of_day(datetime.combine(dtend, time(0)))
-        assert isinstance(dtstart, datetime) and isinstance(dtend, datetime)        
+        if t.start is None: 
+            t.start = datetime.fromisoformat(ref['launch_date'].values[0])
+        if isinstance(t.start, date):
+            t.start = datetime.combine(t.start, time(0))
+        if t.end is None:
+            t.end = datetime.now()
+        elif isinstance(t.end, date):
+            t.end = end_of_day(datetime.combine(t.end, time(0)))
+        assert isinstance(t.start, datetime) and isinstance(t.end, datetime)        
         
         # Check time 
         launch, end = ref['launch_date'].values[0], ref['end_date'].values[0]
-        assert dtstart.date() >= date.fromisoformat(launch)
-        if end != 'x': assert dtend.date() < date.fromisoformat(end)
+        assert t.start.date() >= date.fromisoformat(launch)
+        if end != 'x': 
+            assert t.end.date() < date.fromisoformat(end)
         
-        # Check spatial
-        msg = "Geospatial constraint should be a shapely object of (lon, lat) "\
-              "and -180<=lon<360 and -90<lat<90, got bounds at ({})"
-        if isinstance(geo, Polygon): 
-            bounds = geo.bounds
-            log.check(-180 <= bounds[0] < 360 and -180 <= bounds[2] < 360 and \
-                      -90 <= bounds[1] <= 90 and -90 <= bounds[3] <= 90,
-                      msg.format(bounds), e=RequestsError)
-        elif isinstance(geo, Point): 
-            log.check(-180 <= geo.x < 360 and -90 <= geo.y <= 90,
-                      msg.format(f"{geo.x},{geo.y}"), e=RequestsError)
-        elif geo is None: pass
-        else: log.error(f'Invalid type for geo argmuent, got {type(geo)}', e=ValueError)
-        
-        if geo: geo = change_lon_convention(geo, 180)
-        
-        return dtstart, dtend, geo
+        return t
     
     def __del__(self):
-        self.session.close()
+        if hasattr(self, 'session'):
+            self.session.close()
 
-def raise_api_error(response: dict):
+def raise_api_error(response: dict) -> int:
     """
     Check HTTP response status code and raise appropriate error if needed.
     
@@ -288,7 +300,7 @@ def raise_api_error(response: dict):
 
 def check_too_many_matches(response: dict, 
                            returned_tag: str|list[str], 
-                           hit_tag: str|list[str]):
+                           hit_tag: str|list[str]) -> None:
     """
     Check if an API query returned more matches than it can return in one response.
     

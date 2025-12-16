@@ -1,17 +1,14 @@
-from datetime import datetime, date
 from requests.utils import requote_uri
 from urllib.parse import urlencode
 from typing import Optional, Literal
+from dataclasses import dataclass
 from pathlib import Path
-from shapely import Point, Polygon
-
-import re
-import fnmatch
 import requests
 
 from sand.base import raise_api_error, BaseDownload, RequestsError
-from sand.tinyfunc import _parse_geometry, change_lon_convention
-from sand.results import Query
+from sand.utils import write, check_name_glob
+from sand.constraint import Time, Geo, Name
+from sand.results import SandQuery, SandProduct
 
 from core import log
 from core.files import filegen
@@ -21,30 +18,17 @@ from core.geo.product_name import get_pattern, get_level
 
 
 class DownloadCDSE(BaseDownload):
+    """
+    Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
+
+    This class implements the BaseDownload interface for accessing and downloading 
+    satellite data from Copernicus Data Space. It supports both OData and OpenSearch APIs.
+    """
+    
+    provider = 'cdse'
     
     def __init__(self):
-        """
-        Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
-
-        This class implements the BaseDownload interface for accessing and downloading 
-        satellite data from Copernicus Data Space. It supports both OData and OpenSearch APIs.
-
-        Example:
-            cds = DownloadCDSE()
-            # retrieve the list of products
-            # using a pickle cache file to avoid reconnection
-            ls = cache_dataframe('query-S2.pickle')(cds.query)(
-                collection_sand='SENTINEL-2-MSI',
-                level=1,
-                dtstart=datetime(2024, 1, 1),
-                dtend=datetime(2024, 2, 1),
-                geo=Point(119.514442, -8.411750),
-                name_contains=['_MSIL1C_'],
-            )
-            cds.download(ls.iloc[0], <dirname>)
-        """
         self.api = 'OData'
-        self.provider = 'cdse'
 
     def _login(self):
         """
@@ -61,13 +45,6 @@ class DownloadCDSE(BaseDownload):
     def _get_tokens(self, auth: dict) -> None:
         """
         Get authentication tokens from Copernicus Data Space using provided credentials.
-
-        Args:
-            auth (dict): Authentication credentials with 'user' and 'password' keys
-                obtained from .netrc file
-
-        Raises:
-            Exception: If token creation fails or server response is invalid
         """
         data = {
             "client_id": "cdse-public",
@@ -95,125 +72,72 @@ class DownloadCDSE(BaseDownload):
 
         Args:
             api_name (Literal['OData', 'OpenSearch']): Name of the API to use
-
-        Raises:
-            ValueError: If api_name is not 'OData' or 'OpenSearch'
         """
         assert api_name in ['OData', 'OpenSearch']
         log.debug(f'Move from {self.api} API to {api_name} API')
         self.api = api_name
     
     
-    def query(
+    def _query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
-        dtstart: Optional[date|datetime] = None,
-        dtend: Optional[date|datetime] = None,
-        geo = None,
+        time: Time = None,
+        geo: Geo = None,
+        name: Name = None,
         cloudcover_thres: Optional[int] = None,
-        name_contains: Optional[list] = [],
-        name_startswith: Optional[str] = None,
-        name_endswith: Optional[str] = None,
-        name_glob: Optional[str] = None,
-        use_most_recent: bool = True,
-        api_collections: list[str] = None,
-        other_attrs: Optional[list] = [],
-        **kwargs
+        api_collection: list[str] = None,
     ):
         """
         Product query on the Copernicus Data Space
-
-        Args:
-            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
-            level (int): Processing level (1, 2, or 3)
-            dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
-                Point(lon, lat)
-                Polygon(...)
-            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
-            name_contains (list): list of substrings
-            name_startswith (str): search for name starting with this str
-            name_endswith (str): search for name ending with this str
-            name_glob (str): match name with this string
-            use_most_recent (bool): keep only the most recent processing baseline version
-            api_collections (list[str]): name of deserved collection in API standard
-            other_attrs (list): list of other attributes to include in the output
-                (ex: ['ContentDate', 'Footprint'])
-
-        Note:
-            This method can be decorated by cache_dataframe for storing the outputs.
-            Example:
-                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         self._login()
         
         # Retrieve api collections based on SAND collections
-        if api_collections is None:
-            self._load_sand_collection_properties(collection_sand, level)
-        else:
-            self.api_collection = api_collections
-            self.name_contains = []
+        if api_collection is None:
+            name_constraint = self._load_sand_collection_properties(collection_sand, level)
+            api_collection = self.api_collection[0]
          
-        # https://documentation.dataspace.copernicus.eu/APIs/OData.html#query-by-name
-        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
-        if geo: geo = change_lon_convention(geo, 0)
+        # Format input time and geospatial constraints
+        time = self._format_time(collection_sand, time)
+        if geo: geo.set_convention(0)
         
-        # Add provider constraint
-        self.name_contains += name_contains
+        # Define or complement constraint on naming
+        if name:
+            name.add_contains(name_constraint)
+        else:
+            name = Name(contains=name_constraint)
         
+        # Concatenate every information into a single object
         log.debug(f'Query {self.api} API')
-        params = _Request_params(self.api_collection[0], dtstart, dtend, geo, name_glob, 
-                                 self.name_contains, name_startswith, name_endswith,
-                                 cloudcover_thres)
+        params = _Request_params(api_collection, time, geo, name, cloudcover_thres)
         
+        # Query the server 
         if self.api == 'OpenSearch':
             response = _query_opensearch(params)
         elif self.api == 'OData': 
             response = _query_odata(params)
         else: log.error(f'Invalid API, got {self.api}', e=ValueError)
-
-        # test if maximum number of returns is reached
-        log.info(f'{len(response)} products has been found')
         
-        if use_most_recent and (collection_sand == 'SENTINEL-2-MSI'):
-            # remove duplicate products, take only the most recent one
-            mp = {}  # maps a single_id to a list of lines
-            for args in response:
-                # build a common identifier for multiple versions
-                s = args['Name'].split('_')
-                ident = '_'.join([s[i] for i in [0, 1, 2, 4, 5]])
-                if ident in mp: mp[ident].append(args)
-                else: mp[ident] = [args]
-            # for each identifier, sort the corresponding lines by "Name"
-            # and select the last one
-            json_value = [sorted(lines, key=lambda line: line['Name'])[-1]
-                             for lines in mp.values()]
-        else: json_value = response
-
-        out = [{"id": d["Id"], "name": d["Name"],
-                 **{k: d[k] for k in other_attrs}}
-                for d in json_value
-                if ((not name_glob) or fnmatch.fnmatch(d["Name"], name_glob))
-                ]
+        # Format list of product
+        out = [
+            SandProduct(index=d['Id'], product_id=d['Name'], date=d['ContentDate']['Start'], metadata=d) 
+            for d in response if check_name_glob(d['Name'], name.glob)
+        ]
     
         log.info(f'{len(out)} products has been found')
-        return Query(out)
+        return SandQuery(out)
     
     
-    def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
+    def _dl(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
         """
         Download a product from copernicus data space
-
-        Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
         """
-        self._login()  
+        self._login()
         
-        target = Path(dir)/product['name']
+        target = Path(dir)/product.product_id
         url = ("https://catalogue.dataspace.copernicus.eu/odata/v1/"
-               f"Products({product['id']})/$value")
+               f"Products({product.index})/$value")
         filegen(if_exists=if_exists)(self._download)(target, url, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
@@ -226,20 +150,6 @@ class DownloadCDSE(BaseDownload):
     ) -> None:
         """
         Internal method to download a file from Copernicus Data Space.
-        
-        This method is wrapped by filegen decorator for file management.
-        It handles token refresh and retry logic for failed downloads.
-
-        Args:
-            target (Path): Path where the file should be saved
-            url (str): URL to download the file from
-            compression_ext (str, optional): Compression format of the file to download 
-                (e.g. '.zip'). If not None, file will be uncompress after downloading 
-
-        Raises:
-            ValueError: If response status code is invalid
-            RequestsError: If download fails after retries
-            OSError: If file writing fails
         """
         
         # Compression file path
@@ -273,10 +183,7 @@ class DownloadCDSE(BaseDownload):
                 self._get_tokens(auth)
         
         # Download compressed file
-        log.debug('Start writing on device')
-        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
-        with open(dl_target, 'wb') as f:
-            [f.write(chunk) for chunk in pbar if chunk]
+        write(response, dl_target)
             
         # Uncompress archive
         if compression_ext:
@@ -284,59 +191,34 @@ class DownloadCDSE(BaseDownload):
             assert target == uncompress(dl_target, target.parent)
             dl_target.unlink() 
     
-    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
         """
         Download a specific product from Copernicus Data Space by its product identifier
-        
-        Args:
-            product_id (str): The identifier of the product to download
-                (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
-            dir (Path | str): Directory where to store the downloaded file
-            api_collections (list[str], optional): List of API collection names. 
-                If None, will determine from product_id pattern.
-                
-        Returns:
-            Path: Path to the downloaded file
-            
-        Raises:
-            Exception: If product cannot be found or downloaded
         """
         self._login()
         
         # Retrieve api collections based on SAND collections        
-        if api_collections is None:
+        if api_collection is None:
             p = get_pattern(product_id)
             collection_sand, level = p['Name'], get_level(product_id, p)
             self._load_sand_collection_properties(collection_sand, level)
         else:
-            self.api_collection = api_collections
+            self.api_collection = api_collection
             self.name_contains = []
-            
-        ls = self.query(collection_sand=collection_sand, level=level, name_contains=[product_id])
+        
+        name = Name(contains=[product_id])
+        ls = self.query(collection_sand=collection_sand, level=level, name=name)
         assert len(ls) == 1, 'Multiple products found'
-        return self.download(ls.iloc[0], dir)
+        return self.download(ls[0], dir)
     
     
-    def quicklook(self, product: dict, dir: Path|str):
+    def _qkl(self, product: dict, dir: Path|str):
         """
         Download a quicklook (preview image) of the product
-        
-        Args:
-            product (dict): Product dictionary containing metadata and browse info
-            dir (Path|str): Directory where to save the quicklook
-            
-        Returns:
-            Path: Path to the downloaded quicklook image file
-            
-        Notes:
-            - Downloads the reflectance quicklook if available
-            - Image is saved as PNG
-            - Uses product name as filename with .png extension
-            - Skips download if file already exists
         """
         self._login()
         
-        target = Path(dir)/(product['name'] + '.jpeg')
+        target = Path(dir)/(product.product_id + '.jpeg')
 
         if not target.exists():
             assets = self.metadata(product)['Assets']
@@ -349,7 +231,7 @@ class DownloadCDSE(BaseDownload):
         return target
     
     
-    def metadata(self, product):
+    def _metadata(self, product):
         """
         Extract metadata from a product's metadata field
         
@@ -362,29 +244,20 @@ class DownloadCDSE(BaseDownload):
         self._login()
         
         req = ("https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
-               f" eq '{product['id']}'&$expand=Attributes&$expand=Assets")
+               f" eq '{product.index}'&$expand=Attributes&$expand=Assets")
         json = requests.get(req).json()
 
         assert len(json['value']) == 1
         return json['value'][0]
 
 
-class _Request_params:
-    
-    def __init__(self, collection, dtstart, dtend, geo, name_glob, 
-                name_contains, name_startswith, name_endswith, cloudcover_thres):
-        
-        self.collection = collection
-        self.dtstart = dtstart
-        self.dtend = dtend
-        self.geo = geo 
-        
-        self.name_glob = name_glob
-        self.name_contains = name_contains
-        self.name_startswith = name_startswith
-        self.name_endswith = name_endswith
-        
-        self.cloudcover_thres = cloudcover_thres
+@dataclass
+class _Request_params:        
+    collection: str
+    time: Time
+    geo: Geo
+    name: Name
+    cloudcover_thres: float
         
 def _query_odata(params: _Request_params):        
     """Query the EOData Finder API"""
@@ -393,35 +266,22 @@ def _query_odata(params: _Request_params):
         f"""https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Collection/Name eq '{params.collection}' """
     ]
 
-    if params.dtstart:
-        query_lines.append(f'ContentDate/Start gt {params.dtstart.isoformat()}Z')
-    if params.dtend:
-        query_lines.append(f'ContentDate/Start lt {params.dtend.isoformat()}Z')
-    if params.geo:
-        query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo}')")
+    if params.time and params.time.start:
+        query_lines.append(f'ContentDate/Start gt {params.time.start.isoformat()}Z')
+    if params.time and params.time.end:
+        query_lines.append(f'ContentDate/Start lt {params.time.end.isoformat()}Z')
+    if params.geo is not None:
+        query_lines.append(f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo.to_wkt()}')")
 
-    if params.name_glob:
-        assert params.name_startswith is None
-        assert params.name_endswith is None
-        assert params.name_contains is None
-        substrings = re.split(r'\*|\?', params.name_glob)
-        if substrings[0]:
-            params.name_startswith = substrings[0]
-        if substrings[-1] and (len(substrings) > 1):
-            params.name_endswith = substrings[-1]
-        if (len(substrings) > 2):
-            params.name_contains = [x for x in substrings[1:-1] if x]
+    if params.name.startswith != '':
+        query_lines.append(f"startswith(Name, '{params.name.startswith}')")
 
-    if params.name_startswith:
-        query_lines.append(f"startswith(Name, '{params.name_startswith}')")
-
-    if params.name_contains:
-        assert isinstance(params.name_contains, list)
-        for cont in params.name_contains:
+    if len(params.name.contains) != 0:
+        for cont in params.name.contains:
             query_lines.append(f"contains(Name, '{cont}')")
 
-    if params.name_endswith:
-        query_lines.append(f"endswith(Name, '{params.name_endswith}')")
+    if params.name.endswith != '':
+        query_lines.append(f"endswith(Name, '{params.name.endswith}')")
 
     if params.cloudcover_thres:
         query_lines.append(
@@ -440,6 +300,7 @@ def _query_odata(params: _Request_params):
               "Please refine your query.", e=RequestsError)
     return response.json()['value']
 
+# SHOULD BE DEPRECATED
 def _query_opensearch(params: _Request_params):
     """Query the OpenSearch Finder API"""
     
@@ -452,14 +313,14 @@ def _query_opensearch(params: _Request_params):
     query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{params.collection}/search.json?maxRecords=1000"""
     
     query_params = {'status': 'ALL'}
-    if params.dtstart is not None: 
-        query_params["startDate"] = params.dtstart.isoformat()
+    if params.time and params.time.start: 
+        query_params["startDate"] = params.time.start.isoformat()
         
-    if params.dtend is not None: 
-        query_params["completionDate"] = params.dtend.isoformat()
+    if params.time and params.time.end: 
+        query_params["completionDate"] = params.time.end.isoformat()
         
     if params.geo is not None: 
-        query_params["geometry"] = _parse_geometry(params.geo)
+        query_params["geometry"] = params.geo.to_wkt()
 
     query += f"&{urlencode(query_params)}"
     

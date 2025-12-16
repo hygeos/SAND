@@ -19,8 +19,7 @@ def eval_download(downloader, collec, level, **kwargs):
     with TemporaryDirectory() as tmpdir:
         name_cache = Path(tmpdir)/f'test_{downloader.provider}_cache.pickle'
         ls = cache_dataframe(name_cache)(downloader.query)(**kwargs)
-        assert all(c in ls.columns for c in ['id', 'name'])
-        downloader.download(ls.iloc[0], tmpdir)
+        downloader.download(ls[0], tmpdir)
         assert len(list(Path(tmpdir).iterdir())) == 2
     
 def eval_metadata(downloader, collec, level, **kwargs):    
@@ -28,7 +27,7 @@ def eval_metadata(downloader, collec, level, **kwargs):
     with TemporaryDirectory() as tmpdir:
         name_cache = Path(tmpdir)/f'test_{downloader.provider}_cache.pickle'
         ls = cache_dataframe(name_cache)(downloader.query)(**kwargs)
-        meta = downloader.metadata(ls.iloc[0])
+        meta = downloader.metadata(ls[0])
         assert isinstance(meta, dict)
         print(meta)
     
@@ -37,7 +36,7 @@ def eval_quicklook(request, downloader, collec, level, **kwargs):
     with TemporaryDirectory() as tmpdir:
         name_cache = Path(tmpdir)/f'test_{downloader.provider}_cache.pickle'
         ls = cache_dataframe(name_cache)(downloader.query)(**kwargs)
-        quick = downloader.quicklook(ls.iloc[0], tmpdir)
+        quick = downloader.quicklook(ls[0], tmpdir)
         assert quick.exists()
         
         img = Image.open(quick)

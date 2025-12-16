@@ -16,13 +16,13 @@ def collec(request):
 @pytest.fixture(params=[1])
 def level(request):
     return request.param
-
-@pytest.fixture
-def constraint(collec):
-    return products[collec]['level1']
     
 @pytest.fixture
-def product_id(constraint): return constraint['product_id']
+def constraint(collec):
+    return products[collec]['constraint']
+
+@pytest.fixture
+def product_id(collec): return products[collec]['l1_product']
 
 
 def test_login(downloader):
@@ -36,9 +36,9 @@ def test_download(downloader, collec, level, constraint):
 
 def test_metadata(downloader, collec, level, constraint):
     eval_metadata(downloader, collec, level, **constraint)
-
+    
 def test_quicklook(request, downloader, collec, level, constraint):
     eval_quicklook(request, downloader, collec, level, **constraint)
-            
+        
 def test_download_file(downloader, product_id):
     eval_download_file(downloader, product_id)

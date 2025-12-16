@@ -1,39 +1,60 @@
 import pandas as pd
+from core.ascii_table import ascii_table
+from dataclasses import dataclass, asdict
 
 
-def Query(json_value: list[dict]) -> pd.DataFrame:
+@dataclass
+class SandProduct:
+    product_id: str
+    date: str
+    metadata: dict
+    index: str = None
+    
+    def to_dict(self):
+        return asdict(self)
+
+class SandQuery:
     """
-    Convert a list of product dictionaries into a pandas DataFrame
+    Format a list of product dictionaries.
+    
+    This class is fully serializable using pickle for saving and loading query results.
     
     Args:
         json_value (list[dict]): List of dictionaries, each representing a product
             with keys like 'id', 'name', 'links', etc.
-            
-    Returns:
-        pd.DataFrame: DataFrame containing all products, with each product as a row
-            and dictionary keys as columns. Empty DataFrame if no products.
-            The DataFrame is sorted by 'id'.
-            
-    Example:
-        >>> products = [
-        ...     {"id": "123", "name": "prod1", "links": {...}},
-        ...     {"id": "456", "name": "prod2", "links": {...}}
-        ... ]
-        >>> df = Query(products)
     """
-    # If no product returns empty pandas DataFrame
-    if len(json_value) == 0: return pd.DataFrame()
     
-    # Concatenate every product data into a DataFrame
-    res = []
-    for d in json_value:
-        sub = pd.DataFrame.from_dict({k: [v] for k,v in d.items()})
-        res.append(sub)
+    def __init__(self, json_values: list[SandProduct]):
+        self.products = json_values
     
-    # Sort query results by name
-    df = pd.concat(res, ignore_index=True)
-    df = df.sort_values(by='id')
-    return df 
+    def __repr__(self):
+        # If no product returns empty pandas DataFrame
+        if len(self.products) == 0: 
+            ascii_table(pd.DataFrame()).print()
+        
+        # Concatenate every product data into a DataFrame
+        res = []
+        for d in self.products:
+            sub = pd.DataFrame.from_dict(d.to_dict())
+            res.append(sub)
+        
+        # Sort query results by name
+        df = pd.concat(res, ignore_index=True)
+        df = df.sort_values(by='product_id')
+        df = df.drop('metadata', axis=1)
+        ascii_table(df).print()
+        return ''
+    
+    def __len__(self):
+        return len(self.products)
+    
+    def __getitem__(self, index):
+        product = self.products[index]
+        assert isinstance(product, SandProduct)
+        return product
+    
+    def equals(self, obj):
+        return self.products == obj.products
 
 def Collection(selection: list[str], collec_table: pd.DataFrame) -> pd.DataFrame:
     """

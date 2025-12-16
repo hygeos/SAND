@@ -1,7 +1,7 @@
-from shapely.geometry import shape
+from datetime import timedelta, datetime
 from shapely.ops import transform
-from datetime import timedelta
-from typing import Literal
+from numpy import log2
+from core import log
 import re
 
 
@@ -57,7 +57,7 @@ def check_name_glob(name: str, regexp: str) -> bool:
     """
     return bool(re.fullmatch(regexp, name))
 
-def end_of_day(date):
+def end_of_day(date: datetime) -> datetime:
     """
     Adjust a datetime to the end of the day if it's set to midnight
     
@@ -72,27 +72,6 @@ def end_of_day(date):
         date = date + timedelta(hours=23, minutes=59, seconds=59)
         return date
     return date
-
-def change_lon_convention(geo, center: Literal[0,180]):
-    """
-    Change the longitude convention of a geometry between 0-centered and 180-centered
-    
-    Args:
-        geo: A shapely geometry with coordinates as (lon,lat)
-        center (Literal[0,180]): Target convention:
-            - 0: converts to [-180,180] range
-            - 180: converts to [0,360] range
-            
-    Returns:
-        Transformed geometry with longitudes in the new convention
-        
-    Note:
-        Assumes input geometry coordinates are in (longitude, latitude) order
-    """
-    if center == 0:
-        return transform(lambda x,y: ([(a+180)%360-180 for a in x],y), geo)
-    if center == 180:
-        return transform(lambda x,y: ([a%360 for a in x],y), geo)
 
 def flip_coords(geo):
     """
@@ -109,48 +88,9 @@ def flip_coords(geo):
     """
     return transform(lambda x,y: (y,x), geo)
 
-def _parse_geometry(geom):
-    """
-    Parse a geometry into Well-Known Text (WKT) format
-    
-    Args:
-        geom: Input geometry - either a WKT string or an object with __geo_interface__
-        
-    Returns:
-        str: The geometry in WKT format
-        
-    Raises:
-        ValueError: If the geometry cannot be parsed to WKT
-    """
-    try:
-        # If geom has a __geo_interface__
-        return shape(geom).wkt
-    except AttributeError:
-        if _tastes_like_wkt_polygon(geom):
-            return geom
-        raise ValueError(
-            "geometry must be a WKT polygon str or have a __geo_interface__"
-        )
-    
-def _tastes_like_wkt_polygon(geometry):
-    """
-    Check if a string looks like a WKT polygon definition
-    
-    Args:
-        geometry: String to check for WKT polygon format
-        
-    Returns:
-        str: Normalized WKT string if valid
-        
-    Raises:
-        ValueError: If the string is not in WKT format
-        
-    Note:
-        Normalizes WKT string by:
-        - Removing spaces after commas
-        - Replacing spaces with + except for the first space
-    """
-    try:
-        return geometry.replace(", ", ",").replace(" ", "", 1).replace(" ", "+")
-    except Exception:
-        raise ValueError("Geometry must be in well-known text format")
+def write(response, filepath):
+    log.debug('Start writing on device')
+    chunk = 2 ** round(log2(len(response.content)/100))
+    pbar = log.pbar(list(response.iter_content(chunk_size=chunk)), 'writing')
+    with open(filepath, 'wb') as f:
+        [f.write(chunk) for chunk in pbar if chunk]

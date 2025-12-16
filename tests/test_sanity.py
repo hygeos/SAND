@@ -1,7 +1,6 @@
 from sand.copernicus_dataspace import DownloadCDSE
 from sand.sample_product import products
-from sand.base import RequestsError
-from sand.tinyfunc import change_lon_convention
+from sand.constraint import _change_lon_convention
 
 from core.table import read_csv
 from shapely import Point, Polygon
@@ -18,26 +17,13 @@ def collec(request):
 def constraint(collec):
     return products[collec]['constraint']
 
-@pytest.mark.skip('Find another sensor')
 def test_invalid_level(collec):
-    with pytest.raises(KeyError):
-        DownloadCDSE(collec,2)
+    with pytest.raises(ReferenceError):
+        DownloadCDSE().query(collec,3)
 
-@pytest.mark.parametrize('lonlat', [(-200,-30), (-30,-100)])
-def test_latlon_convention(collec, constraint, lonlat):
-    constraint['geo'] = Point(*lonlat)
-    with pytest.raises(RequestsError):
-        dl = DownloadCDSE()
-        dl.query(collection_sand=collec, **constraint)
-
-@pytest.mark.parametrize('center',[0, 180])
-@pytest.mark.parametrize('a, b',[
-    (Point(200,30), Point(-160,30)), 
-    (Polygon.from_bounds(200,30,210,40), Polygon.from_bounds(-160,30,-150,40))
-])
-def test_latlon_change_convention(center, a, b):
-    inputs, output = (a,b) if center == 0 else (b,a)
-    assert change_lon_convention(inputs, center) == output
+@pytest.mark.parametrize('center, value',[(0, -150), (180, 210)])
+def test_latlon_change_convention(center, value):
+    assert _change_lon_convention(210, center) == value
         
 @pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','geodes','usgs'])
 def test_provider_file(provider):

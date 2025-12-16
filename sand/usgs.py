@@ -10,14 +10,10 @@ from core.network.auth import get_auth
 from core.files import filegen, uncompress
 from core.geo.product_name import get_pattern, get_level
 
+from sand.constraint import Time, Geo, Name
 from sand.base import raise_api_error, BaseDownload, check_too_many_matches
-from sand.results import Query
-from sand.tinyfunc import (
-    check_name_contains, 
-    check_name_glob,
-    check_name_endswith,
-    check_name_startswith,
-)
+from sand.results import SandQuery, SandProduct
+from sand.utils import write
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
@@ -27,32 +23,14 @@ class DownloadUSGS(BaseDownload):
     def __init__(self):
         """
         Python interface to the USGS API (https://data.usgs.gov/)
-        
-        This class implements the BaseDownload interface for accessing and downloading 
-        satellite data from USGS API.
-
-        Example:
-            usgs = DownloadUSGS()
-            # retrieve the list of products
-            # using a pickle cache file to avoid reconnection
-            ls = cache_dataframe('query-S2.pickle')(cds.query)(
-                collection_sand='LANDSAT-5-TM',
-                dtstart=datetime(2024, 1, 1),
-                dtend=datetime(2024, 2, 1),
-                geo=Point(119.514442, -8.411750),
-            )
-            cds.download(ls.iloc[0], <dirname>)
         """
         self.provider = 'usgs'
         
 
-    def _login(self):
+    def _log(self):
         """
         Login to USGS using the M2M API with credentials stored in .netrc
         The authentication uses a token-based system following the USGS M2M API requirements.
-        
-        Raises:
-            Exception: If token creation fails or authentication is unsuccessful
         """
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
@@ -62,7 +40,6 @@ class DownloadUSGS(BaseDownload):
 
         data = {
             "username": auth['user'],
-            # "password": auth['password'],
             "token": auth['password'],
             }
         
@@ -79,85 +56,47 @@ class DownloadUSGS(BaseDownload):
         log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
     
-    def query(
+    def _query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
-        dtstart: Optional[date|datetime] = None,
-        dtend: Optional[date|datetime] = None,
-        geo = None,
+        time: Time = None,
+        geo: Geo = None,
+        name: Name = None,
         cloudcover_thres: Optional[int] = None,
-        name_contains: Optional[list] = [],
-        name_startswith: Optional[str] = None,
-        name_endswith: Optional[str] = None,
-        name_glob: Optional[str] = None,
-        api_collections: list[str] = None,
-        other_attrs: Optional[list] = None,
-        **kwargs
+        api_collection: list[str] = None,
     ):
         """
         Product query on the USGS
-
-        Args:
-            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
-            level (int): Processing level (1, 2, or 3)
-            dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
-                Point(lon, lat)
-                Polygon(...)
-            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
-            name_contains (list): list of substrings
-            name_startswith (str): search for name starting with this str
-            name_endswith (str): search for name ending with this str
-            name_glob (str): match name with this string
-            use_most_recent (bool): keep only the most recent processing baseline version
-            api_collections (list[str]): name of deserved collection in API standard
-            other_attrs (list): list of other attributes to include in the output
-                (ex: ['ContentDate', 'Footprint'])
-
-        Note:
-            This method can be decorated by cache_dataframe for storing the outputs.
-            Example:
-                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         self._login()
         
         # Retrieve api collections based on SAND collections
-        if api_collections is None:
-            self._load_sand_collection_properties(collection_sand, level)
+        if api_collection is None:
+            name_constraint = self._load_sand_collection_properties(collection_sand, level)
+            api_collection = self.api_collection[0]
+        
+        # Format input time and geospatial constraints
+        time = self._format_time(collection_sand, time)
+        
+        # Define or complement constraint on naming
+        if name:
+            name.add_contains(name_constraint)
         else:
-            self.api_collection = api_collections
-            self.name_contains = []
-        
-        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
-        
-        # Add provider constraint
-        self.name_contains += name_contains
-        
-        # Define check functions
-        checker = []
-        if name_contains: checker.append((check_name_contains, name_contains))
-        if name_startswith: checker.append((check_name_startswith, name_startswith))
-        if name_endswith: checker.append((check_name_endswith, name_endswith))
-        if name_glob: checker.append((check_name_glob, name_glob))
+            name = Name(contains=name_constraint)
         
         # Configure scene constraints for request        
         spatial_filter = {}
         spatial_filter["filterType"] = "mbr"
-        if isinstance(geo, Point):
-            spatial_filter["lowerLeft"]  = {"latitude":geo.y, 
-                                            "longitude":geo.x}
-            spatial_filter["upperRight"] = spatial_filter["lowerLeft"]
-
-        elif isinstance(geo, Polygon):
+        if isinstance(geo, Geo.Point|Geo.Polygon):
             bounds = geo.bounds
-            spatial_filter["lowerLeft"]  = {"latitude":bounds[1], 
-                                            "longitude":bounds[0]}
-            spatial_filter["upperRight"] = {"latitude":bounds[3], 
-                                            "longitude":bounds[2]}
+            spatial_filter["lowerLeft"]  = {"latitude":bounds[0], 
+                                            "longitude":bounds[1]}
+            spatial_filter["upperRight"] = {"latitude":bounds[2], 
+                                            "longitude":bounds[3]}
         
-        acquisition_filter = {"start": dtstart.isoformat(),
-                              "end"  : dtend.isoformat()}
+        acquisition_filter = {"start": time.start.isoformat(),
+                              "end"  : time.end.isoformat()}
 
         cloud_cover_filter = {"min" : cloudcover_thres,
                               "max" : 100,
@@ -170,7 +109,7 @@ class DownloadUSGS(BaseDownload):
                         "seasonalFilter"   : None}
 
         params = {
-            "datasetName": self.api_collection[0],
+            "datasetName": api_collection,
             "sceneFilter": scene_filter,
             "maxResults": 1000,
             "metadataType": "full",
@@ -187,16 +126,21 @@ class DownloadUSGS(BaseDownload):
         r = r['data']['results']
         
         # Filter products
-        response = [p for p in r if self._check_name(p['displayId'], checker)]
+        response = [p for p in r if name.apply(p['displayId'])]
+        self.api_collection = api_collection
 
-        out = [{"id": d["entityId"], "name": d["displayId"], "collection": self.api_collection[0],
-                 **{k: d[k] for k in (other_attrs or ['metadata','publishDate','browse'])}}
-                for d in response]
+        out = [
+            SandProduct(
+                product_id=d["displayId"], index=d["entityId"],
+                date=d['temporalCoverage']['startDate'], metadata=d
+            )
+            for d in response
+        ]
         
         log.info(f'{len(out)} products has been found')
-        return Query(out)
+        return SandQuery(out)
     
-    def download_file(self, product_id: str, dir: Path | str, api_collections: list[str] = None) -> Path:
+    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
         """
         Download a specific product from USGS by its product identifier
         
@@ -215,20 +159,21 @@ class DownloadUSGS(BaseDownload):
         self._login()
         
         # Retrieve api collections based on SAND collections        
-        if api_collections is None:
+        if api_collection is None:
             p = get_pattern(product_id)
             collection_sand, level = p['Name'], get_level(product_id, p)
             self._load_sand_collection_properties(collection_sand, level)
         else:
-            self.api_collection = api_collections
+            self.api_collection = [api_collection]
             self.name_contains = []
         
         # Retrieve entity_id based on display_id 
-        entity_id = self._get_entity_id(product_id, self.api_collection[0])
+        self.api_collection = self.api_collection[0]
+        entity_id = self._get_entity_id(product_id, self.api_collection)
         
         # Retrieve filter ID to use for this dataset
         url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
-        params = {'datasetName': self.api_collection[0]}
+        params = {'datasetName': self.api_collection}
         self.session.headers.update(self.API_key)
         r = self.session.get(url_data, json=params)
         raise_api_error(r)
@@ -250,7 +195,7 @@ class DownloadUSGS(BaseDownload):
         }
         
         params = {
-            "datasetName": self.api_collection[0],
+            "datasetName": self.api_collection,
             "sceneFilter": scene_filter,
             "maxResults": 10,
             "metadataType": "full",
@@ -263,19 +208,20 @@ class DownloadUSGS(BaseDownload):
         r = response.json()
         
         if not r['data']['results']:
-            log.error(f'No product found in collection {self.api_collection[0]} '
+            log.error(f'No product found in collection {self.api_collection} '
                       f'for {product_id}')
         
         # Format product to use download function
         product = r['data']['results'][0]
-        product = {"id": product["entityId"], "name": product["displayId"], 
-                   "collection": self.api_collection[0],
-                   **{k: product[k] for k in ['metadata','publishDate','browse']}}
+        product = SandProduct(
+            product_id=product['displayId'], index=product['entityId'],
+            date=product['temporalCoverage']['startDate'], metadata=product
+        )
 
         return self.download(product, dir)
     
     
-    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
+    def _dl(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
         Download a product from USGS
 
@@ -285,11 +231,11 @@ class DownloadUSGS(BaseDownload):
         """
         self._login()
         
-        target = Path(dir)/(product['name'])    
+        target = Path(dir)/(product.product_id)    
         
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
-        params = {'entityIds': product['id'], "datasetName": product["collection"]}
+        params = {'entityIds': product.index, "datasetName": self.api_collection}
         self.session.headers.update(self.API_key)
         dl_opt = self.session.get(url, json=params)
         raise_api_error(dl_opt)
@@ -342,7 +288,7 @@ class DownloadUSGS(BaseDownload):
         """
 
         # Compression file path
-        dl_target = Path(str(target)+'.tar') if compression_ext else target
+        dl_target = target.with_suffix(compression_ext) if compression_ext else target
         
         # Initialize session for download
         self.session.headers.update(self.API_key)
@@ -359,10 +305,7 @@ class DownloadUSGS(BaseDownload):
             niter += 1
 
         # Download file
-        log.debug('Start writing on device')
-        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
-        with open(dl_target, 'wb') as f:
-            [f.write(chunk) for chunk in pbar if chunk]
+        write(response, dl_target)
             
         # Uncompress archive
         if compression_ext:
@@ -371,7 +314,7 @@ class DownloadUSGS(BaseDownload):
             dl_target.unlink() 
     
     
-    def quicklook(self, product: dict, dir: Path|str):
+    def _qkl(self, product: dict, dir: Path|str):
         """
         Download a quicklook (preview image) of the product
         
@@ -390,12 +333,12 @@ class DownloadUSGS(BaseDownload):
         """
         self._login()
         
-        target = Path(dir)/(product['name'] + '.png')
+        target = Path(dir)/(product.product_id + '.png')
 
         if not target.exists():
             assets = self.metadata(product)['Landsat Product Identifier L1']
             log.check(assets, f'Skipping quicklook {target.name}', e=FileNotFoundError)
-            for b in product['browse']:
+            for b in product.metadata['browse']:
                 url = b['browsePath']
                 if 'type=refl' in url: break
             filegen(0)(self._download)(target, url)
@@ -404,7 +347,7 @@ class DownloadUSGS(BaseDownload):
         return target    
     
     
-    def metadata(self, product):
+    def _metadata(self, product):
         """
         Extract metadata from a product's metadata field
         
@@ -417,7 +360,8 @@ class DownloadUSGS(BaseDownload):
         self._login()
         
         meta = {}
-        for m in product['metadata']: meta[m['fieldName']] = m['value']
+        for m in product.metadata['metadata']: 
+            meta[m['fieldName']] = m['value']
         return meta
     
     def _get_entity_id(self, display_id: str, dataset: str = None) -> str:

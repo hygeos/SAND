@@ -1,53 +1,31 @@
 from pathlib import Path
 from typing import Optional, Literal
-from shapely import Point, Polygon
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode
-from datetime import datetime, date
 
 from core import log
 from core.files import filegen
 from core.table import read_xml
 from core.geo.product_name import get_pattern, get_level
 
+from sand.utils import write
+from sand.constraint import Time, Geo, Name
 from sand.base import BaseDownload, raise_api_error, RequestsError
-from sand.results import Query
-from sand.tinyfunc import (
-    change_lon_convention,
-    check_name_contains, 
-    check_name_glob,
-    check_name_endswith,
-    check_name_startswith,
-)
+from sand.results import SandQuery, SandProduct
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
 
 
-
 class DownloadNASA(BaseDownload):
+    """
+    Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)
+    """
+    provider = 'nasa'
 
     def __init__(self):
-        """
-        Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)
+        super().__init__()        
 
-        Args:
-            collection (str): collection name ('ECOSTRESS', 'VIIRS', etc.)
-
-        Example:
-            usgs = DownloadNASA('ECOSTRESS')
-            # retrieve the list of products
-            # using a pickle cache file to avoid reconnection
-            ls = cache_dataframe('query-S2.pickle')(cds.query)(
-                dtstart=datetime(2024, 1, 1),
-                dtend=datetime(2024, 2, 1),
-                geo=Point(119.514442, -8.411750)
-            )
-            cds.download(ls.iloc[0], <dirname>)
-        """
-        self.provider = 'nasa'
-        
-
-    def _login(self):
+    def _log(self):
         """
         Login to NASA with credentials storted in .netrc
         """
@@ -58,87 +36,52 @@ class DownloadNASA(BaseDownload):
         
         log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
     
-    def query(
+    def _query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
-        dtstart: Optional[date|datetime]=None,
-        dtend: Optional[date|datetime]=None,
-        geo: Optional[Point|Polygon]=None,
-        cloudcover_thres: Optional[float]=None,
-        name_contains: Optional[list] = [],
-        name_startswith: Optional[str] = None,
-        name_endswith: Optional[str] = None,
-        name_glob: Optional[str] = None,
-        api_collections: list[str] = None,
-        other_attrs: Optional[list] = [],
-        **kwargs
+        time: Time = None,
+        geo: Geo = None,
+        name: Name = None,
+        cloudcover_thres: Optional[int] = None,
+        api_collection: list[str] = None,
     ):
         """
         Product query on the CMR NASA
-
-        Args:
-            collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
-            level (int): Processing level (1, 2, or 3)
-            dtstart and dtend (datetime): start and stop datetimes
-            geo: shapely geometry with 0<=lon<360 and -90<=lat<90. Examples:
-                Point(lon, lat)
-                Polygon(...)
-            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
-            name_contains (list): list of substrings
-            name_startswith (str): search for name starting with this str
-            name_endswith (str): search for name ending with this str
-            name_glob (str): match name with this string
-            api_collections (list[str]): name of deserved collection in API standard
-            other_attrs (list): list of other attributes to include in the output
-                (ex: ['ContentDate', 'Footprint'])
-
-        Note:
-            This method can be decorated by cache_dataframe for storing the outputs.
-            Example:
-                cache_dataframe('cache_result.pickle')(cds.query)(...)
         """
         self._login()
         
         # Retrieve api collections based on SAND collections
-        if api_collections is None:
-            self._load_sand_collection_properties(collection_sand, level)
-        else:
-            self.api_collection = api_collections
-            self.name_contains = []
+        if api_collection is None:
+            name_constraint = self._load_sand_collection_properties(collection_sand, level)
+            api_collection = self.api_collection[0]
             
-        # Check provided constraints
-        dtstart, dtend, geo = self._format_input_query(collection_sand, dtstart, dtend, geo)
-        if geo: geo = change_lon_convention(geo, 0)
+        # Format input time and geospatial constraints
+        time = self._format_time(collection_sand, time)
+        if geo: geo.set_convention(0)
         
-        # Add provider constraint
-        self.name_contains += name_contains
+        # Define or complement constraint on naming
+        if name:
+            name.add_contains(name_constraint)
+        else:
+            name = Name(contains=name_constraint)
         
         # Initialise data dictionary
         data = {}
         headers = {'Accept': 'application/json'}
         
         # Configure scene constraints for request
-        date_range = dtstart.isoformat() + 'Z,'
-        date_range += dtend.isoformat() + 'Z'
+        date_range = time.start.isoformat() + 'Z,'
+        date_range += time.end.isoformat() + 'Z'
         data['temporal'] = date_range
         
-        if isinstance(geo, Point):
-            bbox = f"{geo.x},{geo.y},{geo.x},{geo.y}"
-        elif isinstance(geo, Polygon):
-            bounds = geo.bounds
-            bbox = f"{bounds[0]},{bounds[1]},{bounds[2]},{bounds[3]}"
-        if geo: data['bounding_box'] = bbox
-        
-        # Define check functions
-        checker = []
-        if name_contains: checker.append((check_name_contains, self.name_contains))
-        if name_startswith: checker.append((check_name_startswith, name_startswith))
-        if name_endswith: checker.append((check_name_endswith, name_endswith))
-        if name_glob: checker.append((check_name_glob, name_glob))
+        if isinstance(geo, Geo.Point|Geo.Polygon):
+            data['bounding_box'] = f"{geo.bounds[1]},{geo.bounds[0]},"
+            data['bounding_box'] += f"{geo.bounds[3]},{geo.bounds[2]}"
         
         # Add constraint for cloud cover
-        if cloudcover_thres: data['cloud_cover'] = f",{cloudcover_thres}"
+        if cloudcover_thres: 
+            data['cloud_cover'] = f",{cloudcover_thres}"
             
         out = []
         for collec in self.api_collection:
@@ -157,40 +100,30 @@ class DownloadNASA(BaseDownload):
             response = response.json()['feed']['entry']   
             
             # Filter products
-            response = [p for p in response if self._check_name(p['title'], checker)]        
+            response = [p for p in response if name.apply(p['title'])]        
             
             for d in response:
-                out.append({"id": d["id"], "name": d["producer_granule_id"],
-                    **{k: d[k] for k in ['links','collection_concept_id']+other_attrs}})
+                out.append(SandProduct(
+                    product_id=d['producer_granule_id'], index=d['id'],
+                    date=d['time_start'], metadata=d
+                ))
         
         log.info(f'{len(out)} products has been found')
-        return Query(out)
+        return SandQuery(out)
     
-    def download_file(self, product_id, dir, api_collections: list[str] = None):
+    def _dl_file(self, product_id, dir, api_collection: list[str] = None):
         """
         Download a specific product from NASA by its product identifier
-        
-        Args:
-            product_id (str): The identifier of the product to download
-            dir (Path | str): Directory where to store the downloaded file
-            api_collections (list[str], optional): List of API collection names. 
-                If None, will determine from product_id pattern.
-                
-        Returns:
-            Path: Path to the downloaded file
-            
-        Raises:
-            Exception: If product cannot be found or downloaded
         """        
         self._login()
         
         # Retrieve api collections based on SAND collections        
-        if api_collections is None:
+        if api_collection is None:
             p = get_pattern(product_id)
             collection_sand, level = p['Name'], get_level(product_id, p)
             self._load_sand_collection_properties(collection_sand, level)
         else:
-            self.api_collection = api_collections
+            self.api_collection = api_collection
             self.name_contains = []
         
         data = {'page_size': 5}
@@ -214,18 +147,15 @@ class DownloadNASA(BaseDownload):
         log.error(f'No file found with name {product_id}')
     
     
-    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
+    def _dl(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         """
         Download a product from NASA data space
-
-        Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
         """
         self._login()
         
-        title = f"Download {product['name']}"
-        url = self._get(product['links'], title, 'title', 'href')
+        links = product.metadata['links']
+        title = f"Download {product.product_id}"
+        url = self._get(links, title, 'title', 'href')
         target = Path(dir)/Path(url).name
         filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
@@ -238,16 +168,6 @@ class DownloadNASA(BaseDownload):
     ):
         """
         Internal method to handle the actual download of files from NASA servers
-        
-        Args:
-            target (Path): Path where the file should be saved
-            url (str): URL to download from
-            
-        Notes:
-            - This method is wrapped by filegen decorator
-            - Handles redirects (up to 5 attempts)
-            - Downloads in chunks to support large files
-            - Shows a progress bar during download
         """
 
         # Try to request server
@@ -264,33 +184,18 @@ class DownloadNASA(BaseDownload):
         raise_api_error(response)
 
         # Download file
-        log.debug('Start writing on device')
-        pbar = log.pbar(list(response.iter_content(chunk_size=1024)), 'writing', nth=100)
-        with open(target, 'wb') as f:
-            [f.write(chunk) for chunk in pbar if chunk]
+        write(response, target)
     
     
-    def quicklook(self, product: dict, dir: Path|str):
+    def _qkl(self, product: dict, dir: Path|str):
         """
         Download a quicklook (preview image) of the product
-        
-        Args:
-            product (dict): Product dictionary containing metadata and browse info
-            dir (Path|str): Directory where to save the quicklook
-            
-        Returns:
-            Path: Path to the downloaded quicklook image file
-            
-        Notes:
-            - Downloads the reflectance quicklook if available
-            - Image is saved as PNG
-            - Uses product name as filename with .png extension
-            - Skips download if file already exists
         """
         self._login()
         
-        target = Path(dir)/(product['name'] + '.jpeg')
-        url = self._get(product['links'], '.png', 'title', 'href')
+        links = product.metadata['links']
+        target = Path(dir)/(product.product_id + '.jpeg')
+        url = self._get(links, '.png', 'title', 'href')
 
         if not target.exists():
             filegen(0)(self._download)(target, url)
@@ -299,19 +204,14 @@ class DownloadNASA(BaseDownload):
         return target
     
     
-    def metadata(self, product):
+    def _metadata(self, product):
         """
         Extract metadata from a product's metadata field
-        
-        Args:
-            product (dict): Product dictionary containing a 'metadata' field
-            
-        Returns:
-            dict: Dictionary of metadata field names and their values
         """
         self._login()
         
-        req = self._get(product['links'], '.xml', 'title', 'href')
+        links = product.metadata['links']
+        req = self._get(links, '.xml', 'title', 'href')
         meta = self.session.get(req).text
 
         assert len(meta) > 0

@@ -1,14 +1,13 @@
-from datetime import datetime
-from shapely import Point, Polygon
+from sand.constraint import Geo, Time, Name
+
 
 products = {}
 
 # SENTINEL-1 Product
 products['SENTINEL-1'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1),
-        'dtend': datetime(2025, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2025-01-01', '2025-02-01'),
+        'geo': Geo.Point(lon=10, lat=12),
     },
     'l1_product': 'S1A_IW_GRDH_1SDH_20250330T141400_20250330T141425_058535_073E3A_5675',
 }
@@ -16,9 +15,8 @@ products['SENTINEL-1'] = {
 # SENTINEL-2 Product
 products['SENTINEL-2-MSI'] = {
     'constraint':{
-        'dtstart': datetime(2024, 1, 1),
-        'dtend': datetime(2024, 1, 10),
-        'geo': Polygon.from_bounds(5, 40, 15, 50),
+        'time': Time('2024-01-01', '2024-01-10'),
+        'geo': Geo.Polygon(latmin=40, latmax=50, lonmin=5, lonmax=15),
     },
     'l1_product': 'S2A_MSIL1C_20230617T130251_N0510_R095_T23KPQ_20240905T221745',
 }
@@ -26,9 +24,8 @@ products['SENTINEL-2-MSI'] = {
 # SENTINEL-3 OLCI-FR Product
 products['SENTINEL-3-OLCI-FR'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1),
-        'dtend': datetime(2025, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2025-01-01', '2025-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
     'l1_product': 'S3A_OL_1_EFR____20250101T091103_20250101T091403_20250102T113753_0180_121_050_2700_MAR_O_NT_004.SEN3',
 }
@@ -36,9 +33,8 @@ products['SENTINEL-3-OLCI-FR'] = {
 # SENTINEL-3 OLCI-RR Product
 products['SENTINEL-3-OLCI-RR'] = {
     'constraint':{
-        'dtstart': datetime(2017, 1, 1),
-        'dtend': datetime(2017, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2017-01-01', '2017-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
     'l1_product': 'S3A_OL_1_ERR____20170101T091103_20170101T091403_20170102T113753_0180_013_050_2700_MAR_O_NT_004.SEN3',
 }
@@ -46,9 +42,8 @@ products['SENTINEL-3-OLCI-RR'] = {
 # SENTINEL-3 SLSTR Product
 products['SENTINEL-3-SLSTR'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1),
-        'dtend': datetime(2025, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2025-01-01', '2025-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
     'l1_product': 'S3A_SL_2_WST____20150101T102500_20150101T114000_20150101T124000_4500_030_215______MAR_O_NR_001',
 }
@@ -56,9 +51,8 @@ products['SENTINEL-3-SLSTR'] = {
 # SENTINEL-3 SRAL Product
 products['SENTINEL-3-SRAL'] = {
     'constraint':{
-        'dtstart': datetime(2023, 8, 1),
-        'dtend': datetime(2023, 8, 5),
-        'geo': Polygon.from_bounds(0, 40, 10, 50)
+        'time': Time('2023-08-01', '2023-08-05'),
+        'geo': Geo.Polygon(latmin=40, latmax=50, lonmin=0, lonmax=10)
     },
     'l1_product': 'S3B_SR_1_SRA____20230826T191616_20230826T200646_20230919T232553_3029_083_184______PS2_O_NT_004.SEN3',
 }
@@ -66,82 +60,73 @@ products['SENTINEL-3-SRAL'] = {
 # SENTINEL-5P-TROPOMI Product
 products['SENTINEL-5P-TROPOMI'] = {
     'constraint':{
-        'dtstart': datetime(2025, 5, 1),
-        'dtend': datetime(2025, 6, 1),
-        'geo': Point(10, 12),
+        'time': Time('2025-05-01', '2025-06-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SENTINEL-6-HR Product
 products['SENTINEL-6-HR'] = {
     'constraint':{
-        'dtstart': datetime(2023, 8, 1),
-        'dtend': datetime(2023, 9, 1),
-        'geo': Point(10, 12),
+        'time': Time('2023-08-01', '2023-09-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SENTINEL-6-LR Product
 products['SENTINEL-6-LR'] = {
     'constraint':{
-        'dtstart': datetime(2023, 8, 1),
-        'dtend': datetime(2023, 9, 1),
-        'geo': Point(10, 12),
+        'time': Time('2023-08-01', '2023-09-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SENTINEL-1-RTC Product
 products['SENTINEL-1-RTC'] = {
     'constraint':{
-        'dtstart': datetime(2015, 1, 1),
-        'dtend': datetime(2015, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2015-01-01', '2015-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SEVIRI-MSG Product
 products['SEVIRI-MSG'] = {
     'constraint':{
-        'dtstart': datetime(2024, 1, 1, 1),
-        'dtend': datetime(2024, 1, 1, 2),
-        'geo': Point(10, 12),
+        'time': Time('2024-01-01T01:00:00', '2024-01-01T02:00:00'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # FCI-MTG-HR Product
 products['FCI-MTG-HR'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1, 1),
-        'dtend': datetime(2025, 1, 1, 2),
-        'geo': Point(10, 12),
+        'time': Time('2025-01-01T01:00:00', '2025-01-01T02:00:00'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # FCI-MTG-NR Product
 products['FCI-MTG-NR'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1, 1),
-        'dtend': datetime(2025, 1, 1, 2),
-        'geo': Point(10, 12),
+        'time': Time('2025-01-01T01:00:00', '2025-01-01T02:00:00'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # MVIRI-MFG Product
 products['MVIRI-MFG'] = {
     'constraint':{
-        'dtstart': datetime(2000, 1, 1, 1),
-        'dtend': datetime(2000, 1, 1, 2),
-        'geo': Point(10, 12),
+        'time': Time('2000-01-01T01:00:00', '2000-01-01T02:00:00'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # ECOSTRESS Product
 products['ECOSTRESS'] = {
     'constraint':{
-        'dtstart': datetime(2023, 10, 20),
-        'dtend': datetime(2023, 11, 14),
-        'geo': Polygon.from_bounds(239.70,34.21,240.47,35.23),
-        'name_contains': ['L1C'],
+        'time': Time('2023-10-20', '2023-11-14'),
+        'geo': Geo.Polygon(latmin=34.21, latmax=35.23, lonmin=239.70, lonmax=240.47),
+        'name': Name(contains=['L1C']),
     },
     'l1_product': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01',
 }
@@ -149,17 +134,15 @@ products['ECOSTRESS'] = {
 # EMIT Product
 products['EMIT'] = {
     'constraint':{
-        'dtstart': datetime(2022, 8, 1),
-        'dtend': datetime(2022, 9, 1),
-        'geo': Point(10, 12),
+        'time': Time('2022-08-01', '2022-09-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # VENUS Product
 products['VENUS'] = {
     'constraint':{
-        'dtstart': datetime(2018, 1, 1),
-        'dtend': datetime(2018, 6, 1),
+        'time': Time('2018-01-01', '2018-06-01'),
         'venus_site': 'NARYN',
     },
     'l1_product': 'VENUS-XS_20231003-110220-000_L1C_VILAINE_C_V3',
@@ -168,8 +151,7 @@ products['VENUS'] = {
 # VENUS-VM5 Product
 products['VENUS-VM5'] = {
     'constraint':{
-        'dtstart': datetime(2021, 1, 1),
-        'dtend': datetime(2021, 6, 1),
+        'time': Time('2021-01-01', '2021-06-01'),
         'venus_site': 'NARYN',
     },
 }
@@ -177,8 +159,7 @@ products['VENUS-VM5'] = {
 # SPOT-1 Product
 products['SPOT-1'] = {
     'constraint':{
-        'dtstart': datetime(2003, 9, 1),
-        'dtend': datetime(2003, 9, 20),
+        'time': Time('2003-09-01', '2003-09-20'),
     },
     'l1_product': 'SPOT1-HRV1-XS_20030918-103500-347_L1C_046-265-0_D_V1-0',
 }
@@ -186,8 +167,7 @@ products['SPOT-1'] = {
 # SPOT-2 Product
 products['SPOT-2'] = {
     'constraint':{
-        'dtstart': datetime(2009, 6, 15),
-        'dtend': datetime(2009, 7, 1),
+        'time': Time('2009-06-15', '2009-07-01'),
     },
     'l1_product': 'SPOT2-HRV2-XS_20090629-112812-214_L1C_026-253-0_D',
 }
@@ -195,8 +175,7 @@ products['SPOT-2'] = {
 # SPOT-3 Product
 products['SPOT-3'] = {
     'constraint':{
-        'dtstart': datetime(1996, 11, 10),
-        'dtend': datetime(1996, 11, 20),
+        'time': Time('1996-11-10', '1996-11-20'),
     },
     'l1_product': 'SPOT3-HRV1-XS_19961113-104800-180_L1C_046-333-0_D',
 }
@@ -204,8 +183,7 @@ products['SPOT-3'] = {
 # SPOT-4 Product
 products['SPOT-4'] = {
     'constraint':{
-        'dtstart': datetime(2013, 6, 10),
-        'dtend': datetime(2013, 6, 20),
+        'time': Time('2013-06-10', '2013-06-20'),
     },
     'l1_product': 'SPOT4-HRVIR2-XS_20130618-090822-826_L1C_049-262-4_D',
 }
@@ -213,8 +191,7 @@ products['SPOT-4'] = {
 # SPOT-5 Product
 products['SPOT-5'] = {
     'constraint':{
-        'dtstart': datetime(2015, 8, 10),
-        'dtend': datetime(2015, 8, 30),
+        'time': Time('2015-08-10', '2015-08-30'),
     },
     'l1_product': 'SPOT5-HRG2-XS_20150827-050516-710_L1C_186-392-1_D',
 }
@@ -222,81 +199,72 @@ products['SPOT-5'] = {
 # SPOT-6 Product
 products['SPOT-6'] = {
     'constraint':{
-        'dtstart': datetime(2013, 1, 1),
-        'dtend': datetime(2013, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2013-01-01', '2013-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SPOT-7 Product
 products['SPOT-7'] = {
     'constraint':{
-        'dtstart': datetime(2014, 7, 1),
-        'dtend': datetime(2014, 8, 1),
-        'geo': Point(10, 12),
+        'time': Time('2014-07-01', '2014-08-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # PLEIADES Product
 products['PLEIADES'] = {
     'constraint':{
-        'dtstart': datetime(2012, 1, 1),
-        'dtend': datetime(2012, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2012-01-01', '2012-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SWH Product
 products['SWH'] = {
     'constraint':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2020-01-01', '2020-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # LANDSAT-1-MSS Product
 products['LANDSAT-1-MSS'] = {
     'constraint':{
-        'dtstart': datetime(1972, 7, 23),
-        'dtend': datetime(1973, 1, 1),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('1972-07-23', '1973-01-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
 
 # LANDSAT-2-MSS Product
 products['LANDSAT-2-MSS'] = {
     'constraint':{
-        'dtstart': datetime(1978, 1, 22),
-        'dtend': datetime(1978, 6, 1),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('1978-01-22', '1978-06-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
 
 # LANDSAT-3-MSS Product
 products['LANDSAT-3-MSS'] = {
     'constraint':{
-        'dtstart': datetime(1978, 3, 5),
-        'dtend': datetime(1978, 8, 1),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('1978-03-05', '1978-08-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
 
 # LANDSAT-4-MSS Product
 products['LANDSAT-4-MSS'] = {
     'constraint':{
-        'dtstart': datetime(1982, 7, 16),
-        'dtend': datetime(1983, 1, 1),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('1982-07-16', '1983-01-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
 
 # LANDSAT-5-TM Product
 products['LANDSAT-5-TM'] = {
     'constraint':{
-        'dtstart': datetime(2000, 12, 10),
-        'dtend': datetime(2005, 12, 10),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('2000-12-10', '2005-12-10'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
     'l1_product': 'LT05_L1TP_114066_20030721_20200904_02_T1',
     'l2_product': 'LT05_L2SP_114066_20030721_20200904_02_T1',
@@ -305,9 +273,8 @@ products['LANDSAT-5-TM'] = {
 # LANDSAT-7-ET Product
 products['LANDSAT-7-ET'] = {
     'constraint':{
-        'dtstart': datetime(2000, 1, 1),
-        'dtend': datetime(2000, 6, 1),
-        'geo': Point(119.514442, -8.411750),
+        'time': Time('2000-01-01', '2000-06-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
     'l1_product': 'LE07_L1TP_114066_20000715_20200918_02_T1',
     'l2_product': 'LE07_L2SP_114066_20000715_20200918_02_T1',
@@ -316,9 +283,8 @@ products['LANDSAT-7-ET'] = {
 # LANDSAT-8-OLI Product
 products['LANDSAT-8-OLI'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1),
-        'dtend': datetime(2025, 4, 1),
-        'geo': Point(21, 8),
+        'time': Time('2025-01-01', '2025-04-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
     'l1_product': 'LC08_L1GT_029030_20151209_20160131_01_RT',
 }
@@ -326,9 +292,8 @@ products['LANDSAT-8-OLI'] = {
 # LANDSAT-9-OLI Product
 products['LANDSAT-9-OLI'] = {
     'constraint':{
-        'dtstart': datetime(2025, 1, 1),
-        'dtend': datetime(2025, 4, 1),
-        'geo': Point(21, 8),
+        'time': Time('2025-01-01', '2025-04-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
     'l1_product': 'LC09_L1TP_014034_20220618_20230411_02_T1',
 }
@@ -336,162 +301,144 @@ products['LANDSAT-9-OLI'] = {
 # MODIS-AQUA-HR Product
 products['MODIS-AQUA-HR'] = {
     'constraint':{
-        'dtstart': datetime(2018, 1, 1),
-        'dtend': datetime(2018, 2, 1),
-        'geo': Point(21, 8),
+        'time': Time('2018-01-01', '2018-02-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # MODIS-AQUA-LR Product
 products['MODIS-AQUA-LR'] = {
     'constraint':{
-        'dtstart': datetime(2018, 1, 1),
-        'dtend': datetime(2018, 2, 1),
-        'geo': Point(21, 8),
+        'time': Time('2018-01-01', '2018-02-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # MODIS-TERRA-HR Product
 products['MODIS-TERRA-HR'] = {
     'constraint':{
-        'dtstart': datetime(2018, 1, 1),
-        'dtend': datetime(2018, 2, 1),
-        'geo': Point(21, 8),
+        'time': Time('2018-01-01', '2018-02-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # MODIS-TERRA-LR Product
 products['MODIS-TERRA-LR'] = {
     'constraint':{
-        'dtstart': datetime(2018, 1, 1),
-        'dtend': datetime(2018, 2, 1),
-        'geo': Point(21, 8),
+        'time': Time('2018-01-01', '2018-02-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # VIIRS Product
 products['VIIRS'] = {
     'constraint':{
-        'dtstart': datetime(2024, 4, 1),
-        'dtend': datetime(2024, 5, 1),
-        'geo': Point(21, 8),
+        'time': Time('2024-04-01', '2024-05-01'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # PACE-OCI Product
 products['PACE-OCI'] = {
     'constraint':{
-        'dtstart': datetime(2024, 10, 1),
-        'dtend': datetime(2024, 10, 15),
-        'geo': Point(21, 8),
+        'time': Time('2024-10-01', '2024-10-15'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # PACE-HARP2 Product
 products['PACE-HARP2'] = {
     'constraint':{
-        'dtstart': datetime(2024, 10, 1),
-        'dtend': datetime(2024, 10, 15),
-        'geo': Point(21, 8),
+        'time': Time('2024-10-01', '2024-10-15'),
+        'geo': Geo.Point(lat=8, lon=21),
     },
 }
 
 # ENVISAT-MERIS Product
 products['ENVISAT-MERIS'] = {
     'constraint':{
-        'dtstart': datetime(2002, 3, 1),
-        'dtend': datetime(2002, 4, 1),
-        'geo': Point(10, 12),
+        'time': Time('2002-03-01', '2002-04-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # IASI Product
 products['IASI'] = {
     'constraint':{
-        'dtstart': datetime(2010, 10, 19),
-        'dtend': datetime(2010, 10, 30),
-        'geo': Point(10, 12),
+        'time': Time('2010-10-19', '2010-10-30'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # ASCAT-METOP-FR Product
 products['ASCAT-METOP-FR'] = {
     'constraint':{
-        'dtstart': datetime(2017, 1, 1),
-        'dtend': datetime(2017, 1, 1),
-        'geo': Point(10, 12),
+        'time': Time('2017-01-01', '2017-01-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # ASCAT-METOP-RES Product
 products['ASCAT-METOP-RES'] = {
     'constraint':{
-        'dtstart': datetime(2017, 1, 1),
-        'dtend': datetime(2017, 1, 1),
-        'geo': Point(10, 12),
+        'time': Time('2017-01-01', '2017-01-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # SMOS Product
 products['SMOS'] = {
     'constraint':{
-        'dtstart': datetime(2009, 12, 2),
-        'dtend': datetime(2010, 1, 2),
-        'geo': Point(10, 12),
+        'time': Time('2009-12-02', '2010-01-02'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # ASTER Product
 products['ASTER'] = {
     'constraint':{
-        'dtstart': datetime(1999, 12, 18),
-        'dtend': datetime(2000, 1, 18),
-        'geo': Point(10, 12),
+        'time': Time('1999-12-18', '2000-01-18'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # AMSU-A Product
 products['AMSU-A'] = {
     'constraint':{
-        'dtstart': datetime(2010, 1, 1),
-        'dtend': datetime(2010, 1, 20),
-        'geo': Point(10, 12),
+        'time': Time('2010-01-01', '2010-01-20'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # CCM Product
 products['CCM'] = {
     'constraint':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2020-01-01', '2020-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # COP-DEM Product
 products['COP-DEM'] = {
     'constraint':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2020-01-01', '2020-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # GLOBAL-MOSAICS Product
 products['GLOBAL-MOSAICS'] = {
     'constraint':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2020-01-01', '2020-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # S2GLC Product
 products['S2GLC'] = {
     'constraint':{
-        'dtstart': datetime(2020, 1, 1),
-        'dtend': datetime(2020, 2, 1),
-        'geo': Point(10, 12),
+        'time': Time('2020-01-01', '2020-02-01'),
+        'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
