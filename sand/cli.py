@@ -4,6 +4,7 @@ from pathlib import Path
 
 from numpy import unique
 from sand.sample_product import products
+from sand._cli_cfg import SearchCfg
 
 from core.ascii_table import ascii_table
 from core.table import read_csv
@@ -53,8 +54,9 @@ def entry():
     
     args = parser.parse_args()
     
-    
     if args.command == 'search':
+        
+        cfg = SearchCfg()
         
         # Concatenate all csv files
         providers = []
@@ -82,8 +84,7 @@ def entry():
         df = df[df['Name'].isin(selection)]
         
         # Display final results
-        colors = {}
-        ascii_table(df, colors=colors).print()
+        ascii_table(df, colors=cfg.colors).print()
     
     if args.command == 'sample':
         print('> Implementation of sample command is on going.')
