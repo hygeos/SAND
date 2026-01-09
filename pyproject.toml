@@ -22,7 +22,7 @@ git = [
 [project.scripts]
 sand = "sand.cli:entry"
 
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
