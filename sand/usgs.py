@@ -58,13 +58,13 @@ class DownloadUSGS(BaseDownload):
     
     def _query(
         self,
-        collection_sand: str = None,
+        collection_sand: str | None = None,
         level: Literal[1,2,3] = 1,
-        time: Time = None,
-        geo: Geo = None,
-        name: Name = None,
-        cloudcover_thres: Optional[int] = None,
-        api_collection: list[str] = None,
+        time: Time | None = None,
+        geo: Geo | None = None,
+        name: Name | None = None,
+        cloudcover_thres: Optional[int] | None = None,
+        api_collection: list[str] | None = None,
     ):
         """
         Product query on the USGS
