@@ -29,10 +29,12 @@ def get_tempdir(keep):
     else: yield env.getdir('DIR_SAMPLES')
 
 with get_tempdir(args.keep) as tmpdir:
-    d = dl[args.dl]()
-    params = products[args.sensor]
-    assert f'level{args.level}' in params
-    params = params[f'level{args.level}']
-    params.update(collection_sand=args.sensor, level=int(args.level))
+    # d = dl[args.dl]()
+    # params = products[args.sensor]['constraint']
+    # params.update(collection_sand=args.sensor, level=int(args.level))
+    d = dl['USGS']()
+    params = products['LANDSAT-1-MSS']['constraint']
+    params.update(collection_sand='LANDSAT-1-MSS', level=1)
+    params = dict(collection_sand='LANDSAT-1-MSS', level=1)
     ls = d.query(**params)
-    d.download(ls.iloc[0], tmpdir)
+    d.download(ls[0], tmpdir)

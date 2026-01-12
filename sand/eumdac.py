@@ -28,10 +28,7 @@ class DownloadEumDAC(BaseDownload):
     def __init__(self):
         super().__init__()
         
-    def _log(self):
-        """
-        Login to EUMETSAT Data Access API with credentials from .netrc.
-        """
+    def _login(self):
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
             self._set_session()
@@ -51,7 +48,7 @@ class DownloadEumDAC(BaseDownload):
         log.debug(f'Log to API (https://data.eumetsat.int/)')
     
     
-    def _query(
+    def query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
@@ -61,9 +58,6 @@ class DownloadEumDAC(BaseDownload):
         cloudcover_thres: int = None,
         api_collection: list[str] = None
     ):
-        """
-        Product query on Eumetsat datahub
-        """
         self._login()
         
         # Retrieve api collections based on SAND collections
@@ -88,8 +82,9 @@ class DownloadEumDAC(BaseDownload):
             try:
                 prod = list(self.selected_collection.search(
                     geo = geo.to_wkt() if geo else None,
-                    dtstart = time.start,
-                    dtend = time.end
+                    dtstart = time.start if time else None,
+                    dtend = time.end if time else None,
+                    set='brief'
                 ))
             except eumdac.collection.CollectionError: 
                 continue
@@ -109,10 +104,7 @@ class DownloadEumDAC(BaseDownload):
         return SandQuery(out)
     
     
-    def _dl(self, product: str, dir: Path, if_exists='skip') -> Path:
-        """
-        Download a product from EUMETSAT Data Store.
-        """
+    def download(self, product: str, dir: Path, if_exists='skip') -> Path:
         self._login()
         
         data = self.datastore.get_product(
@@ -125,10 +117,7 @@ class DownloadEumDAC(BaseDownload):
         log.info(f'Product has been downloaded at : {target}')
         return target
     
-    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
-        """
-        Download a specific product from EumDAC by its product identifier
-        """        
+    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -156,19 +145,6 @@ class DownloadEumDAC(BaseDownload):
     ) -> None:
         """
         Internal method to download a file from EUMETSAT Data Store.
-
-        This method is wrapped by filegen decorator for file management.
-        Downloads are done in chunks to handle large files efficiently.
-
-        Args:
-            target (Path): Path where the file should be saved
-            data: EUMETSAT data object containing the file to download
-            compression_ext (str, optional): Compression format of the file to download 
-                (e.g. '.zip'). If not None, file will be uncompress after downloading 
-
-        Raises:
-            OSError: If file writing fails
-            eumdac.collection.CollectionError: If data access fails
         """
         
         # Compression file path
@@ -188,24 +164,7 @@ class DownloadEumDAC(BaseDownload):
             dl_target.unlink() 
     
     
-    def _qkl(self, product: dict, dir: Path|str) -> Path:
-        """
-        Download a quicklook preview image for a product.
-
-        Args:
-            product (dict): Product metadata from query results, must contain:
-                - name: Product name
-                - quicklook_url: List of preview image URLs
-            dir (Path|str): Directory where to save the quicklook image
-
-        Returns:
-            Path: Path to the downloaded quicklook image
-
-        Raises:
-            RequestsError: If quicklook download fails
-            ValueError: If quicklook is not available
-            OSError: If file operations fail
-        """
+    def quicklook(self, product: dict, dir: Path|str) -> Path:
         self._login()
         
         quicklook_url = product.metadata.metadata['properties']['links'].get('previews')
@@ -240,17 +199,7 @@ class DownloadEumDAC(BaseDownload):
         return target
     
     
-    def _metadata(self, product: dict) -> dict:
-        """
-        Retrieve detailed metadata for a product from EUMETSAT.
-
-        Args:
-            product (dict): Product metadata from query results, must contain:
-                - meta_url: List containing metadata URL in XML format
-
-        Returns:
-            dict: Parsed XML metadata containing detailed product information
-        """
+    def metadata(self, product: dict) -> dict:
         self._login()
         
         meta_url = product.metadata.metadata['properties']['links']['alternates']

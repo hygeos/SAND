@@ -1,11 +1,12 @@
 from re import search
+from numpy import array
 from pathlib import Path
 from typing import Optional, Literal
 
 from sand.constraint import Time, Geo, Name
 from sand.base import BaseDownload, raise_api_error, check_too_many_matches
 from sand.results import SandQuery, SandProduct
-from sand.utils import write
+from sand.utils import write, get_compression_suffix
 
 from core import log
 from core.network.auth import get_auth
@@ -26,10 +27,7 @@ class DownloadCNES(BaseDownload):
     def __init__(self):
         super().__init__()
 
-    def _log(self):
-        """
-        Login to CNES Geodes Data Center using credentials stored in .netrc
-        """
+    def _login(self):
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
             self._set_session()
@@ -49,9 +47,6 @@ class DownloadCNES(BaseDownload):
         cloudcover_thres: Optional[int] = None,
         api_collection: list[str] = None,
     ):
-        """
-        Product query on the Geodes Data Center
-        """
         self._login()
         
         # Retrieve api collections based on SAND collections
@@ -73,14 +68,14 @@ class DownloadCNES(BaseDownload):
         query = {'dataset': {'in': self.api_collection}}
         
         # Time constraint
-        if time.start:
+        if time and time.start:
             query['start_datetime'] = {'gte':time.start.isoformat()+'Z'}
-        if time.end:
+        if time and time.end:
             query['end_datetime'] = {'lte':time.end.isoformat()+'Z'}
         
         # Spatial constraint
         if isinstance(geo, Geo.Point|Geo.Polygon): 
-            data['bbox'] = geo.bounds
+            data['bbox'] = list(array(geo.bounds)[[1,0,3,2]])
         if isinstance(geo, Geo.Tile):
             if geo.MGRS: query["location"] = geo.MGRS
             if geo.venus: query["grid:code"] = {'contains': geo.venus}
@@ -111,26 +106,24 @@ class DownloadCNES(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
 
-    def _dl(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
-        """
-        Download a product from Geodes Datahub
-        """
+    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         self._login()
         
         # Extract download url
         links = product.metadata['assets']
-        find = [l for l in links if search(product.product_id+'.*.zip',l)]
+        find = [l for l in links if get_compression_suffix(l)]
         log.check(len(find) == 1, "No download link for product found")
         
         # Check if product is a SAFE folder
+        suffix = get_compression_suffix(find[0])
         is_safe = any(product.product_id.startswith(p) for p in self.safe_product)
         if is_safe: 
-            target = Path(dir)/find[0].replace('.zip','.SAFE')
+            target = (Path(dir)/find[0]).with_suffix('.SAFE')
         else:
-            target = Path(dir)/find[0].replace('.zip','')
+            target = (Path(dir)/find[0]).with_suffix('')
         
         dl_data = links[find[0]]
-        filegen(0, if_exists=if_exists)(self._download)(target, dl_data, '.zip')
+        filegen(0, if_exists=if_exists)(self._download)(target, dl_data, suffix)
         log.info(f'Product has been downloaded at : {target}')
         return target
 
@@ -145,7 +138,7 @@ class DownloadCNES(BaseDownload):
         """
         
         # Compression file path
-        dl_target = Path(str(target)+'.zip') if compression_ext else target
+        dl_target = Path(str(target)+compression_ext) if compression_ext else target
         
         # Download compressed file
         self.session.headers.update({"X-API-Key": self.tokens})
@@ -162,10 +155,7 @@ class DownloadCNES(BaseDownload):
             path.rename(target)
             dl_target.unlink() 
     
-    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
-        """
-        Download a specific product from Geodes by its identifier
-        """
+    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
         self._login()
         
         log.warning('no api collection is required with new GEODES API')
@@ -194,10 +184,7 @@ class DownloadCNES(BaseDownload):
         assert len(out) == 1
         return self.download(out[0], dir, 'skip')
 
-    def _qkl(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook (preview image) of the product
-        """
+    def quicklook(self, product: dict, dir: Path|str):
         self._login()
         
         links = product.metadata['assets']
@@ -212,10 +199,8 @@ class DownloadCNES(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
           
-    def _metadata(self, product: dict):
-        """
-        Returns the product metadata including attributes and assets
-        """
+    def metadata(self, product: dict):
+        
         self._login()
         
         server_url = "https://geodes-portal.cnes.fr/api/stac/search"

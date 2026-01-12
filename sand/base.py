@@ -31,21 +31,21 @@ class BaseDownload:
     
     # Main functions to implement for each provider
     
-    def _login(self):
+    def _login(self) -> None:
         """
         Login to API server with credentials stored in .netrc file.
         """
-        self._log()
+        raise NotImplemented
 
     def query(
         self,
-        collection_sand: str = None,
+        collection_sand: str|None = None,
         level: Literal[1,2,3] = 1,
-        time: Time = None,
-        geo: Geo = None,
-        name: Name = None,
-        cloudcover_thres: int = None,
-        api_collection: list[str] = None
+        time: Time|None = None,
+        geo: Geo|None = None,
+        name: Name|None = None,
+        cloudcover_thres: int|None = None,
+        api_collection: list[str]|None = None
     ) -> SandQuery:
         """
         Query products from the API server based on temporal and spatial constraints.
@@ -62,15 +62,7 @@ class BaseDownload:
         Returns:
             SandQuery: Query results containing matching products
         """
-        return self._query(
-            collection_sand=collection_sand,
-            level=level,
-            time=time,
-            geo=geo,
-            name=name,
-            cloudcover_thres=cloudcover_thres,
-            api_collection=api_collection
-        )
+        raise NotImplemented
 
     def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
         """
@@ -83,7 +75,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded product file
         """
-        return self._dl(product=product, dir=dir, if_exists=if_exists)
+        raise NotImplemented
 
     def quicklook(self, product: dict, dir: Path|str) -> Path:
         """
@@ -96,7 +88,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded quicklook image
         """
-        return self._qkl(product=product, dir=dir)
+        raise NotImplemented
 
     def metadata(self, product: dict) -> dict:
         """
@@ -110,9 +102,9 @@ class BaseDownload:
                 - attributes: Product attributes (e.g., cloud cover, quality flags)
                 - assets: Available product assets (e.g., bands, ancillary data)
         """
-        return self._metadata(product=product)
+        raise NotImplemented
     
-    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+    def download_file(self, product_id: str, dir: Path | str, api_collection: str|None = None) -> Path:
         """
         Download a specific product from API server by its product identifier
         
@@ -126,7 +118,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded file
         """
-        return self._dl_file(product_id=product_id, dir=dir, api_collection=api_collection)
+        raise NotImplemented
         
     # Visible functions already implemented    
     def download_all(self, products, dir: Path|str, if_exists: str='skip', 
@@ -219,8 +211,9 @@ class BaseDownload:
             log.error(f'Level{level} products are not available for {collection}',
                       e=KeyError)
         
-        log.check(len(self.sand_props)>0, 'It is not possible to download '
-                  f'level-{level} product for {collection}', e=ReferenceError)
+        if len(self.sand_props)==0:
+            raise ReferenceError('It is not possible to download '
+                                 f'level-{level} product for {collection}')
     
     def _retrieve_api_collec(self):
         """
@@ -265,12 +258,6 @@ class BaseDownload:
             t.end = end_of_day(datetime.combine(t.end, time(0)))
         assert isinstance(t.start, datetime) and isinstance(t.end, datetime)        
         
-        # Check time 
-        launch, end = ref['launch_date'].values[0], ref['end_date'].values[0]
-        assert t.start.date() >= date.fromisoformat(launch)
-        if end != 'x': 
-            assert t.end.date() < date.fromisoformat(end)
-        
         return t
     
     def __del__(self):
@@ -312,10 +299,11 @@ def check_too_many_matches(response: dict,
     returned = reduce(lambda x,k: x[k], returned_tag, response) 
     matches = reduce(lambda x,k: x[k], hit_tag, response)
     
-    log.check(returned == matches,
-              f"The query returned too many matches ({matches}) "
-              f"and exceeded the limit ({returned}) "
-              "set by the provider.", e=RequestsError)
+    if returned > matches:
+        log.warning(
+            f"The query returned too many matches ({matches}) "
+            f"and exceeded the limit ({returned}) set by the provider."
+        )
 
 def get_ssl_context() -> ssl.SSLContext:
     """

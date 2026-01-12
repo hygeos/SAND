@@ -27,11 +27,8 @@ class DownloadUSGS(BaseDownload):
         self.provider = 'usgs'
         
 
-    def _log(self):
-        """
-        Login to USGS using the M2M API with credentials stored in .netrc
-        The authentication uses a token-based system following the USGS M2M API requirements.
-        """
+    def _login(self):
+        
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
             self._set_session()
@@ -56,7 +53,7 @@ class DownloadUSGS(BaseDownload):
         log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
     
-    def _query(
+    def query(
         self,
         collection_sand: str | None = None,
         level: Literal[1,2,3] = 1,
@@ -66,9 +63,6 @@ class DownloadUSGS(BaseDownload):
         cloudcover_thres: Optional[int] | None = None,
         api_collection: list[str] | None = None,
     ):
-        """
-        Product query on the USGS
-        """
         self._login()
         
         # Retrieve api collections based on SAND collections
@@ -77,7 +71,7 @@ class DownloadUSGS(BaseDownload):
             api_collection = self.api_collection[0]
         
         # Format input time and geospatial constraints
-        time = self._format_time(collection_sand, time)
+        time = self._format_time(collection_sand, time or Time())
         
         # Define or complement constraint on naming
         if name:
@@ -95,8 +89,11 @@ class DownloadUSGS(BaseDownload):
             spatial_filter["upperRight"] = {"latitude":bounds[2], 
                                             "longitude":bounds[3]}
         
-        acquisition_filter = {"start": time.start.isoformat(),
-                              "end"  : time.end.isoformat()}
+        if time:
+            acquisition_filter = {"start": time.start.isoformat(),
+                                  "end"  : time.end.isoformat()}
+        else:
+            acquisition_filter = dict()
 
         cloud_cover_filter = {"min" : cloudcover_thres,
                               "max" : 100,
@@ -140,22 +137,8 @@ class DownloadUSGS(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
     
-    def _dl_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
-        """
-        Download a specific product from USGS by its product identifier
-        
-        Args:
-            product_id (str): The identifier of the product to download
-            dir (Path | str): Directory where to store the downloaded file
-            api_collections (list[str], optional): List of API collection names. 
-                If None, will determine from product_id pattern.
-                
-        Returns:
-            Path: Path to the downloaded file
-            
-        Raises:
-            Exception: If product cannot be found or downloaded
-        """
+    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -221,14 +204,8 @@ class DownloadUSGS(BaseDownload):
         return self.download(product, dir)
     
     
-    def _dl(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
-        """
-        Download a product from USGS
+    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
 
-        Args:
-            product (dict): product definition with keys 'id' and 'name'
-            dir (Path | str): Directory where to store downloaded file.
-        """
         self._login()
         
         target = Path(dir)/(product.product_id)    
@@ -273,18 +250,6 @@ class DownloadUSGS(BaseDownload):
     ):
         """
         Internal method to handle the actual download of files from USGS servers
-        
-        Args:
-            target (Path): Path where the file should be saved
-            url (str): URL to download from
-            compression_ext (str, optional): Compression format of the file to download 
-                (e.g. '.zip'). If not None, file will be uncompress after downloading 
-            
-        Notes:
-            - This method is wrapped by filegen decorator
-            - Handles redirects (up to 5 attempts)
-            - Downloads in chunks to support large files
-            - Shows a progress bar during download
         """
 
         # Compression file path
@@ -314,23 +279,7 @@ class DownloadUSGS(BaseDownload):
             dl_target.unlink() 
     
     
-    def _qkl(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook (preview image) of the product
-        
-        Args:
-            product (dict): Product dictionary containing metadata and browse info
-            dir (Path|str): Directory where to save the quicklook
-            
-        Returns:
-            Path: Path to the downloaded quicklook image file
-            
-        Notes:
-            - Downloads the reflectance quicklook if available
-            - Image is saved as PNG
-            - Uses product name as filename with .png extension
-            - Skips download if file already exists
-        """
+    def quicklook(self, product: dict, dir: Path|str):
         self._login()
         
         target = Path(dir)/(product.product_id + '.png')
@@ -347,16 +296,7 @@ class DownloadUSGS(BaseDownload):
         return target    
     
     
-    def _metadata(self, product):
-        """
-        Extract metadata from a product's metadata field
-        
-        Args:
-            product (dict): Product dictionary containing a 'metadata' field
-            
-        Returns:
-            dict: Dictionary of metadata field names and their values
-        """
+    def metadata(self, product):
         self._login()
         
         meta = {}

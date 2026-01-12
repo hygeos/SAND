@@ -1,3 +1,4 @@
+from sand.constraint import Time
 from sand.sample_product import products
 from tempfile import TemporaryDirectory
 from core import log
@@ -22,6 +23,9 @@ parser.add_argument('-p', '--provider',
                     help = 'Name of the provider to check',
                     choices = list(dl.keys()),
                     type = str)
+parser.add_argument('-c', '--check_collec',
+                    action = 'store_true',
+                    help = 'Option to only check that collection is not empty')
 
 args = parser.parse_args()
 
@@ -49,6 +53,10 @@ with TemporaryDirectory() as tmpdir:
                 
                 # Query
                 try: 
+                    if args.check_collec:
+                        if name in ['CNES','NASA','CDSE']:
+                            params = dict(time=Time('1970-01-01', '2025-01-01'))
+                            
                     ls = dl.query(collection_sand=collec, level=level, **params)
                 except ReferenceError as e:
                     continue
@@ -62,7 +70,7 @@ with TemporaryDirectory() as tmpdir:
                 
                 # Download
                 try: 
-                    dl.download(ls.iloc[0], tmpdir)
+                    dl.download(ls[0], tmpdir)
                 except Exception as e: 
                     log.info(log.rgb.red, error_msg.format('download',e))
                     continue

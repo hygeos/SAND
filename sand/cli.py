@@ -6,6 +6,7 @@ from numpy import unique
 from sand.sample_product import products
 from sand._cli_cfg import SearchCfg
 
+from core import log
 from core.ascii_table import ascii_table
 from core.table import read_csv
 from core.fuzzy import search
@@ -24,7 +25,8 @@ def entry():
     cmd.add_argument(
         "keywords", 
         nargs="+",  # Captures ALL remaining arguments
-        help="Keywords to search for in the database"
+        help="Keywords to search for in the database",
+        default=None,
     )
     
     cmd.add_argument("--debug", action="store_true", help="Debug mode (developper)", default=False)
@@ -36,6 +38,10 @@ def entry():
         default=None, nargs="+", metavar="source",
     )
     
+    cmd.add_argument("--level", action="store", help="Level selection (Like L1, L2, etc..)", 
+        default=None, nargs="+", metavar="source",
+    )
+        
     # Create a mutually exclusive group
     mode_group = cmd.add_mutually_exclusive_group()
     mode_group.add_argument("--exact", "-e",        action="store_true", help="Exact matching")
@@ -77,13 +83,23 @@ def entry():
         df['end_date'] = df['end_date'].apply(lambda x: x if x != 'x' else '-')
         
         if getattr(args, 'from'):
-            df = df[df['provider'] == getattr(args, 'from')[0]]
+            df = df[df['provider'].isin(getattr(args, 'from'))]
         
-        # Apply selection based on fuzzy search result  
-        selection = unique([n for n,_ in search(args.keywords, df['Name'])])
-        df = df[df['Name'].isin(selection)]
+        if args.level:
+            df = df[df['level'].isin(args.level)]
+            
+        # Apply selection based on fuzzy search result
+        if args.keywords != ['']:
+            keywords = [part for k in args.keywords for part in k.split('-')]
+            selection = unique([n for n,_ in search(keywords, df['Name'])])
+            df = df[df['Name'].isin(selection)]
         
         # Display final results
+        if len(df) == 0:
+            print('> no result found.')
+            exit()
+        
+        df = df.sort_values(by='Name')
         ascii_table(df, colors=cfg.colors).print()
     
     if args.command == 'sample':

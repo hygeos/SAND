@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional, Literal
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode
+from re import match
 
 from core import log
 from core.files import filegen
@@ -25,10 +26,7 @@ class DownloadNASA(BaseDownload):
     def __init__(self):
         super().__init__()        
 
-    def _log(self):
-        """
-        Login to NASA with credentials storted in .netrc
-        """
+    def _login(self):
         
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
@@ -36,7 +34,7 @@ class DownloadNASA(BaseDownload):
         
         log.debug(f'No login required for NASA API (https://cmr.earthdata.nasa.gov/)')
     
-    def _query(
+    def query(
         self,
         collection_sand: str = None,
         level: Literal[1,2,3] = 1,
@@ -46,9 +44,6 @@ class DownloadNASA(BaseDownload):
         cloudcover_thres: Optional[int] = None,
         api_collection: list[str] = None,
     ):
-        """
-        Product query on the CMR NASA
-        """
         self._login()
         
         # Retrieve api collections based on SAND collections
@@ -71,9 +66,10 @@ class DownloadNASA(BaseDownload):
         headers = {'Accept': 'application/json'}
         
         # Configure scene constraints for request
-        date_range = time.start.isoformat() + 'Z,'
-        date_range += time.end.isoformat() + 'Z'
-        data['temporal'] = date_range
+        if time:
+            date_range = time.start.isoformat() + 'Z,'
+            date_range += time.end.isoformat() + 'Z'
+            data['temporal'] = date_range
         
         if isinstance(geo, Geo.Point|Geo.Polygon):
             data['bounding_box'] = f"{geo.bounds[1]},{geo.bounds[0]},"
@@ -93,28 +89,29 @@ class DownloadNASA(BaseDownload):
             url = 'https://cmr.earthdata.nasa.gov/search/granules'
             url_encode = url + '?' + urlencode(data)
             response = self.session.post(url_encode, headers=headers, verify=True)
-            log.check(len(response.json()['feed']['entry']) < data['page_size'], 
-              "The number of matches has reached the API limit on the maximum " 
-              "number of items returned. This may mean that some hits are missing. "
-              "Please refine your query.", e=RequestsError)
+            if len(response.json()['feed']['entry']) == data['page_size']:
+                log.warning( 
+                    "The number of matches has reached the API limit on the maximum " 
+                    "number of items returned. This may mean that some hits are missing. "
+                    "Please refine your query."
+                )
             response = response.json()['feed']['entry']   
             
             # Filter products
             response = [p for p in response if name.apply(p['title'])]        
             
             for d in response:
+                if 'producer_granule_id' in d: prod_id = d['producer_granule_id'] 
+                else: prod_id = d['title']
                 out.append(SandProduct(
-                    product_id=d['producer_granule_id'], index=d['id'],
+                    product_id=prod_id, index=d['id'],
                     date=d['time_start'], metadata=d
                 ))
         
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
     
-    def _dl_file(self, product_id, dir, api_collection: list[str] = None):
-        """
-        Download a specific product from NASA by its product identifier
-        """        
+    def download_file(self, product_id, dir, api_collection: list[str] = None):     
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -147,15 +144,11 @@ class DownloadNASA(BaseDownload):
         log.error(f'No file found with name {product_id}')
     
     
-    def _dl(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
-        """
-        Download a product from NASA data space
-        """
+    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
         self._login()
         
         links = product.metadata['links']
-        title = f"Download {product.product_id}"
-        url = self._get(links, title, 'title', 'href')
+        url = self._get(links, product.product_id)
         target = Path(dir)/Path(url).name
         filegen(0, if_exists=if_exists)(self._download)(target, url)
         log.info(f'Product has been downloaded at : {target}')
@@ -187,15 +180,12 @@ class DownloadNASA(BaseDownload):
         write(response, target)
     
     
-    def _qkl(self, product: dict, dir: Path|str):
-        """
-        Download a quicklook (preview image) of the product
-        """
+    def quicklook(self, product: dict, dir: Path|str):
         self._login()
         
         links = product.metadata['links']
-        target = Path(dir)/(product.product_id + '.jpeg')
-        url = self._get(links, '.png', 'title', 'href')
+        target = Path(dir)/(product.product_id + '.png')
+        url = self._get(links, target.name)
 
         if not target.exists():
             filegen(0)(self._download)(target, url)
@@ -204,14 +194,11 @@ class DownloadNASA(BaseDownload):
         return target
     
     
-    def _metadata(self, product):
-        """
-        Extract metadata from a product's metadata field
-        """
+    def metadata(self, product):
         self._login()
         
         links = product.metadata['links']
-        req = self._get(links, '.xml', 'title', 'href')
+        req = self._get(links, product.product_id + '.*.xml')
         meta = self.session.get(req).text
 
         assert len(meta) > 0
@@ -220,12 +207,16 @@ class DownloadNASA(BaseDownload):
                 f.writelines(meta.split('\n'))
             return read_xml(Path(tmpdir)/'meta.xml')
     
-    def _get(self, liste, name, in_key, out_key):
+    def _get(self, liste, name):
         """
         Internal helper to find a value in a list of dictionaries by matching keys
         """
         for col in liste:
-            if in_key not in col: continue
-            if name in col[in_key]:
-                return col[out_key]
+            if 'title' not in col: continue
+            if match(f'Download {name}', col['title']):
+                return col['href']
+        for col in liste:
+            if 'href' not in col: continue
+            if match(name, col['href']):
+                return col['href']
         log.error(f'{name} has not been found', e=KeyError)

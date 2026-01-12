@@ -1,8 +1,9 @@
 from datetime import timedelta, datetime
 from shapely.ops import transform
+from re import search, fullmatch
+from pathlib import Path
 from numpy import log2
 from core import log
-import re
 
 
 def check_name_contains(name: str, elements: list[str]) -> bool:
@@ -55,7 +56,7 @@ def check_name_glob(name: str, regexp: str) -> bool:
     Returns:
         bool: True if name matches the pattern exactly, False otherwise
     """
-    return bool(re.fullmatch(regexp, name))
+    return bool(fullmatch(regexp, name))
 
 def end_of_day(date: datetime) -> datetime:
     """
@@ -94,3 +95,10 @@ def write(response, filepath):
     pbar = log.pbar(list(response.iter_content(chunk_size=chunk)), 'writing')
     with open(filepath, 'wb') as f:
         [f.write(chunk) for chunk in pbar if chunk]
+
+def get_compression_suffix(filename):
+    possible = ['zip','tgz','tar','tar.gz','gz','bz2','Z','rar']
+    if search(f".*.({'|'.join(possible)})", filename):
+        return Path(filename).suffix
+    else:
+        return None
