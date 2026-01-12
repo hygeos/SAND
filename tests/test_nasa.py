@@ -9,7 +9,7 @@ from sand.nasa import DownloadNASA
 def downloader():
     return DownloadNASA()
 
-@pytest.fixture(params=['ECOSTRESS'])
+@pytest.fixture(params=['ISS-ECOSTRESS'])
 def collec(request):
     return request.param
     

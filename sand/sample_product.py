@@ -4,7 +4,7 @@ from sand.constraint import Geo, Time, Name
 products = {}
 
 # SENTINEL-1 Product
-products['SENTINEL-1'] = {
+products['SENTINEL-1-SAR'] = {
     'constraint':{
         'time': Time('2025-01-01', '2025-02-01'),
         'geo': Geo.Point(lon=10, lat=12),
@@ -82,7 +82,7 @@ products['SENTINEL-6-LR'] = {
 }
 
 # SENTINEL-1-RTC Product
-products['SENTINEL-1-RTC'] = {
+products['SENTINEL-1-SAR-RTC'] = {
     'constraint':{
         'time': Time('2015-01-01', '2015-02-01'),
         'geo': Geo.Point(lat=12, lon=10),
@@ -116,25 +116,24 @@ products['FCI-MTG-NR'] = {
 # MVIRI-MFG Product
 products['MVIRI-MFG'] = {
     'constraint':{
-        'time': Time('2000-01-01T01:00:00', '2000-01-01T02:00:00'),
-        'geo': Geo.Point(lat=12, lon=10),
+        'time': Time('2000-01-01T01:00:00', '2000-02-01T02:00:00'),
+        # 'geo': Geo.Point(lat=12, lon=10),
     },
 }
 
 # ECOSTRESS Product
-products['ECOSTRESS'] = {
+products['ISS-ECOSTRESS'] = {
     'constraint':{
         'time': Time('2023-10-20', '2023-11-14'),
         'geo': Geo.Polygon(latmin=34.21, latmax=35.23, lonmin=239.70, lonmax=240.47),
-        'name': Name(contains=['L1C']),
     },
     'l1_product': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01',
 }
 
 # EMIT Product
-products['EMIT'] = {
+products['ISS-EMIT'] = {
     'constraint':{
-        'time': Time('2022-08-01', '2022-09-01'),
+        'time': Time('2023-08-01', '2023-09-01'),
         'geo': Geo.Point(lat=12, lon=10),
     },
 }
@@ -143,17 +142,9 @@ products['EMIT'] = {
 products['VENUS'] = {
     'constraint':{
         'time': Time('2018-01-01', '2018-06-01'),
-        'venus_site': 'NARYN',
+        'geo': Geo.Tile(venus='NARYN'),
     },
     'l1_product': 'VENUS-XS_20231003-110220-000_L1C_VILAINE_C_V3',
-}
-
-# VENUS-VM5 Product
-products['VENUS-VM5'] = {
-    'constraint':{
-        'time': Time('2021-01-01', '2021-06-01'),
-        'venus_site': 'NARYN',
-    },
 }
 
 # SPOT-1 Product
@@ -215,15 +206,7 @@ products['SPOT-7'] = {
 # PLEIADES Product
 products['PLEIADES'] = {
     'constraint':{
-        'time': Time('2012-01-01', '2012-02-01'),
-        'geo': Geo.Point(lat=12, lon=10),
-    },
-}
-
-# SWH Product
-products['SWH'] = {
-    'constraint':{
-        'time': Time('2020-01-01', '2020-02-01'),
+        'time': Time('2015-01-01', '2015-04-01'),
         'geo': Geo.Point(lat=12, lon=10),
     },
 }
@@ -248,14 +231,30 @@ products['LANDSAT-2-MSS'] = {
 products['LANDSAT-3-MSS'] = {
     'constraint':{
         'time': Time('1978-03-05', '1978-08-01'),
-        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
+        # 'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
 
 # LANDSAT-4-MSS Product
 products['LANDSAT-4-MSS'] = {
     'constraint':{
-        'time': Time('1982-07-16', '1983-01-01'),
+        'time': Time('1988-07-16', '1989-01-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
+    },
+}
+
+# LANDSAT-4-MSS Product
+products['LANDSAT-4-TM'] = {
+    'constraint':{
+        'time': Time('1988-07-16', '1989-01-01'),
+        'geo': Geo.Point(lat=-8.411750, lon=119.514442),
+    },
+}
+
+# LANDSAT-4-MSS Product
+products['LANDSAT-5-MSS'] = {
+    'constraint':{
+        'time': Time('2000-12-10', '2005-12-10'),
         'geo': Geo.Point(lat=-8.411750, lon=119.514442),
     },
 }
@@ -363,7 +362,7 @@ products['ENVISAT-MERIS'] = {
 }
 
 # IASI Product
-products['IASI'] = {
+products['METOP-IASI'] = {
     'constraint':{
         'time': Time('2010-10-19', '2010-10-30'),
         'geo': Geo.Point(lat=12, lon=10),
@@ -371,7 +370,7 @@ products['IASI'] = {
 }
 
 # ASCAT-METOP-FR Product
-products['ASCAT-METOP-FR'] = {
+products['METOP-ASCAT-FR'] = {
     'constraint':{
         'time': Time('2017-01-01', '2017-01-01'),
         'geo': Geo.Point(lat=12, lon=10),
@@ -379,7 +378,7 @@ products['ASCAT-METOP-FR'] = {
 }
 
 # ASCAT-METOP-RES Product
-products['ASCAT-METOP-RES'] = {
+products['METOP-ASCAT-RES'] = {
     'constraint':{
         'time': Time('2017-01-01', '2017-01-01'),
         'geo': Geo.Point(lat=12, lon=10),
@@ -403,513 +402,9 @@ products['ASTER'] = {
 }
 
 # AMSU-A Product
-products['AMSU-A'] = {
+products['METOP-AMSU-A'] = {
     'constraint':{
         'time': Time('2010-01-01', '2010-01-20'),
         'geo': Geo.Point(lat=12, lon=10),
     },
 }
-
-# CCM Product
-products['CCM'] = {
-    'constraint':{
-        'time': Time('2020-01-01', '2020-02-01'),
-        'geo': Geo.Point(lat=12, lon=10),
-    },
-}
-
-# COP-DEM Product
-products['COP-DEM'] = {
-    'constraint':{
-        'time': Time('2020-01-01', '2020-02-01'),
-        'geo': Geo.Point(lat=12, lon=10),
-    },
-}
-
-# GLOBAL-MOSAICS Product
-products['GLOBAL-MOSAICS'] = {
-    'constraint':{
-        'time': Time('2020-01-01', '2020-02-01'),
-        'geo': Geo.Point(lat=12, lon=10),
-    },
-}
-
-# S2GLC Product
-products['S2GLC'] = {
-    'constraint':{
-        'time': Time('2020-01-01', '2020-02-01'),
-        'geo': Geo.Point(lat=12, lon=10),
-    },
-}
-
-# # SENTINEL-3 OLCI Product
-# products['SENTINEL-3-OLCI-FR'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1),
-#         'dtend': datetime(2025, 2, 1),
-#         'geo': Point(10, 12),
-#         'product_id': 'S3A_OL_1_EFR____20250101T091103_20250101T091403_20250102T113753_0180_121_050_2700_MAR_O_NT_004.SEN3'
-#     }   
-# }
-
-# # SENTINEL-3 SLSTR Product
-# products['SENTINEL-3-SLSTR'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1),
-#         'dtend': datetime(2025, 2, 1),
-#         'geo': Point(10, 12),
-#         'product_id': 'S3A_SL_2_WST____20150101T102500_20150101T114000_20150101T124000_4500_030_215______MAR_O_NR_001'
-#     }    
-# }
-
-# # SENTINEL-3 SRAL Product
-# products['SENTINEL-3-SRAL'] = {
-#     'level1':{
-#         'dtstart': datetime(2023, 8, 1),
-#         'dtend': datetime(2023, 9, 1),
-#         'geo': Point(3, 48),
-#         'product_id': 'S3B_SR_1_SRA____20230826T191616_20230826T200646_20230919T232553_3029_083_184______PS2_O_NT_004.SEN3'
-#     }    
-# }
-
-# # SENTINEL-5P-TROPOMI Product
-# products['SENTINEL-5P-TROPOMI'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 5, 1),
-#         'dtend': datetime(2025, 6, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SENTINEL-3 SRAL Product
-# products['SENTINEL-6-HR'] = {
-#     'level1':{
-#         'dtstart': datetime(2023, 8, 1),
-#         'dtend': datetime(2023, 9, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SENTINEL-3 SRAL Product
-# products['SENTINEL-6-LR'] = {
-#     'level1':{
-#         'dtstart': datetime(2023, 8, 1),
-#         'dtend': datetime(2023, 9, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SEVIRI-MSG Product
-# products['SEVIRI-MSG'] = {
-#     'level1':{
-#         'dtstart': datetime(2024, 1, 1, 1),
-#         'dtend': datetime(2024, 1, 1, 2),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # FCI-MTG Product
-# products['FCI-MTG-HR'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1, 1),
-#         'dtend': datetime(2025, 1, 1, 2),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# products['FCI-MTG-NR'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1, 1),
-#         'dtend': datetime(2025, 1, 1, 2),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # ECOSTRESS Product
-# products['ECOSTRESS'] = {
-#     'level1':{
-#         'dtstart': datetime(2023, 10, 20),
-#         'dtend': datetime(2023, 11, 14),
-#         'geo': Polygon.from_bounds(239.70,34.21,240.47,35.23),
-#         'name_contains': ['L1C'],
-#         'product_id': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01'
-#     }
-# }
-
-# # VENUS Product
-# products['VENUS'] = {
-#     'level1':{
-#         'dtstart': datetime(2018, 1, 1),
-#         'dtend': datetime(2018, 6, 1),
-#         'venus_site': 'NARYN',
-#         "product_id": "VENUS-XS_20231003-110220-000_L1C_VILAINE_C_V3"
-#     }    
-# }
-
-# # SPOT-1 Product
-# products['SPOT-1'] = {
-#     'level1':{
-#         'dtstart': datetime(2003, 9, 1),
-#         'dtend': datetime(2003, 9, 20),
-#         "product_id": "SPOT1-HRV1-XS_20030918-103500-347_L1C_046-265-0_D_V1-0"
-#     }    
-# }
-
-# # SPOT-2 Product
-# products['SPOT-2'] = {
-#     'level1':{
-#         'dtstart': datetime(2009, 6, 15),
-#         'dtend': datetime(2009, 7, 1),
-#         "product_id": "SPOT2-HRV2-XS_20090629-112812-214_L1C_026-253-0_D"
-#     }    
-# }
-
-# # SPOT-3 Product
-# products['SPOT-3'] = {
-#     'level1':{
-#         'dtstart': datetime(1996, 11, 10),
-#         'dtend': datetime(1996, 11, 20),
-#         "product_id": "SPOT3-HRV1-XS_19961113-104800-180_L1C_046-333-0_D"
-#     }    
-# }
-
-# # SPOT-4 Product
-# products['SPOT-4'] = {
-#     'level1':{
-#         'dtstart': datetime(2013, 6, 10),
-#         'dtend': datetime(2013, 6, 20),
-#         "product_id": "SPOT4-HRVIR2-XS_20130618-090822-826_L1C_049-262-4_D"
-#     }    
-# }
-
-# # SPOT-5 Product
-# products['SPOT-5'] = {
-#     'level1':{
-#         'dtstart': datetime(2015, 8, 10),
-#         'dtend': datetime(2015, 8, 30),
-#         "product_id": "SPOT5-HRG2-XS_20150827-050516-710_L1C_186-392-1_D"
-#     }    
-# }
-
-# # LANDSAT-5 Product
-# products['LANDSAT-5-TM'] = {
-#     'level1':{
-#         'dtstart': datetime(2000, 12, 10),
-#         'dtend': datetime(2005, 12, 10),
-#         'geo': Point(119.514442, -8.411750),
-#         'product_id': 'LT05_L1TP_114066_20030721_20200904_02_T1'
-#     },
-#     'level1':{
-#         'dtstart': datetime(2000, 12, 10),
-#         'dtend': datetime(2005, 12, 10),
-#         'geo': Point(119.514442, -8.411750),
-#         'product_id': 'LT05_L2SP_114066_20030721_20200904_02_T1'
-#     }  
-# }
-
-# # LANDSAT-8 Product
-# products['LANDSAT-8-OLI'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1),
-#         'dtend': datetime(2025, 4, 1),
-#         'geo': Point(21, 8),
-#         'product_id': 'LC08_L1GT_029030_20151209_20160131_01_RT'
-#     }    
-# }
-
-# # LANDSAT-9 Product
-# products['LANDSAT-9-OLI'] = {
-#     'level1':{
-#         'dtstart': datetime(2025, 1, 1),
-#         'dtend': datetime(2025, 4, 1),
-#         'geo': Point(21, 8),
-#         'product_id': 'LC09_L1TP_014034_20220618_20230411_02_T1'
-#     }    
-# }
-
-# # MODIS-AQUA Product
-# products['MODIS-AQUA-HR'] = {
-#     'level1':{
-#         'dtstart': datetime(2018, 1, 1),
-#         'dtend': datetime(2018, 2, 1),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # MODIS-AQUA Product
-# products['MODIS-AQUA-LR'] = {
-#     'level1':{
-#         'dtstart': datetime(2018, 1, 1),
-#         'dtend': datetime(2018, 2, 1),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # MODIS-AQUA Product
-# products['MODIS-TERRA-HR'] = {
-#     'level1':{
-#         'dtstart': datetime(2018, 1, 1),
-#         'dtend': datetime(2018, 2, 1),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # MODIS-AQUA Product
-# products['MODIS-TERRA-LR'] = {
-#     'level1':{
-#         'dtstart': datetime(2018, 1, 1),
-#         'dtend': datetime(2018, 2, 1),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # PACE-OCI Product
-# products['PACE-OCI'] = {
-#     'level1':{
-#         'dtstart': datetime(2024, 10, 1),
-#         'dtend': datetime(2024, 10, 15),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # PACE-HARP2 Product
-# products['PACE-HARP2'] = {
-#     'level1':{
-#         'dtstart': datetime(2024, 10, 1),
-#         'dtend': datetime(2024, 10, 15),
-#         'geo': Point(21, 8),
-#     }    
-# }
-
-# # ENVISAT-MERIS Product
-# products['ENVISAT-MERIS'] = {
-#     'level1':{
-#         'dtstart': datetime(2002, 3, 1),
-#         'dtend': datetime(2002, 4, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # IASI Product
-# products['IASI'] = {
-#     'level1':{
-#         'dtstart': datetime(2010, 10, 19),
-#         'dtend': datetime(2010, 10, 30),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # ASCAT-METOP-FR Product
-# products['ASCAT-METOP-FR'] = {
-#     'level1':{
-#         'dtstart': datetime(2017, 1, 1),
-#         'dtend': datetime(2017, 1, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # ASCAT-METOP-RES Product
-# products['ASCAT-METOP-RES'] = {
-#     'level1':{
-#         'dtstart': datetime(2017, 1, 1),
-#         'dtend': datetime(2017, 1, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SMOS Product
-# products['SMOS'] = {
-#     'level1':{
-#         'dtstart': datetime(2009, 12, 2),
-#         'dtend': datetime(2010, 1, 2),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # ASTER Product
-# products['ASTER'] = {
-#     'level1':{
-#         'dtstart': datetime(1999, 12, 18),
-#         'dtend': datetime(2000, 1, 18),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # AMSU Product
-# products['AMSU-A'] = {
-#     'level1':{
-#         'dtstart': datetime(2010, 1, 1),
-#         'dtend': datetime(2010, 1, 20),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # CCM Product
-# products['CCM'] = {
-#     'level1':{
-#         'dtstart': datetime(2020, 1, 1),
-#         'dtend': datetime(2020, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # COP-DEM Product
-# products['COP-DEM'] = {
-#     'level1':{
-#         'dtstart': datetime(2020, 1, 1),
-#         'dtend': datetime(2020, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # EMIT Product
-# products['EMIT'] = {
-#     'level1':{
-#         'dtstart': datetime(2022, 8, 1),
-#         'dtend': datetime(2022, 9, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # GLOBAL-MOSAICS Product
-# products['GLOBAL-MOSAICS'] = {
-#     'level1':{
-#         'dtstart': datetime(2020, 1, 1),
-#         'dtend': datetime(2020, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # LANDSAT-1-MSS Product
-# products['LANDSAT-1-MSS'] = {
-#     'level1':{
-#         'dtstart': datetime(1972, 7, 23),
-#         'dtend': datetime(1973, 1, 1),
-#         'geo': Point(119.514442, -8.411750),
-#     }    
-# }
-
-# # LANDSAT-2-MSS Product
-# products['LANDSAT-2-MSS'] = {
-#     'level1':{
-#         'dtstart': datetime(1978, 1, 22),
-#         'dtend': datetime(1978, 6, 1),
-#         'geo': Point(119.514442, -8.411750),
-#     }    
-# }
-
-# # LANDSAT-3-MSS Product
-# products['LANDSAT-3-MSS'] = {
-#     'level1':{
-#         'dtstart': datetime(1978, 3, 5),
-#         'dtend': datetime(1978, 8, 1),
-#         'geo': Point(119.514442, -8.411750),
-#     }    
-# }
-
-# # LANDSAT-4-MSS Product
-# products['LANDSAT-4-MSS'] = {
-#     'level1':{
-#         'dtstart': datetime(1982, 7, 16),
-#         'dtend': datetime(1983, 1, 1),
-#         'geo': Point(119.514442, -8.411750),
-#     }    
-# }
-
-# # LANDSAT-7-ET Product
-# products['LANDSAT-7-ET'] = {
-#     'level1':{
-#         'dtstart': datetime(2000, 1, 1),
-#         'dtend': datetime(2000, 6, 1),
-#         'geo': Point(119.514442, -8.411750),
-#         'product_id': 'LE07_L1TP_114066_20000715_20200918_02_T1'
-#     },
-#     'level2':{
-#         'dtstart': datetime(2000, 1, 1),
-#         'dtend': datetime(2000, 6, 1),
-#         'geo': Point(119.514442, -8.411750),
-#         'product_id': 'LE07_L2SP_114066_20000715_20200918_02_T1'
-#     }    
-# }
-
-# # MVIRI-MFG Product
-# products['MVIRI-MFG'] = {
-#     'level1':{
-#         'dtstart': datetime(2000, 1, 1, 1),
-#         'dtend': datetime(2000, 1, 1, 2),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # PLEIADES Product
-# products['PLEIADES'] = {
-#     'level1':{
-#         'dtstart': datetime(2012, 1, 1),
-#         'dtend': datetime(2012, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # S2GLC Product
-# products['S2GLC'] = {
-#     'level1':{
-#         'dtstart': datetime(2020, 1, 1),
-#         'dtend': datetime(2020, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SENTINEL-1-RTC Product
-# products['SENTINEL-1-RTC'] = {
-#     'level1':{
-#         'dtstart': datetime(2015, 1, 1),
-#         'dtend': datetime(2015, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SENTINEL-3-OLCI-RR Product
-# products['SENTINEL-3-OLCI-RR'] = {
-#     'level1':{
-#         'dtstart': datetime(2017, 1, 1),
-#         'dtend': datetime(2017, 2, 1),
-#         'geo': Point(10, 12),
-#         'product_id': 'S3A_OL_1_ERR____20170101T091103_20170101T091403_20170102T113753_0180_013_050_2700_MAR_O_NT_004.SEN3'
-#     }    
-# }
-
-# # SPOT-6 Product
-# products['SPOT-6'] = {
-#     'level1':{
-#         'dtstart': datetime(2013, 1, 1),
-#         'dtend': datetime(2013, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SPOT-7 Product
-# products['SPOT-7'] = {
-#     'level1':{
-#         'dtstart': datetime(2014, 7, 1),
-#         'dtend': datetime(2014, 8, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # SWH Product
-# products['SWH'] = {
-#     'level1':{
-#         'dtstart': datetime(2020, 1, 1),
-#         'dtend': datetime(2020, 2, 1),
-#         'geo': Point(10, 12),
-#     }    
-# }
-
-# # VIIRS Product
-# products['VIIRS'] = {
-#     'level1':{
-#         'dtstart': datetime(2014, 1, 1),
-#         'dtend': datetime(2014, 2, 1),
-#         'geo': Point(21, 8),
-#     }    
-# }

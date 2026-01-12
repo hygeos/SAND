@@ -9,7 +9,7 @@ from sand.geodes import DownloadCNES
 def downloader():
     return DownloadCNES()
 
-@pytest.fixture(params=['SENTINEL-1'])
+@pytest.fixture(params=['SENTINEL-1-SAR'])
 def collec(request): return request.param
     
 @pytest.fixture(params=[1])

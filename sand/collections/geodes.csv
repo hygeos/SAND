@@ -3,7 +3,7 @@ LANDSAT-5-TM,           2,      ,         THEIA_REFLECTANCE_LANDSAT5_L2A
 LANDSAT-7-ET,           2,      ,         THEIA_REFLECTANCE_LANDSAT7_L2A
 LANDSAT-8-OLI,          2,      ,         THEIA_REFLECTANCE_LANDSAT8_L2A
 PLEIADES,               1,      ,         MUSCATE_PLEIADES_PLEIADES_ORTHO
-SENTINEL-1,             1,      ,         PEPS_S1_L1
+SENTINEL-1-SAR,         1,      ,         PEPS_S1_L1
 SENTINEL-2-MSI,         1,      ,         PEPS_S2_L1C
 SENTINEL-2-MSI,         2,      ,         THEIA_REFLECTANCE_SENTINEL2_L2A
 SENTINEL-2-MSI,         3,      ,         THEIA_REFLECTANCE_SENTINEL2_L3A

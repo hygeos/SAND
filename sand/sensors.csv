@@ -1,55 +1,50 @@
-Name,               Resolution, Swath,  Orbit, Cycle, launch_date, end_date,   longname,  url
-AMSU-A,             45km,       1027km, LEO,   1d,    2008-03-01,  x,           Advanced Microwave Sounding Unit, https://nwp-saf.eumetsat.int/site/software/aapp/aapp-overview/amsu-a/
-ASCAT-METOP-FR,     25km,       500km,  LEO,   29d,   2007-01-21,  x,           Advanced Scatterometer on Metop at Full Resolution, https://www.eoportal.org/satellite-missions/metop#summary
-ASCAT-METOP-RES,    50km,       550km,  LEO,   29d,   2007-01-21,  x,           Advanced Scatterometer on Metop resampled, https://www.eoportal.org/satellite-missions/metop#summary
-ASTER,              15-90m,     7.5km,  LEO,   16d,   1999-12-18,  x,           Advanced Spaceborne Thermal Emission and Reflection, https://en.wikipedia.org/wiki/Advanced_Spaceborne_Thermal_Emission_and_Reflection_Radiometer
-CCM,                -,          , , , x,  x,                    Copernicus Contributing Missions,
-COP-DEM,            30-90m,     , , , x,  x,                    Copernicus Digital Elevation Model,	
-ECOSTRESS,          70m,        300km,  LEO,   3d,    2018-06-29,  x,           ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station, https://www.eoportal.org/satellite-missions/iss-ecostress
-EMIT,               60m,        80km,   LEO,   3d,    2022-07-14,  x,           Earth surface Mineral dust source InvesTigation, https://www.eoportal.org/satellite-missions/iss-emit
-ENVISAT-MERIS,      1km,        500km,  LEO,   35d,   2002-03-01,  2012-04-08,           EnviSat (Environmental Satellite) Medium Resolution Imaging Spectrometer, https://www.eoportal.org/satellite-missions/envisat
-FCI-MTG-HR,         500m,       -,      GEO,   10m,   2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
-FCI-MTG-NR,         1km,        -,      GEO,   10m,   2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
-GLOBAL-MOSAICS,     -,          ,,, x,  x,                    GLOBAL-MOSAICS,
-IASI,               1km,        2000km, LEO,   1d,    2007-07-10,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
-LANDSAT-1-MSS,      80m,        185km,  LEO,   18d,   1972-07-23,  1978-01-01,  LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
-LANDSAT-2-MSS,      80m,        185km,  LEO,   18d,   1975-01-22,  1982-02-25,  LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
-LANDSAT-3-MSS,      80m,        185km,  LEO,   18d,   1978-03-05,  1983-03-31,  LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
-LANDSAT-4-MSS,      80m,        185km,  LEO,   16d,   1982-07-16,  1993-08-01,  LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
-LANDSAT-4-TM,       30m,        185km,  LEO,   16d,   1982-07-16,  1993-08-01,  LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
-LANDSAT-5-MSS,      80m,        185km,  LEO,   16d,   1984-03-01,  2013-06-05,  LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
-LANDSAT-5-TM,       30m,        185km,  LEO,   16d,   1984-03-01,  2013-06-05,  LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
-LANDSAT-7-ET,       30-60m,     185km,  LEO,   16d,   1999-04-15,  2024-01-19,  LANDSAT-7 Enhanced Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-7
-LANDSAT-8-OLI,      15-30m,     185km,  LEO,   16d,   2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.eoportal.org/satellite-missions/landsat-8
-LANDSAT-9-OLI,      15-30m,     185km,  LEO,   16d,   2021-09-27,  x,           LANDSAT-9 Operational Land Imager, https://www.eoportal.org/satellite-missions/landsat-9
-MODIS-AQUA-HR,      250m-1km,   2300km, LEO,   16d,   2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
-MODIS-AQUA-LR,      250m-1km,   2300km, LEO,   16d,   2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
-MODIS-TERRA-HR,     250m-1km,   2300km, LEO,   16d,   1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
-MODIS-TERRA-LR,     250m-1km,   2300km, LEO,   16d,   1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
-MVIRI-MFG,          2.5-5km,    -,      GEO,   30m,   1977-11-01,  1979-12-24,  Meteosat Visible Infra-Red Imager (Meteosat First Generation), https://www.eoportal.org/satellite-missions/meteosat-first-generation
-PACE-OCI,           1km,        2500km, LEO,   1d,    2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Ocean Color Instrument), https://www.eoportal.org/satellite-missions/pace-mission#spacecraft
-PACE-HARP2,         3km,        1500km, LEO,   1d,    2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Hyper-Angular Rainbow Polarimeter), https://www.eoportal.org/satellite-missions/pace-mission#spacecraft
-PLEIADES,           1-3m,       20km,   LEO,   26d,   2011-12-17,  x,           Pléiades constellation from CNES, https://www.eoportal.org/satellite-missions/pleiades
-S2GLC,              -,          ,,, 2015-06-23,  x,           Sentinel-2 Global Land Cover,
-SENTINEL-1,         5m,         80km,   LEO,   12d,   2014-04-03,  x,           Sentinel-1, https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
-SENTINEL-1-RTC,     5m,         80km,   LEO,   12d,   2014-04-03,  x,           Sentinel-1 Radiometric Terrain Corrected (RTC), https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
-SENTINEL-2-MSI,     10-60m,     290km,  LEO,   5d,    2015-06-23,  x,           Sentinel-2 MultiSpectral Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-2#spacecraft
-SENTINEL-3-OLCI-FR, 300m,       1270km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Full Resolution,https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
-SENTINEL-3-OLCI-RR, 1.2km,      1270km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Reduced Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
-SENTINEL-3-SLSTR,   0.5-1km,    1420km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Sea and Land Surface Temperature Radiometer, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
-SENTINEL-3-SRAL,    300m,       1200km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Radar ALtimeter, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
-SENTINEL-5P-TROPOMI,5-15km,     2600km, LEO,   1d,    2017-10-13,  x,           Sentinel-5P TROPOspheric Monitoring Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-5p
-SENTINEL-6-HR,      -,          ,,, 2020-11-21,  x,           Sentinel-6 at High Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
-SENTINEL-6-LR,      -,          ,,, 2020-11-21,  x,           Sentinel-6 at Low Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
-SEVIRI-MSG,         1km,        -,      GEO,   15m,   2002-02-28,  x,           Spinning Enhanced Visible Infra-Red Imager (Meteosat Second Generation), https://www.eoportal.org/satellite-missions/meteosat-second-generation
-SMOS,               50km,       900km,  LEO,   3d,    2009-12-02,  x,           Soil Moisture and Ocean Salinity, https://directory.eoportal.org/satellite-missions/smos#smos-soil-moisture-and-ocean-salinity-mission
-SPOT-1,             10-20m,     60km,   LEO,   26d,   1986-02-22,  2003-11-17,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
-SPOT-2,             10-20m,     60km,   LEO,   26d,   1990-01-22,  2009-06-30,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
-SPOT-3,             10-20m,     60km,   LEO,   26d,   1993-09-22,  1996-11-14,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
-SPOT-4,             10-20m,     60km,   LEO,   26d,   1998-03-24,  2013-06-29,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-4
-SPOT-5,             10-20m,     60km,   LEO,   26d,   2002-05-04,  2015-03-30,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-5
-SPOT-6,             10-20m,     60km,   LEO,   26d,   2012-09-09,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-6-7
-SPOT-7,             10-20m,     60km,   LEO,   26d,   2014-06-30,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-6-7
-SWH,                -,          ,,, x,  x,                    Spot World Heritage,
-VENUS,              3-5m,       28km,   LEO,   2d,    2017-08-02,  2024-08-30,  Vegetation and Environment monitoring on a New Micro-Satellite, https://www.eoportal.org/satellite-missions/venus
-VIIRS,              500m,       3000km, LEO,   16d,   2013-11-07,  x,           Visible Infrared Imaging Radiometer Suite, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/
+Name,                   Resolution, Swath,  Orbit, Cycle, launch_date, end_date,   longname,  url
+AQUA-MODIS-HR,          250m-1km,   2300km, LEO,   16d,   2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+AQUA-MODIS-LR,          250m-1km,   2300km, LEO,   16d,   2002-05-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Aqua satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+ENVISAT-MERIS,          1km,        500km,  LEO,   35d,   2002-03-01,  2012-04-08,           EnviSat (Environmental Satellite) Medium Resolution Imaging Spectrometer, https://www.eoportal.org/satellite-missions/envisat
+FCI-MTG-HR,             500m,       -,      GEO,   10m,   2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at High Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
+FCI-MTG-NR,             1km,        -,      GEO,   10m,   2022-12-13,  x,           Flexible Combined Imager (Meteosat Third Generation) at Normal Resolution, https://www.eoportal.org/satellite-missions/meteosat-third-generation
+ISS-ECOSTRESS,          70m,        300km,  LEO,   3d,    2018-06-29,  x,           ECOsystem Spaceborne Thermal Radiometer Experiment on Space Station, https://www.eoportal.org/satellite-missions/iss-ecostress
+ISS-EMIT,               60m,        80km,   LEO,   3d,    2022-07-14,  x,           Earth surface Mineral dust source InvesTigation, https://www.eoportal.org/satellite-missions/iss-emit
+LANDSAT-1-MSS,          80m,        185km,  LEO,   18d,   1972-07-23,  1978-01-01,  LANDSAT-1 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
+LANDSAT-2-MSS,          80m,        185km,  LEO,   18d,   1975-01-22,  1982-02-25,  LANDSAT-2 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
+LANDSAT-3-MSS,          80m,        185km,  LEO,   18d,   1978-03-05,  1983-03-31,  LANDSAT-3 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-1-3
+LANDSAT-4-MSS,          80m,        185km,  LEO,   16d,   1982-07-16,  2001-06-01,  LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-4-TM,           30m,        185km,  LEO,   16d,   1982-07-16,  2001-06-01,  LANDSAT-4 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-5-MSS,          80m,        185km,  LEO,   16d,   1984-03-01,  2013-06-05,  LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-5-TM,           30m,        185km,  LEO,   16d,   1984-03-01,  2013-06-05,  LANDSAT-5 Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-4-5
+LANDSAT-7-ET,           30-60m,     185km,  LEO,   16d,   1999-04-15,  2024-01-19,  LANDSAT-7 Enhanced Thematic Mapper, https://www.eoportal.org/satellite-missions/landsat-7
+LANDSAT-8-OLI,          15-30m,     185km,  LEO,   16d,   2013-02-11,  x,           LANDSAT-8 Operational Land Imager, https://www.eoportal.org/satellite-missions/landsat-8
+LANDSAT-9-OLI,          15-30m,     185km,  LEO,   16d,   2021-09-27,  x,           LANDSAT-9 Operational Land Imager, https://www.eoportal.org/satellite-missions/landsat-9
+METOP-AMSU-A,           45km,       1027km, LEO,   1d,    2008-03-01,  x,           Advanced Microwave Sounding Unit, https://nwp-saf.eumetsat.int/site/software/aapp/aapp-overview/amsu-a/
+METOP-ASCAT-FR,         25km,       500km,  LEO,   29d,   2007-01-21,  x,           Advanced Scatterometer on Metop at Full Resolution, https://www.eoportal.org/satellite-missions/metop#summary
+METOP-ASCAT-RES,        50km,       550km,  LEO,   29d,   2007-01-21,  x,           Advanced Scatterometer on Metop resampled, https://www.eoportal.org/satellite-missions/metop#summary
+METOP-IASI,             1km,        2000km, LEO,   1d,    2007-07-10,  x,           Infrared Atmospheric Sounding Interferometer, https://en.wikipedia.org/wiki/Infrared_atmospheric_sounding_interferometer
+MVIRI-MFG,              2.5-5km,    -,      GEO,   30m,   1977-11-01,  2017-04-04,  Meteosat Visible Infra-Red Imager (Meteosat First Generation), https://www.eoportal.org/satellite-missions/meteosat-first-generation
+PACE-OCI,               1km,        2500km, LEO,   1d,    2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Ocean Color Instrument), https://www.eoportal.org/satellite-missions/pace-mission#spacecraft
+PACE-HARP2,             3km,        1500km, LEO,   1d,    2024-02-22,  x,           Plankton Aerosol Cloud and ocean Ecosystem (Hyper-Angular Rainbow Polarimeter), https://www.eoportal.org/satellite-missions/pace-mission#spacecraft
+PLEIADES,               1-3m,       20km,   LEO,   26d,   2011-12-17,  x,           Pléiades constellation from CNES, https://www.eoportal.org/satellite-missions/pleiades
+SENTINEL-1-SAR,         5m,         80km,   LEO,   12d,   2014-04-03,  x,           Sentinel-1, https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
+SENTINEL-1-SAR-RTC,     5m,         80km,   LEO,   12d,   2014-04-03,  x,           Sentinel-1 Radiometric Terrain Corrected (RTC), https://www.eoportal.org/satellite-missions/copernicus-sentinel-1
+SENTINEL-2-MSI,         10-60m,     290km,  LEO,   5d,    2015-06-23,  x,           Sentinel-2 MultiSpectral Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-2#spacecraft
+SENTINEL-3-OLCI-FR,     300m,       1270km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Full Resolution,https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-OLCI-RR,     1.2km,      1270km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Ocean and Land Colour Instrument at Reduced Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-SLSTR,       0.5-1km,    1420km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Sea and Land Surface Temperature Radiometer, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-3-SRAL,        300m,       1200km, LEO,   2d,    2016-02-16,  x,           Sentinel-3 Radar ALtimeter, https://www.eoportal.org/satellite-missions/copernicus-sentinel-3
+SENTINEL-5P-TROPOMI,    5-15km,     2600km, LEO,   1d,    2017-10-13,  x,           Sentinel-5P TROPOspheric Monitoring Instrument, https://www.eoportal.org/satellite-missions/copernicus-sentinel-5p
+SENTINEL-6-HR,          -,          ,,, 2020-11-21,  x,           Sentinel-6 at High Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
+SENTINEL-6-LR,          -,          ,,, 2020-11-21,  x,           Sentinel-6 at Low Resolution, https://www.eoportal.org/satellite-missions/copernicus-sentinel-6-michael-freilich
+SEVIRI-MSG,             1km,        -,      GEO,   15m,   2002-02-28,  x,           Spinning Enhanced Visible Infra-Red Imager (Meteosat Second Generation), https://www.eoportal.org/satellite-missions/meteosat-second-generation
+SMOS-MIRAS,             50km,       900km,  LEO,   3d,    2009-12-02,  x,           Soil Moisture and Ocean Salinity, https://directory.eoportal.org/satellite-missions/smos#smos-soil-moisture-and-ocean-salinity-mission
+SPOT-1,                 10-20m,     60km,   LEO,   26d,   1986-02-22,  2003-11-17,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
+SPOT-2,                 10-20m,     60km,   LEO,   26d,   1990-01-22,  2009-06-30,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
+SPOT-3,                 10-20m,     60km,   LEO,   26d,   1993-09-22,  1996-11-14,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-1-2-3
+SPOT-4,                 10-20m,     60km,   LEO,   26d,   1998-03-24,  2013-06-29,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-4
+SPOT-5,                 10-20m,     60km,   LEO,   26d,   2002-05-04,  2015-03-30,  Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-5
+SPOT-6,                 10-20m,     60km,   LEO,   26d,   2012-09-09,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-6-7
+SPOT-7,                 10-20m,     60km,   LEO,   26d,   2014-06-30,  x,           Satellite Pour l'Observation de la Terre, https://www.eoportal.org/satellite-missions/spot-6-7
+TERRA-ASTER,            15-90m,     7.5km,  LEO,   16d,   1999-12-18,  x,           Advanced Spaceborne Thermal Emission and Reflection, https://en.wikipedia.org/wiki/Advanced_Spaceborne_Thermal_Emission_and_Reflection_Radiometer
+TERRA-MODIS-HR,         250m-1km,   2300km, LEO,   16d,   1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at High Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+TERRA-MODIS-LR,         250m-1km,   2300km, LEO,   16d,   1999-12-01,  x,           Moderate Resolution Imaging Spectroradiometer aboard the Terra satellite at Low Resolution, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/modis/
+VENUS,                  3-5m,       28km,   LEO,   2d,    2017-08-02,  2024-08-30,  Vegetation and Environment monitoring on a New Micro-Satellite, https://www.eoportal.org/satellite-missions/venus
+VIIRS,                  500m,       3000km, LEO,   16d,   2013-11-07,  x,           Visible Infrared Imaging Radiometer Suite, https://ladsweb.modaps.eosdis.nasa.gov/missions-and-measurements/viirs/
