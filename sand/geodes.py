@@ -1,9 +1,9 @@
 from re import search
 from numpy import array
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 
-from sand.constraint import Time, Geo, Name
+from sand.constraint import Time, Geo, GeoType, Name
 from sand.base import BaseDownload, raise_api_error, check_too_many_matches
 from sand.results import SandQuery, SandProduct
 from sand.utils import write, get_compression_suffix
@@ -35,24 +35,26 @@ class DownloadCNES(BaseDownload):
         auth = get_auth("geodes.cnes.fr")     
         self.tokens = auth['password']
         log.debug('Log to API (https://geodes-portal.cnes.fr/)')
-    
-    
+
     def query(
         self,
-        collection_sand: str = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
-        time: Time = None,
-        geo: Geo = None,
-        name: Name = None,
-        cloudcover_thres: Optional[int] = None,
-        api_collection: list[str] = None,
-    ):
+        time: Time|None = None,
+        geo: GeoType|None = None,
+        name: Name|None = None,
+        cloudcover_thres: int|None = None,
+        api_collection: str|None = None
+    ) -> SandQuery:
+        
         self._login()
         
         # Retrieve api collections based on SAND collections
         if api_collection is None:
             name_constraint = self._load_sand_collection_properties(collection_sand, level)
             api_collection = self.api_collection[0]
+        else:
+            name_constraint = []
             
         # Format input time and geospatial constraints
         time = self._format_time(collection_sand, time)
@@ -106,7 +108,12 @@ class DownloadCNES(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
 
-    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
         self._login()
         
         # Extract download url
@@ -130,8 +137,8 @@ class DownloadCNES(BaseDownload):
     def _download(
         self,
         target: Path,
-        url: str,
-        compression_ext: str = None
+        url: dict,
+        compression_ext: str|None = None
     ):
         """
         Internal method to handle the actual download of files from Geodes servers
@@ -155,7 +162,9 @@ class DownloadCNES(BaseDownload):
             path.rename(target)
             dl_target.unlink() 
     
-    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+    def download_file(
+        self, product_id: str, dir: Path | str, api_collection: str|None = None
+    ) -> Path:
         self._login()
         
         log.warning('no api collection is required with new GEODES API')
@@ -184,7 +193,11 @@ class DownloadCNES(BaseDownload):
         assert len(out) == 1
         return self.download(out[0], dir, 'skip')
 
-    def quicklook(self, product: dict, dir: Path|str):
+    def quicklook(
+        self, 
+        product: SandProduct, 
+        dir: Path|str
+    ) -> Path:
         self._login()
         
         links = product.metadata['assets']
@@ -199,7 +212,10 @@ class DownloadCNES(BaseDownload):
         log.info(f'Quicklook has been downloaded at : {target}')
         return target
           
-    def metadata(self, product: dict):
+    def metadata(
+        self, 
+        product: SandProduct
+    ) -> dict:
         
         self._login()
         

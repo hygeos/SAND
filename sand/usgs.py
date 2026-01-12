@@ -10,7 +10,7 @@ from core.network.auth import get_auth
 from core.files import filegen, uncompress
 from core.geo.product_name import get_pattern, get_level
 
-from sand.constraint import Time, Geo, Name
+from sand.constraint import Time, Geo, GeoType, Name
 from sand.base import raise_api_error, BaseDownload, check_too_many_matches
 from sand.results import SandQuery, SandProduct
 from sand.utils import write
@@ -52,23 +52,25 @@ class DownloadUSGS(BaseDownload):
                 )
         log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
-    
+
     def query(
         self,
-        collection_sand: str | None = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
-        time: Time | None = None,
-        geo: Geo | None = None,
-        name: Name | None = None,
-        cloudcover_thres: Optional[int] | None = None,
-        api_collection: list[str] | None = None,
-    ):
+        time: Time|None = None,
+        geo: GeoType|None = None,
+        name: Name|None = None,
+        cloudcover_thres: int|None = None,
+        api_collection: str|None = None
+    ) -> SandQuery:
         self._login()
         
         # Retrieve api collections based on SAND collections
         if api_collection is None:
             name_constraint = self._load_sand_collection_properties(collection_sand, level)
             api_collection = self.api_collection[0]
+        else:
+            name_constraint = []
         
         # Format input time and geospatial constraints
         time = self._format_time(collection_sand, time or Time())
@@ -89,11 +91,12 @@ class DownloadUSGS(BaseDownload):
             spatial_filter["upperRight"] = {"latitude":bounds[2], 
                                             "longitude":bounds[3]}
         
+        acquisition_filter = {}
         if time:
-            acquisition_filter = {"start": time.start.isoformat(),
-                                  "end"  : time.end.isoformat()}
-        else:
-            acquisition_filter = dict()
+            if time.start:
+                acquisition_filter["start"] = time.start.isoformat()
+            if time.end:
+                acquisition_filter["end"] = time.end.isoformat()
 
         cloud_cover_filter = {"min" : cloudcover_thres,
                               "max" : 100,
@@ -137,7 +140,12 @@ class DownloadUSGS(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
     
-    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+    def download_file(
+        self, 
+        product_id: str, 
+        dir: Path | str, 
+        api_collection: str|None = None
+    ) -> Path:
 
         self._login()
         
@@ -203,8 +211,12 @@ class DownloadUSGS(BaseDownload):
 
         return self.download(product, dir)
     
-    
-    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
 
         self._login()
         
@@ -246,7 +258,7 @@ class DownloadUSGS(BaseDownload):
         self,
         target: Path,
         url: str,
-        compression_ext: str = None
+        compression_ext: str|None = None
     ):
         """
         Internal method to handle the actual download of files from USGS servers
@@ -279,7 +291,11 @@ class DownloadUSGS(BaseDownload):
             dl_target.unlink() 
     
     
-    def quicklook(self, product: dict, dir: Path|str):
+    def quicklook(
+        self, 
+        product: SandProduct, 
+        dir: Path|str
+    ) -> Path:
         self._login()
         
         target = Path(dir)/(product.product_id + '.png')
@@ -289,8 +305,9 @@ class DownloadUSGS(BaseDownload):
             log.check(assets, f'Skipping quicklook {target.name}', e=FileNotFoundError)
             for b in product.metadata['browse']:
                 url = b['browsePath']
-                if 'type=refl' in url: break
-            filegen(0)(self._download)(target, url)
+                if 'type=refl' in url:
+                    filegen(0)(self._download)(target, url)
+                    break
 
         log.info(f'Quicklook has been downloaded at : {target}')
         return target    
@@ -304,7 +321,7 @@ class DownloadUSGS(BaseDownload):
             meta[m['fieldName']] = m['value']
         return meta
     
-    def _get_entity_id(self, display_id: str, dataset: str = None) -> str:
+    def _get_entity_id(self, display_id: str, dataset: str|None = None) -> str:
         """
         Convert display ID (Product ID) to entity ID (Scene ID)
         

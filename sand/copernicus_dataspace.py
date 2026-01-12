@@ -1,13 +1,13 @@
 from requests.utils import requote_uri
 from urllib.parse import urlencode
-from typing import Optional, Literal
 from dataclasses import dataclass
+from typing import Literal
 from pathlib import Path
 import requests
 
 from sand.base import raise_api_error, BaseDownload, RequestsError
 from sand.utils import write, check_name_glob
-from sand.constraint import Time, Geo, Name
+from sand.constraint import Time, Geo, GeoType, Name
 from sand.results import SandQuery, SandProduct
 
 from core import log
@@ -49,9 +49,9 @@ class DownloadCDSE(BaseDownload):
             "password": auth["password"],
             "grant_type": "password",
         }
+        url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+        r = requests.post(url, data=data)
         try:
-            url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-            r = requests.post(url, data=data)
             r.raise_for_status()
         except Exception:
             raise Exception(
@@ -76,13 +76,13 @@ class DownloadCDSE(BaseDownload):
 
     def query(
         self,
-        collection_sand: str|None = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
         time: Time|None = None,
-        geo: Geo|None = None,
+        geo: GeoType|None = None,
         name: Name|None = None,
         cloudcover_thres: int|None = None,
-        api_collection: list[str]|None = None
+        api_collection: str|None = None
     ):
         self._login()
 
@@ -92,17 +92,19 @@ class DownloadCDSE(BaseDownload):
                 collection_sand, level
             )
             api_collection = self.api_collection[0]
+        else:
+            name_constraint = []
 
         # Format input time and geospatial constraints
         time = self._format_time(collection_sand, time)
-        if geo:
+        if isinstance(geo, Geo.Point|Geo.Polygon):
             geo.set_convention(0)
 
         # Assert that time has been provided
-        log.warning(
-            time is None and geo is None and name is None, 
-            "Using CDSE API without constraint is likely to raise maximum results exceed."
-        )
+        if time is None and geo is None and name is None:
+            log.warning(
+                "Using CDSE API without constraint is likely to raise maximum results exceed."
+            )
 
         # Define or complement constraint on naming
         if name:
@@ -137,7 +139,12 @@ class DownloadCDSE(BaseDownload):
         log.info(f"{len(out)} products has been found")
         return SandQuery(out)
 
-    def download(self, product: dict, dir: Path | str, if_exists: str = "skip") -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
         self._login()
 
         target = Path(dir) / product.product_id
@@ -149,7 +156,7 @@ class DownloadCDSE(BaseDownload):
         log.info(f"Product has been downloaded at : {target}")
         return target
 
-    def _download(self, target: Path, url: str, compression_ext: str = None) -> None:
+    def _download(self, target: Path, url: str, compression_ext: str|None = None) -> None:
         """
         Internal method to download a file from Copernicus Data Space.
         """
@@ -193,16 +200,16 @@ class DownloadCDSE(BaseDownload):
             dl_target.unlink()
 
     def download_file(
-        self, product_id: str, dir: Path | str, api_collection: str = None
+        self, product_id: str, dir: Path | str, api_collection: str|None = None
     ) -> Path:
         self._login()
 
         # Retrieve api collections based on SAND collections
-        if api_collection is None:
-            p = get_pattern(product_id)
-            collection_sand, level = p["Name"], get_level(product_id, p)
-            self._load_sand_collection_properties(collection_sand, level)
-        else:
+        p = get_pattern(product_id)
+        collection_sand, level = p["Name"], get_level(product_id, p)
+        self._load_sand_collection_properties(collection_sand, level)
+        
+        if api_collection:
             self.api_collection = api_collection
             self.name_contains = []
 
@@ -211,7 +218,11 @@ class DownloadCDSE(BaseDownload):
         assert len(ls) == 1, "Multiple products found"
         return self.download(ls[0], dir)
 
-    def quicklook(self, product: dict, dir: Path | str):
+    def quicklook(
+        self, 
+        product: SandProduct, 
+        dir: Path|str
+    ) -> Path:
         self._login()
 
         target = Path(dir) / (product.product_id + ".jpeg")
@@ -226,7 +237,10 @@ class DownloadCDSE(BaseDownload):
         log.info(f"Quicklook has been downloaded at : {target}")
         return target
 
-    def metadata(self, product):
+    def metadata(
+        self, 
+        product: SandProduct
+    ) -> dict:
         self._login()
 
         req = (
@@ -242,10 +256,10 @@ class DownloadCDSE(BaseDownload):
 @dataclass
 class _Request_params:
     collection: str
-    time: Time
-    geo: Geo
-    name: Name
-    cloudcover_thres: float
+    time: Time|None
+    geo: GeoType|None
+    name: Name|None
+    cloudcover_thres: int|None
 
 
 def _query_odata(params: _Request_params):
@@ -259,19 +273,19 @@ def _query_odata(params: _Request_params):
         query_lines.append(f"ContentDate/Start gt {params.time.start.isoformat()}Z")
     if params.time and params.time.end:
         query_lines.append(f"ContentDate/Start lt {params.time.end.isoformat()}Z")
-    if params.geo is not None:
+    if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
         query_lines.append(
             f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo.to_wkt()}')"
         )
 
-    if params.name.startswith != "":
+    if params.name and params.name.startswith != "":
         query_lines.append(f"startswith(Name, '{params.name.startswith}')")
 
-    if len(params.name.contains) != 0:
+    if params.name and len(params.name.contains) != 0:
         for cont in params.name.contains:
             query_lines.append(f"contains(Name, '{cont}')")
 
-    if params.name.endswith != "":
+    if params.name and params.name.endswith != "":
         query_lines.append(f"endswith(Name, '{params.name.endswith}')")
 
     if params.cloudcover_thres:
@@ -316,7 +330,7 @@ def _query_opensearch(params: _Request_params):
     if params.time and params.time.end:
         query_params["completionDate"] = params.time.end.isoformat()
 
-    if params.geo is not None:
+    if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
         query_params["geometry"] = params.geo.to_wkt()
 
     query += f"&{urlencode(query_params)}"

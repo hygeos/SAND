@@ -10,7 +10,7 @@ from core.table import read_xml
 from core.geo.product_name import get_pattern, get_level
 
 from sand.utils import write
-from sand.constraint import Time, Geo, Name
+from sand.constraint import Time, Geo, GeoType, Name
 from sand.base import BaseDownload, raise_api_error, RequestsError
 from sand.results import SandQuery, SandProduct
 
@@ -36,13 +36,13 @@ class DownloadNASA(BaseDownload):
     
     def query(
         self,
-        collection_sand: str = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
-        time: Time = None,
-        geo: Geo = None,
-        name: Name = None,
-        cloudcover_thres: Optional[int] = None,
-        api_collection: list[str] = None,
+        time: Time|None = None,
+        geo: GeoType|None = None,
+        name: Name|None = None,
+        cloudcover_thres: int|None = None,
+        api_collection: str|None = None
     ):
         self._login()
         
@@ -50,10 +50,13 @@ class DownloadNASA(BaseDownload):
         if api_collection is None:
             name_constraint = self._load_sand_collection_properties(collection_sand, level)
             api_collection = self.api_collection[0]
+        else:
+            name_constraint = []
             
         # Format input time and geospatial constraints
         time = self._format_time(collection_sand, time)
-        if geo: geo.set_convention(0)
+        if isinstance(geo, Geo.Point|Geo.Polygon):
+            geo.set_convention(0)
         
         # Define or complement constraint on naming
         if name:
@@ -66,9 +69,10 @@ class DownloadNASA(BaseDownload):
         headers = {'Accept': 'application/json'}
         
         # Configure scene constraints for request
-        if time:
+        if time and time.start:
             date_range = time.start.isoformat() + 'Z,'
-            date_range += time.end.isoformat() + 'Z'
+            if time.end:
+                date_range += time.end.isoformat() + 'Z'
             data['temporal'] = date_range
         
         if isinstance(geo, Geo.Point|Geo.Polygon):
@@ -111,7 +115,12 @@ class DownloadNASA(BaseDownload):
         log.info(f'{len(out)} products has been found')
         return SandQuery(out)
     
-    def download_file(self, product_id, dir, api_collection: list[str] = None):     
+    def download_file(
+        self, 
+        product_id: str, 
+        dir: Path | str, 
+        api_collection: str|None = None
+    ) -> Path:  
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -143,8 +152,12 @@ class DownloadNASA(BaseDownload):
         
         log.error(f'No file found with name {product_id}')
     
-    
-    def download(self, product: dict, dir: Path|str, if_exists='skip') -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
         self._login()
         
         links = product.metadata['links']
@@ -179,8 +192,11 @@ class DownloadNASA(BaseDownload):
         # Download file
         write(response, target)
     
-    
-    def quicklook(self, product: dict, dir: Path|str):
+    def quicklook(
+        self, 
+        product: SandProduct, 
+        dir: Path|str
+    ) -> Path:
         self._login()
         
         links = product.metadata['links']
@@ -207,7 +223,7 @@ class DownloadNASA(BaseDownload):
                 f.writelines(meta.split('\n'))
             return read_xml(Path(tmpdir)/'meta.xml')
     
-    def _get(self, liste, name):
+    def _get(self, liste, name) -> str:
         """
         Internal helper to find a value in a list of dictionaries by matching keys
         """

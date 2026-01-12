@@ -5,10 +5,13 @@ from dataclasses import dataclass, asdict
 
 @dataclass
 class SandProduct:
+    """
+    Result for a query using any SAND downloader.
+    """
     product_id: str
     date: str
     metadata: dict
-    index: str = None
+    index: str|None = None
     
     def to_dict(self):
         return asdict(self)

@@ -1,10 +1,11 @@
 from datetime import datetime, date, time
+from pandas import DataFrame
 from functools import reduce
 from typing import Literal
 from pathlib import Path
 
-from sand.constraint import Time, Geo, Name
-from sand.results import Collection, SandQuery
+from sand.constraint import Time, Name, GeoType
+from sand.results import Collection, SandQuery, SandProduct
 from sand.utils import end_of_day
 from core.table import read_csv
 from core import log
@@ -39,13 +40,13 @@ class BaseDownload:
 
     def query(
         self,
-        collection_sand: str|None = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
         time: Time|None = None,
-        geo: Geo|None = None,
+        geo: GeoType|None = None,
         name: Name|None = None,
         cloudcover_thres: int|None = None,
-        api_collection: list[str]|None = None
+        api_collection: str|None = None
     ) -> SandQuery:
         """
         Query products from the API server based on temporal and spatial constraints.
@@ -64,7 +65,12 @@ class BaseDownload:
         """
         raise NotImplemented
 
-    def download(self, product: dict, dir: Path|str, if_exists: str='skip') -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
         """
         Download a product from the API server.
 
@@ -77,7 +83,11 @@ class BaseDownload:
         """
         raise NotImplemented
 
-    def quicklook(self, product: dict, dir: Path|str) -> Path:
+    def quicklook(
+        self, 
+        product: SandProduct, 
+        dir: Path|str
+    ) -> Path:
         """
         Download a quicklook preview image for a product.
 
@@ -90,7 +100,10 @@ class BaseDownload:
         """
         raise NotImplemented
 
-    def metadata(self, product: dict) -> dict:
+    def metadata(
+        self, 
+        product: SandProduct
+    ) -> dict:
         """
         Retrieve detailed metadata for a product.
 
@@ -104,7 +117,12 @@ class BaseDownload:
         """
         raise NotImplemented
     
-    def download_file(self, product_id: str, dir: Path | str, api_collection: str|None = None) -> Path:
+    def download_file(
+        self, 
+        product_id: str, 
+        dir: Path | str, 
+        api_collection: str|None = None
+    ) -> Path:
         """
         Download a specific product from API server by its product identifier
         
@@ -121,8 +139,13 @@ class BaseDownload:
         raise NotImplemented
         
     # Visible functions already implemented    
-    def download_all(self, products, dir: Path|str, if_exists: str='skip', 
-                     parallelized: bool = False) -> list[Path]:
+    def download_all(
+        self, 
+        products, 
+        dir: Path|str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip",
+        parallelized: bool = False
+    ) -> list[Path]:
         """
         Download all products from API server resulting from a query.
 
@@ -156,7 +179,7 @@ class BaseDownload:
             out.append(self.download(products.iloc[i], dir, if_exists))
         return out 
     
-    def get_available_collection(self) -> dict:
+    def get_available_collection(self) -> DataFrame:
         """
         Return every downloadable collections for selected provider
         """
@@ -231,7 +254,7 @@ class BaseDownload:
     def _check_name(self, name, check_funcs) -> bool:
         return all(c[0](name, c[1]) for c in check_funcs)
     
-    def _format_time(self, collection: str, t: Time) -> Time:
+    def _format_time(self, collection: str, t: Time|None) -> Time|None:
         """
         Function to check and format main arguments of query method
 
@@ -264,7 +287,7 @@ class BaseDownload:
         if hasattr(self, 'session'):
             self.session.close()
 
-def raise_api_error(response: dict) -> int:
+def raise_api_error(response: requests.Response) -> int:
     """
     Check HTTP response status code and raise appropriate error if needed.
     

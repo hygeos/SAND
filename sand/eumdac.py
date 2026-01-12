@@ -6,7 +6,7 @@ from typing import Literal
 from tempfile import TemporaryDirectory
 from datetime import datetime
 
-from sand.constraint import Time, Geo, Name
+from sand.constraint import Time, Geo, GeoType, Name
 from sand.base import raise_api_error, RequestsError, BaseDownload
 from sand.results import SandQuery, SandProduct
 from sand.utils import write
@@ -50,13 +50,13 @@ class DownloadEumDAC(BaseDownload):
     
     def query(
         self,
-        collection_sand: str = None,
+        collection_sand: str,
         level: Literal[1,2,3] = 1,
-        time: Time = None,
-        geo: Geo = None,
-        name: Name = None,
-        cloudcover_thres: int = None,
-        api_collection: list[str] = None
+        time: Time|None = None,
+        geo: GeoType|None = None,
+        name: Name|None = None,
+        cloudcover_thres: int|None = None,
+        api_collection: str|None = None
     ):
         self._login()
         
@@ -64,6 +64,8 @@ class DownloadEumDAC(BaseDownload):
         if api_collection is None:
             name_constraint = self._load_sand_collection_properties(collection_sand, level)
             api_collection = self.api_collection[0]
+        else:
+            name_constraint = []
             
         time = self._format_time(collection_sand, time)
 
@@ -81,7 +83,7 @@ class DownloadEumDAC(BaseDownload):
             self.selected_collection = self.datastore.get_collection(collec)
             try:
                 prod = list(self.selected_collection.search(
-                    geo = geo.to_wkt() if geo else None,
+                    geo = geo.to_wkt() if isinstance(geo, Geo.Point|Geo.Polygon) else None,
                     dtstart = time.start if time else None,
                     dtend = time.end if time else None,
                     set='brief'
@@ -104,7 +106,12 @@ class DownloadEumDAC(BaseDownload):
         return SandQuery(out)
     
     
-    def download(self, product: str, dir: Path, if_exists='skip') -> Path:
+    def download(
+        self, 
+        product: SandProduct, 
+        dir: Path | str, 
+        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+    ) -> Path:
         self._login()
         
         data = self.datastore.get_product(
@@ -116,8 +123,13 @@ class DownloadEumDAC(BaseDownload):
         filegen(if_exists=if_exists)(self._download)(target, data, '.zip')
         log.info(f'Product has been downloaded at : {target}')
         return target
-    
-    def download_file(self, product_id: str, dir: Path | str, api_collection: str = None) -> Path:
+     
+    def download_file(
+        self, 
+        product_id: str, 
+        dir: Path | str, 
+        api_collection: str|None = None
+    ) -> Path:
         self._login()
         
         # Retrieve api collections based on SAND collections        
@@ -135,13 +147,15 @@ class DownloadEumDAC(BaseDownload):
             target = Path(dir)/prod._id
             filegen(if_exists='skip')(self._download)(target, prod, '.zip')
             log.info(f'Product has been downloaded at : {target}')
-            return target
+            break
+        
+        return target
     
     def _download(
         self, 
         target: Path, 
         data,
-        compression_ext: str = None
+        compression_ext: str|None = None
     ) -> None:
         """
         Internal method to download a file from EUMETSAT Data Store.
@@ -164,7 +178,7 @@ class DownloadEumDAC(BaseDownload):
             dl_target.unlink() 
     
     
-    def quicklook(self, product: dict, dir: Path|str) -> Path:
+    def quicklook(self, product: SandProduct, dir: Path|str) -> Path:
         self._login()
         
         quicklook_url = product.metadata.metadata['properties']['links'].get('previews')
@@ -199,7 +213,7 @@ class DownloadEumDAC(BaseDownload):
         return target
     
     
-    def metadata(self, product: dict) -> dict:
+    def metadata(self, product: SandProduct) -> dict:
         self._login()
         
         meta_url = product.metadata.metadata['properties']['links']['alternates']

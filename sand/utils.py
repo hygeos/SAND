@@ -87,7 +87,7 @@ def flip_coords(geo):
     Note:
         Useful for converting between (x,y) and (lat,lon) coordinate orders
     """
-    return transform(lambda x,y: (y,x), geo)
+    return transform(lambda x,y: (y,x), geom=geo)
 
 def write(response, filepath):
     log.debug('Start writing on device')

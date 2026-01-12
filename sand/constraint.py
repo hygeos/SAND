@@ -1,4 +1,4 @@
-from typing import Literal, List
+from typing import Literal, List, TypeAlias
 from datetime import datetime, date
 from shapely import to_wkt, Polygon
 from core import log
@@ -20,8 +20,8 @@ class Time:
     
     def __init__(
         self, 
-        start: datetime | date | str = None, 
-        end: datetime | date | str = None
+        start: datetime|date|str|None = None, 
+        end: datetime|date|str|None = None
     ):
         """
         Initialize a temporal constraint.
@@ -134,9 +134,11 @@ class Geo:
         
     class Tile:
         
-        def __init__(self, MGRS: str = None, venus: str = None):
+        def __init__(self, MGRS: str|None = None, venus: str|None = None):
             self.venus = venus
             self.MGRS = MGRS
+
+GeoType: TypeAlias = Geo.Point | Geo.Polygon | Geo.Tile
 
 class Name:
     
