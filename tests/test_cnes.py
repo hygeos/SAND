@@ -2,7 +2,7 @@ import pytest
 
 from tests.generic import *
 from sand.sample_product import products
-from sand.geodes import DownloadCNES
+from sand.cnes import DownloadCNES
 
 
 @pytest.fixture

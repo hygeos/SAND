@@ -47,4 +47,4 @@ def eval_download_file(downloader, product_id):
     with TemporaryDirectory() as tmpdir:
         quick = downloader.download_file(product_id, tmpdir)
         assert Path(quick).exists()
-        assert product_id in quick.name
+        assert quick.name.startswith(product_id)

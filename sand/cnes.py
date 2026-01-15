@@ -21,7 +21,7 @@ class DownloadCNES(BaseDownload):
     Python interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)
     """
     
-    provider = 'geodes'
+    provider = 'cnes'
     safe_product = ['S1A','S2A','S2B']
     
     def __init__(self):
@@ -52,7 +52,7 @@ class DownloadCNES(BaseDownload):
         # Retrieve api collections based on SAND collections
         if api_collection is None:
             name_constraint = self._load_sand_collection_properties(collection_sand, level)
-            api_collection = self.api_collection[0]
+            api_collection = self.api_collection
         else:
             name_constraint = []
             
@@ -67,7 +67,7 @@ class DownloadCNES(BaseDownload):
         
         server_url = "https://geodes-portal.cnes.fr/api/stac/search"
         data = {'page':1, 'limit':500}
-        query = {'dataset': {'in': self.api_collection}}
+        query = {'dataset': {'in': api_collection}}
         
         # Time constraint
         if time and time.start:
@@ -167,7 +167,8 @@ class DownloadCNES(BaseDownload):
     ) -> Path:
         self._login()
         
-        log.warning('no api collection is required with new GEODES API')
+        if api_collection:
+            log.warning('No api collection is required with new GEODES API')
             
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
@@ -201,8 +202,8 @@ class DownloadCNES(BaseDownload):
         self._login()
         
         links = product.metadata['assets']
-        search = [l for l in links if 'quicklook' in l]
-        log.check(len(search) == 1, "No download link for quicklook found")
+        search = [k for k,l in links.items() if 'quicklook' in l['href']]
+        log.check(len(search) > 0, "No download link for quicklook found")
         target = Path(dir)/search[0].split('/')[-1]
         url = links[search[0]]
 

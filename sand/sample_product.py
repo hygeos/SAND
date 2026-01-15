@@ -144,7 +144,8 @@ products['VENUS'] = {
         'time': Time('2018-01-01', '2018-06-01'),
         'geo': Geo.Tile(venus='NARYN'),
     },
-    'l1_product': 'VENUS-XS_20231003-110220-000_L1C_VILAINE_C_V3',
+    'l1_product': 'VENUS-XS_20240718-055823-000_L1C_BOMBETOK_D',
+    'l2_product': 'VENUS-XS_20240718-055823-000_L2A_BOMBETOK_D',
 }
 
 # SPOT-1 Product

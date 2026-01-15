@@ -1,6 +1,6 @@
 from numpy import unique, savetxt, concatenate
 from datetime import timedelta, datetime
-from sand.geodes import DownloadCNES
+from sand.cnes import DownloadCNES
 from core import log
 
 
