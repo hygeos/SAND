@@ -196,7 +196,7 @@ class DownloadCDSE(BaseDownload):
         # Uncompress archive
         if compression_ext:
             log.debug("Uncompress archive")
-            assert target == uncompress(dl_target, target.parent)
+            assert target == uncompress(dl_target, target.parent, extract_to='auto')
             dl_target.unlink()
 
     def download_file(

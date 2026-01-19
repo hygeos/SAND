@@ -28,7 +28,7 @@ class SandQuery:
     """
     
     def __init__(self, json_values: list[SandProduct]):
-        self.products = json_values
+        self.products = sorted(json_values, key=lambda p: p.index)
     
     def __repr__(self):
         # If no product returns empty pandas DataFrame

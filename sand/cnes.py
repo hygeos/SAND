@@ -156,7 +156,7 @@ class DownloadCNES(BaseDownload):
         # Uncompress archive
         if compression_ext:
             log.debug('Uncompress archive')
-            path = uncompress(dl_target, target.parent)
+            path = uncompress(dl_target, target.parent, extract_to='auto')
             log.check(_name_difference(target.name, path.name) < 2, 
             f'target ({target}) is different from uncompressed file ({path})')
             path.rename(target)
