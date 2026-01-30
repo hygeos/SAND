@@ -28,7 +28,7 @@ class DownloadCDSE(BaseDownload):
     provider = "cdse"
 
     def __init__(self):
-        self.api = "OData"
+        super().__init__()
 
     def _login(self):
         # Check if session is already set and set it up if not
@@ -58,21 +58,6 @@ class DownloadCDSE(BaseDownload):
                 f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
             )
         self.tokens = r.json()["access_token"]
-
-    def change_api(self, api_name: Literal["OData", "OpenSearch"]):
-        """
-        Change the backend API used for querying Copernicus Data Space.
-
-        The Copernicus Data Space provides two APIs:
-        - OData: Modern REST API with rich querying capabilities
-        - OpenSearch: Legacy API maintained for compatibility
-
-        Args:
-            api_name (Literal['OData', 'OpenSearch']): Name of the API to use
-        """
-        assert api_name in ["OData", "OpenSearch"]
-        log.debug(f"Move from {self.api} API to {api_name} API")
-        self.api = api_name
 
     def query(
         self,
@@ -113,16 +98,9 @@ class DownloadCDSE(BaseDownload):
             name = Name(contains=name_constraint)
 
         # Concatenate every information into a single object
-        log.debug(f"Query {self.api} API")
+        log.debug(f"Query OData API")
         params = _Request_params(api_collection, time, geo, name, cloudcover_thres)
-
-        # Query the server
-        if self.api == "OpenSearch":
-            response = _query_opensearch(params)
-        elif self.api == "OData":
-            response = _query_odata(params)
-        else:
-            log.error(f"Invalid API, got {self.api}", e=ValueError)
+        response = _query_odata(params)
 
         # Format list of product
         out = [
@@ -315,36 +293,36 @@ def _query_odata(params: _Request_params):
 
 
 # SHOULD BE DEPRECATED
-def _query_opensearch(params: _Request_params):
-    """Query the OpenSearch Finder API"""
+# def _query_opensearch(params: _Request_params):
+#     """Query the OpenSearch Finder API"""
 
-    def _get_next_page(links):
-        for link in links:
-            if link["rel"] == "next":
-                return link["href"]
-        return False
+#     def _get_next_page(links):
+#         for link in links:
+#             if link["rel"] == "next":
+#                 return link["href"]
+#         return False
 
-    query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{params.collection}/search.json?maxRecords=1000"""
+#     query = f"""https://catalogue.dataspace.copernicus.eu/resto/api/collections/{params.collection}/search.json?maxRecords=1000"""
 
-    query_params = {"status": "ALL"}
-    if params.time and params.time.start:
-        query_params["startDate"] = params.time.start.isoformat()
+#     query_params = {"status": "ALL"}
+#     if params.time and params.time.start:
+#         query_params["startDate"] = params.time.start.isoformat()
 
-    if params.time and params.time.end:
-        query_params["completionDate"] = params.time.end.isoformat()
+#     if params.time and params.time.end:
+#         query_params["completionDate"] = params.time.end.isoformat()
 
-    if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
-        query_params["geometry"] = params.geo.to_wkt()
+#     if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
+#         query_params["geometry"] = params.geo.to_wkt()
 
-    query += f"&{urlencode(query_params)}"
+#     query += f"&{urlencode(query_params)}"
 
-    query_response = []
-    while query:
-        response = requests.get(query, verify=True)
-        response.raise_for_status()
-        data = response.json()
-        for feature in data["features"]:
-            query_response.append(feature)
-        query = _get_next_page(data["properties"]["links"])
+#     query_response = []
+#     while query:
+#         response = requests.get(query, verify=True)
+#         response.raise_for_status()
+#         data = response.json()
+#         for feature in data["features"]:
+#             query_response.append(feature)
+#         query = _get_next_page(data["properties"]["links"])
 
-    return query_response
+#     return query_response

@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 from shapely.ops import transform
 from re import search, fullmatch
+# from hashlib import blake2b
 from pathlib import Path
 from numpy import log2
 from core import log
@@ -102,3 +103,17 @@ def get_compression_suffix(filename):
         return Path(filename).suffix
     else:
         return None
+
+def drop_extension(filename: str) -> str:
+    possible_extensions = ['.nc','.h5']
+    for ext in possible_extensions:
+        if filename.endswith(ext):
+            return filename[:-len(ext)]
+    return filename
+
+# def get_hash(query: dict) -> str:
+#     h = blake2b(digest_size=64)	    # hasher
+#     l = [f'{k}:{v}' for k,v in query.items()]
+#     s = ";".join(l)			        # concatenated inputs
+#     h.update(s).encode('utf-8')		# hash 
+#     return h.hexdigest()            # get digest
