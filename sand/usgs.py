@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Optional, Literal
-from shapely import Point, Polygon
-from datetime import datetime, date
+from typing import Literal
+from datetime import datetime
 from random import choice
 from string import ascii_lowercase
 
@@ -158,58 +157,77 @@ class DownloadUSGS(BaseDownload):
             self.api_collection = [api_collection]
             self.name_contains = []
         
-        # Retrieve entity_id based on display_id 
-        self.api_collection = self.api_collection[0]
-        entity_id = self._get_entity_id(product_id, self.api_collection)
-        
-        # Retrieve filter ID to use for this dataset
-        url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
-        params = {'datasetName': self.api_collection}
-        self.session.headers.update(self.API_key)
-        r = self.session.get(url_data, json=params)
-        raise_api_error(r)
-        
-        filterid = None
-        for dfilter in r.json()['data']:
-            if 'Scene Identifier' in dfilter['fieldLabel']:
-                filterid = dfilter['id']
-                break
-        
-        # Compose the query 
-        scene_filter = {
-            "metadataFilter": {
-                "filterType": "value",
-                "filterId": filterid,
-                "value": entity_id,
-                "operand": "like",
+        @filegen(if_exists='skip')
+        def _dl(target):
+            # Retrieve entity_id based on display_id 
+            self.api_collection = self.api_collection[0]
+            entity_id = self._get_entity_id(product_id, self.api_collection)
+            
+            # Retrieve filter ID to use for this dataset
+            url_data = 'https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters'
+            params = {'datasetName': self.api_collection}
+            self.session.headers.update(self.API_key)
+            r = self.session.get(url_data, json=params)
+            raise_api_error(r)
+            
+            filterid = None
+            for dfilter in r.json()['data']:
+                if 'Scene Identifier' in dfilter['fieldLabel']:
+                    filterid = dfilter['id']
+                    break
+            
+            # Compose the query 
+            scene_filter = {
+                "metadataFilter": {
+                    "filterType": "value",
+                    "filterId": filterid,
+                    "value": entity_id,
+                    "operand": "like",
+                }
             }
-        }
+            
+            params = {
+                "datasetName": self.api_collection,
+                "sceneFilter": scene_filter,
+                "maxResults": 10,
+                "metadataType": "full",
+            }
+            
+            # Request API for each dataset
+            url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
+            response = self.session.get(url, json=params)
+            raise_api_error(response)
+            r = response.json()
+            
+            if not r['data']['results']:
+                log.error(f'No product found in collection {self.api_collection} '
+                        f'for {product_id}')
+            
+            # Format product to use download function
+            product = r['data']['results'][0]
+            product = SandProduct(
+                product_id=product['displayId'], index=product['entityId'],
+                date=product['temporalCoverage']['startDate'], metadata=product
+            )
         
-        params = {
-            "datasetName": self.api_collection,
-            "sceneFilter": scene_filter,
-            "maxResults": 10,
-            "metadataType": "full",
-        }
+            # Find product in dataset
+            dl_opt = self._get_dl_options(product)
+            
+            # Find available acquisitions
+            for product in dl_opt.json()['data']:
+                
+                # Check if product is correct
+                if not self._check_product(product): 
+                    continue
+                
+                url, ext = self._get_dl_url(product)
+                self._download(target, url, ext)
+                return 
         
-        # Request API for each dataset
-        url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
-        response = self.session.get(url, json=params)
-        raise_api_error(response)
-        r = response.json()
-        
-        if not r['data']['results']:
-            log.error(f'No product found in collection {self.api_collection} '
-                      f'for {product_id}')
-        
-        # Format product to use download function
-        product = r['data']['results'][0]
-        product = SandProduct(
-            product_id=product['displayId'], index=product['entityId'],
-            date=product['temporalCoverage']['startDate'], metadata=product
-        )
-
-        return self.download(product, dir)
+        filename = Path(dir)/product_id
+        _dl(filename)
+        log.info(f'Product has been downloaded at : {filename}')
+        return filename
     
     def download(
         self, 
@@ -223,36 +241,24 @@ class DownloadUSGS(BaseDownload):
         target = Path(dir)/(product.product_id)    
         
         # Find product in dataset
-        url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
-        params = {'entityIds': product.index, "datasetName": self.api_collection}
-        self.session.headers.update(self.API_key)
-        dl_opt = self.session.get(url, json=params)
-        raise_api_error(dl_opt)
+        dl_opt = self._get_dl_options(product)
         
         # Find available acquisitions
-        for product in dl_opt.json()['data']:
-            if not product['available']: continue
+        for prod in dl_opt.json()['data']:
             
-            # Determine if file is compressed
-            ext = '.tar' if product['downloadSystem'] == 'ls_zip' else None   
-                       
-            # Find one available product     
-            url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-request"
-            label = datetime.now().strftime("%Y%m%d_%H%M%S") # Customized label using date time
-            downloads = [{'entityId':product['entityId'], 'productId':product['id']}]
-            params = {'label': label, 'downloads' : downloads}
-            dl = self.session.get(url, json=params)
-            dl = dl.json()['data']
+            # Check if product is correct
+            if not self._check_product(prod): 
+                continue
             
-            # Collect url for download
-            if dl['numInvalidScenes'] != 0: continue
-            url = dl['availableDownloads'][0]['url']
-            
+            url, ext = self._get_dl_url(prod)
             filegen(0, if_exists=if_exists)(self._download)(target, url, ext)
             log.info(f'Product has been downloaded at : {target}')
             return target
-            
-        log.error('No product immediately available')
+        
+        msg = 'No product immediately available.'
+        if len(dl_opt.json()['data']):
+            msg += ' Your product is likely to be archived.'
+        raise ReferenceError(msg)
     
     def _download(
         self,
@@ -379,3 +385,47 @@ class DownloadUSGS(BaseDownload):
                 self.session.get(url, json=params)
             except:
                 pass  # Ignore cleanup errors
+        
+        
+    def _check_product(self, product) -> bool:
+        # Check if product is available
+        available = product['available']
+        
+        # Check if product is a bundle 
+        is_bundle = 'Bundle' in product['productName'] 
+        is_bundle |= len(product['secondaryDownloads']) > 1      
+        
+        # Only download folder or compressed archive
+        is_folder = product['downloadSystem'] in ['ls_zip','folder']
+        
+        return is_folder & is_bundle & available 
+    
+    def _get_dl_options(self, product: SandProduct):
+        
+        # Find product in dataset
+        url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
+        params = {'entityIds': product.index, "datasetName": self.api_collection}
+        self.session.headers.update(self.API_key)
+        dl_opt = self.session.get(url, json=params)
+        raise_api_error(dl_opt)
+        return dl_opt        
+    
+    
+    def _get_dl_url(self, product) -> tuple[str]:
+        
+        # Determine if file is compressed
+        ext = '.tar' if product['downloadSystem'] == 'ls_zip' else None   
+                    
+        # Find one available product     
+        url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-request"
+        label = datetime.now().strftime("%Y%m%d_%H%M%S") # Customized label using date time
+        downloads = [{'entityId':product['entityId'], 'productId':product['id']}]
+        params = {'label': label, 'downloads' : downloads}
+        dl = self.session.get(url, json=params)
+        dl = dl.json()['data']
+        
+        # Collect url for download
+        if dl['numInvalidScenes'] != 0: return
+        url = dl['availableDownloads'][0]['url']
+        
+        return url, ext

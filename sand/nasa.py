@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Literal
 from tempfile import TemporaryDirectory
 from urllib.parse import urlencode
 from re import match
@@ -9,9 +9,9 @@ from core.files import filegen
 from core.table import read_xml
 from core.geo.product_name import get_pattern, get_level
 
-from sand.utils import write
+from sand.utils import write, drop_extension
 from sand.constraint import Time, Geo, GeoType, Name
-from sand.base import BaseDownload, raise_api_error, RequestsError
+from sand.base import BaseDownload, raise_api_error
 from sand.results import SandQuery, SandProduct
 
 # BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore
@@ -136,21 +136,27 @@ class DownloadNASA(BaseDownload):
         headers = {'Accept': 'application/json'}
         url = 'https://cmr.earthdata.nasa.gov/search/granules'
         
-        for collec in self.api_collection:   
-            data['collection_concept_id'] = collec
-            data['producer_granule_id'] = product_id
-            url_encode = url + '?' + urlencode(data)
-            response = self.session.post(url_encode, headers=headers, verify=True)
-            response = response.json()['feed']['entry']   
-            if len(response) == 0: continue          
-            
-            dl_url = response[0]['links'][0]['href']
-            target = Path(dir)/Path(dl_url).name
-            filegen(if_exists='skip')(self._download)(target, dl_url)
-            log.info(f'Product has been downloaded at : {target}')
-            return target
+        @filegen(if_exists='skip')
+        def _dl(target):
+            for collec in self.api_collection:   
+                data['collection_concept_id'] = collec
+                data['producer_granule_id'] = drop_extension(product_id)
+                url_encode = url + '?' + urlencode(data)
+                response = self.session.post(url_encode, headers=headers, verify=True)
+                response = response.json()['feed']['entry']   
+                if len(response) == 0: continue          
+                
+                dl_url = response[0]['links'][0]['href']
+                assert target.name == Path(dl_url).name
+                self._download(target, dl_url)
+                return
         
-        log.error(f'No file found with name {product_id}')
+            log.error(f'No file found with name {product_id}')
+    
+        filename = Path(dir)/product_id
+        _dl(filename)
+        log.info(f'Product has been downloaded at : {filename}')
+        return filename
     
     def download(
         self, 

@@ -98,8 +98,10 @@ class DownloadEumDAC(BaseDownload):
             log.warning("'cloudcover_thres' is not used with eumdac") 
         
         out = [
-            SandProduct(product_id=str(d), date=d.sensing_start.isoformat(), metadata=d)    
-            for d in product
+            SandProduct(
+                product_id=str(d), date=d.sensing_start.isoformat(), 
+                metadata=d, index=str(d)
+            ) for d in product
         ]
         
         log.info(f'{len(out)} products has been found')
@@ -141,15 +143,19 @@ class DownloadEumDAC(BaseDownload):
             self.api_collection = api_collection
             self.name_contains = []
         
-        for c in self.api_collection:
-            collec = self.datastore.get_collection(c)
-            prod = self.datastore.get_product(collec, product_id)
-            target = Path(dir)/prod._id
-            filegen(if_exists='skip')(self._download)(target, prod, '.zip')
-            log.info(f'Product has been downloaded at : {target}')
-            break
+        @filegen(if_exists='skip')
+        def _dl(target):
+            for c in self.api_collection:
+                collec = self.datastore.get_collection(c)
+                prod = self.datastore.get_product(collec, product_id)
+                assert target.name == prod._id
+                self._download(target, prod, '.zip')
+                return
         
-        return target
+        filename = Path(dir)/product_id
+        _dl(filename)
+        log.info(f'Product has been downloaded at : {filename}')
+        return filename
     
     def _download(
         self, 

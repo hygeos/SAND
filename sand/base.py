@@ -127,7 +127,7 @@ class BaseDownload:
         Download a specific product from API server by its product identifier
         
         Args:
-            product_id (str): The identifier of the product to download
+            product_id (str): The identifier of the product to download with its extension
                 (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
             dir (Path | str): Directory where to store the downloaded file
             api_collection (str, optional): Name of the API collection to query. 

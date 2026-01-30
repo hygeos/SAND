@@ -1,4 +1,3 @@
-from re import search
 from numpy import array
 from pathlib import Path
 from typing import Literal
@@ -114,8 +113,13 @@ class DownloadCNES(BaseDownload):
         dir: Path | str, 
         if_exists: Literal['skip','overwrite','backup','error'] = "skip"
     ) -> Path:
-        self._login()
-        
+        self._login()        
+        target, url, suffix = self._check_before_download(product, dir)
+        filegen(0, if_exists=if_exists)(self._download)(target, url, suffix)
+        log.info(f'Product has been downloaded at : {target}')
+        return target
+    
+    def _check_before_download(self, product, directory) -> list[str]:
         # Extract download url
         links = product.metadata['assets']
         find = [l for l in links if get_compression_suffix(l)]
@@ -125,14 +129,11 @@ class DownloadCNES(BaseDownload):
         suffix = get_compression_suffix(find[0])
         is_safe = any(product.product_id.startswith(p) for p in self.safe_product)
         if is_safe: 
-            target = (Path(dir)/find[0]).with_suffix('.SAFE')
+            target = (Path(directory)/find[0]).with_suffix('.SAFE')
         else:
-            target = (Path(dir)/find[0]).with_suffix('')
+            target = (Path(directory)/find[0]).with_suffix('')
         
-        dl_data = links[find[0]]
-        filegen(0, if_exists=if_exists)(self._download)(target, dl_data, suffix)
-        log.info(f'Product has been downloaded at : {target}')
-        return target
+        return target, links[find[0]], suffix
 
     def _download(
         self,
@@ -147,9 +148,15 @@ class DownloadCNES(BaseDownload):
         # Compression file path
         dl_target = Path(str(target)+compression_ext) if compression_ext else target
         
+        # Check if product is archived based on description
+        desc = self._parse_response_description(url['description'])
+        # if 'Is online' in desc:
+        #     assert desc['Is online'] == 'true', 'This product has been archived.'
+        
         # Download compressed file
         self.session.headers.update({"X-API-Key": self.tokens})
         response = self.session.get(url['href'], verify=True)
+        
         raise_api_error(response)
         write(response, dl_target)
             
@@ -172,27 +179,33 @@ class DownloadCNES(BaseDownload):
             
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
-        data = {'page':1, 'limit':1}
-        data['query'] = {'identifier': {'contains':product_id}}
-        self.session.headers.update({"X-API-Key": self.tokens})
-        self.session.headers.update({"Content-type": "application/json"})
+        data = {'page':1, 'limit':2}
+        data['query'] = {'identifier': {'contains':product_id.split('.')[0]}}
         
-        response = self.session.post(server_url, json=data, verify=False)
-        raise_api_error(response)        
-        r = response.json()['features']
-        log.check(len(r) > 0, f'No product named {product_id}')
-        
-        # Download the product
-        out =  [
-            SandProduct(
-                product_id=d["properties"]["identifier"], index=d["id"],
-                date=d['properties']['start_datetime'],
-                metadata=d
+        @filegen(if_exists='skip')
+        def _dl(target):
+            self.session.headers.update({"X-API-Key": self.tokens})
+            self.session.headers.update({"Content-type": "application/json"})
+            
+            response = self.session.post(server_url, json=data, verify=False)
+            raise_api_error(response)        
+            r = response.json()['features']
+            assert len(r) > 0, f'No product named {product_id}'
+            assert len(r) < 2, f'Multiple products found for {product_id}'
+            
+            # Download the product
+            prod = SandProduct(
+                product_id=r[0]["properties"]["identifier"], index=r[0]["id"],
+                date=r[0]['properties']['start_datetime'],
+                metadata=r[0]
             )
-            for d in r
-        ]
-        assert len(out) == 1
-        return self.download(out[0], dir, 'skip')
+            
+            filename, url, suffix = self._check_before_download(prod, dir)
+            assert target.name == filename.name
+            return self._download(target, url, suffix)
+        
+        _dl(Path(dir)/product_id)
+        return Path(dir)/product_id
 
     def quicklook(
         self, 
@@ -236,10 +249,16 @@ class DownloadCNES(BaseDownload):
         Internal helper to find a value in a list of dictionaries by matching keys
         """
         for col in liste:
-            if in_key not in col: continue
-            if name in col[in_key]:
+            if in_key in col and name in col[in_key]:
                 return col[out_key]
         log.error(f'{name} has not been found', e=KeyError)
+    
+    def _parse_response_description(self, description: str) -> dict:
+        outdict = dict()
+        for line in description.split('\n\n'):
+            key, value = line.split(':')
+            outdict[key.strip()] = value.strip()
+        return outdict
     
 def _name_difference(str1, str2) -> int:
     """

@@ -215,7 +215,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
       - pypi: https://files.pythonhosted.org/packages/98/78/01c019cdb5d6498122777c1a43056ebb3ebfeef2076d9d026bfe15583b2b/click-8.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/88/39/799be3f2f0f38cc727ee3b4f1445fe6d5e4133064ec2e4115069418a5bb6/cloudpickle-3.1.2-py3-none-any.whl
-      - pypi: git+https://github.com/hygeos/core.git#04deff6275d75503d891468518fca6814deeb89a
+      - pypi: git+https://github.com/hygeos/core.git#d66e60695ea116ce46dfc54bb4b370347336001a
       - pypi: https://files.pythonhosted.org/packages/e9/4b/9cc373120658a2516aa5f6dcdde631c95d714b876d29ad8f8e009d793f3f/dask-2026.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f2/50/19f18fb17dc7bad32070fbca54d40f6fe8e5711deb1c744c84ac9d13ec10/eumdac-3.1.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/01/c9/97cc5aae1648dcb851958a3ddf73ccd7dbe5650d95203ecb4d7720b4cdbf/fsspec-2026.1.0-py3-none-any.whl
@@ -491,7 +491,7 @@ packages:
   - pkg:pypi/contourpy?source=hash-mapping
   size: 295243
   timestamp: 1762525427240
-- pypi: git+https://github.com/hygeos/core.git#04deff6275d75503d891468518fca6814deeb89a
+- pypi: git+https://github.com/hygeos/core.git#d66e60695ea116ce46dfc54bb4b370347336001a
   name: core
   version: 1.2.1
   requires_dist:
@@ -914,7 +914,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/h2?source=compressed-mapping
+  - pkg:pypi/h2?source=hash-mapping
   size: 95967
   timestamp: 1756364871835
 - pypi: https://files.pythonhosted.org/packages/90/91/2b767766af8dc7bf7dec23994c147a98ee611f82f28f24ce0173a730f6f4/h5netcdf-1.8.0-py3-none-any.whl
@@ -2729,8 +2729,8 @@ packages:
   timestamp: 1766025162370
 - pypi: ./
   name: sand
-  version: 2.1.3
-  sha256: 5a97ea58f9e7c2c65f11ba8160c07b746f6be125626cc8fc37ffa9d8d82f3b14
+  version: 2.1.4
+  sha256: 8518f90855b993dba62887c42796f4ce292459accae594afd18067657ec8c9b0
   requires_dist:
   - numpy
   - requests

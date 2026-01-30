@@ -208,15 +208,23 @@ class DownloadCDSE(BaseDownload):
         p = get_pattern(product_id)
         collection_sand, level = p["Name"], get_level(product_id, p)
         self._load_sand_collection_properties(collection_sand, level)
+        name = Name(contains=[product_id])
         
         if api_collection:
             self.api_collection = api_collection
             self.name_contains = []
-
-        name = Name(contains=[product_id])
-        ls = self.query(collection_sand=collection_sand, level=level, name=name)
-        assert len(ls) == 1, "Multiple products found"
-        return self.download(ls[0], dir)
+        
+        @filegen(if_exists='skip')
+        def _dl(target):
+            ls = self.query(collection_sand=collection_sand, level=level, name=name)
+            assert len(ls) == 1, "Multiple products found"
+            assert ls[0].product_id in target.name
+            url = "https://catalogue.dataspace.copernicus.eu/odata/v1/"
+            url += f"Products({ls[0].index})/$value"
+            self._download(target, url, '.zip')
+        
+        _dl(Path(dir)/product_id)
+        return Path(dir)/product_id
 
     def quicklook(
         self, 
@@ -299,15 +307,10 @@ def _query_odata(params: _Request_params):
     response = requests.get(requote_uri(req), verify=True)
 
     raise_api_error(response)
-    if len(response.json()["value"]) == top:
-        raise NotImplementedError
-    log.check(
-        len(response.json()["value"]) < top,
-        "The number of matches has reached the API limit on the maximum "
-        "number of items returned. This may mean that some hits are missing. "
-        "Please refine your query.",
-        e=RequestsError,
-    )
+    if len(response.json()["value"]) >= top:
+        raise RequestsError("The number of matches has reached the API limit on"
+        " the maximum number of items returned. This may mean that some hits are"
+        " missing. Please refine your query.")
     return response.json()["value"]
 
 

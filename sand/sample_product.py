@@ -9,7 +9,7 @@ products['SENTINEL-1-SAR'] = {
         'time': Time('2025-01-01', '2025-02-01'),
         'geo': Geo.Point(lon=10, lat=12),
     },
-    'l1_product': 'S1A_IW_GRDH_1SDH_20250330T141400_20250330T141425_058535_073E3A_5675',
+    'l1_product': 'S1A_IW_GRDH_1SDH_20250330T141400_20250330T141425_058535_073E3A_5675.SAFE',
 }
 
 # SENTINEL-2 Product
@@ -18,7 +18,7 @@ products['SENTINEL-2-MSI'] = {
         'time': Time('2024-01-01', '2024-01-10'),
         'geo': Geo.Polygon(latmin=40, latmax=50, lonmin=5, lonmax=15),
     },
-    'l1_product': 'S2A_MSIL1C_20230617T130251_N0510_R095_T23KPQ_20240905T221745',
+    'l1_product': 'S2A_MSIL1C_20230617T130251_N0510_R095_T23KPQ_20240905T221745.SAFE',
 }
 
 # SENTINEL-3 OLCI-FR Product
@@ -127,7 +127,7 @@ products['ISS-ECOSTRESS'] = {
         'time': Time('2023-10-20', '2023-11-14'),
         'geo': Geo.Polygon(latmin=34.21, latmax=35.23, lonmin=239.70, lonmax=240.47),
     },
-    'l1_product': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01',
+    'l1_product': 'ECOv002_L1CG_RAD_30110_005_20231028T094350_0711_01.h5',
 }
 
 # EMIT Product
