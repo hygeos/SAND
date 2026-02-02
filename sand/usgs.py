@@ -425,7 +425,11 @@ class DownloadUSGS(BaseDownload):
         dl = dl.json()['data']
         
         # Collect url for download
-        if dl['numInvalidScenes'] != 0: return
-        url = dl['availableDownloads'][0]['url']
+        if dl['numInvalidScenes'] != 0: 
+            msg = ''
+            if 'failed' in dl:
+                msg = dl['failed'][0]['errorMessage']
+            raise ValueError(msg)
         
+        url = dl['availableDownloads'][0]['url']
         return url, ext

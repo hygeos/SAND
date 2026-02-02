@@ -286,7 +286,7 @@ products['LANDSAT-8-OLI'] = {
         'time': Time('2025-01-01', '2025-04-01'),
         'geo': Geo.Point(lat=8, lon=21),
     },
-    'l1_product': 'LC08_L1TP_092079_20260115_20260115_02_RT',
+    'l1_product': 'LC08_L1TP_005015_20260129_20260129_02_RT',
 }
 
 # LANDSAT-9-OLI Product

@@ -167,7 +167,7 @@ class BaseDownload:
             from multiprocessing import Pool
             from functools import partial
             
-            workers = min(1, len(products))
+            workers = min(self.nb_worker, len(products))
             process = partial(self.download, dir=dir, if_exists=if_exists)
             with Pool(workers) as pool:
                 tmp = pool.map(process, [p[1] for p in products.iterrows()])
