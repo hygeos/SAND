@@ -1,6 +1,7 @@
 import pandas as pd
 from core.ascii_table import ascii_table
 from dataclasses import dataclass, asdict
+from typing import Iterable
 
 
 @dataclass
@@ -16,7 +17,7 @@ class SandProduct:
     def to_dict(self):
         return asdict(self)
 
-class SandQuery:
+class SandQuery(Iterable):
     """
     Format a list of product dictionaries.
     
@@ -51,7 +52,12 @@ class SandQuery:
     def __len__(self):
         return len(self.products)
     
+    def __iter__(self):
+        return iter(self.products)
+    
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            return SandQuery(self.products[index])
         product = self.products[index]
         assert isinstance(product, SandProduct)
         return product
