@@ -175,8 +175,8 @@ class BaseDownload:
                 return tmp
             
         out = []
-        for i in range(len(products)): 
-            out.append(self.download(products.iloc[i], dir, if_exists))
+        for product in products: 
+            out.append(self.download(product, dir, if_exists))
         return out 
     
     def get_available_collection(self) -> DataFrame:
