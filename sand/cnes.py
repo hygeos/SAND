@@ -180,7 +180,7 @@ class DownloadCNES(BaseDownload):
         # Query and check if product exists
         server_url = f'https://geodes-portal.cnes.fr/api/stac/search'
         data = {'page':1, 'limit':2}
-        data['query'] = {'identifier': {'contains':product_id.split('.')[0]}}
+        data['query'] = {'identifier': {'contains': product_id.split('.')[0]}}
         
         @filegen(if_exists='skip')
         def _dl(target):
@@ -188,7 +188,7 @@ class DownloadCNES(BaseDownload):
             self.session.headers.update({"Content-type": "application/json"})
             
             response = self.session.post(server_url, json=data, verify=False)
-            raise_api_error(response)        
+            raise_api_error(response)
             r = response.json()['features']
             assert len(r) > 0, f'No product named {product_id}'
             assert len(r) < 2, f'Multiple products found for {product_id}'

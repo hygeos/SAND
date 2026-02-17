@@ -189,7 +189,7 @@ class DownloadCDSE(BaseDownload):
         name = Name(contains=[product_id])
         
         if api_collection:
-            self.api_collection = api_collection
+            self.api_collection = [api_collection]
             self.name_contains = []
         
         @filegen(if_exists='skip')

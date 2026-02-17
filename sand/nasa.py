@@ -129,7 +129,7 @@ class DownloadNASA(BaseDownload):
             collection_sand, level = p['Name'], get_level(product_id, p)
             self._load_sand_collection_properties(collection_sand, level)
         else:
-            self.api_collection = api_collection
+            self.api_collection = [api_collection]
             self.name_contains = []
         
         data = {'page_size': 5}
