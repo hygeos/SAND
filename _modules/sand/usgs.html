@@ -1,0 +1,556 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sand.usgs &mdash; sand 2.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=adc66a14"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sand
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sand.html">sand package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sand.usgs</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sand.usgs</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">random</span><span class="w"> </span><span class="kn">import</span> <span class="n">choice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">string</span><span class="w"> </span><span class="kn">import</span> <span class="n">ascii_lowercase</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.network.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_auth</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.files</span><span class="w"> </span><span class="kn">import</span> <span class="n">filegen</span><span class="p">,</span> <span class="n">uncompress</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.geo.product_name</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_pattern</span><span class="p">,</span> <span class="n">get_level</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.constraint</span><span class="w"> </span><span class="kn">import</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Geo</span><span class="p">,</span> <span class="n">GeoType</span><span class="p">,</span> <span class="n">Name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">raise_api_error</span><span class="p">,</span> <span class="n">BaseDownload</span><span class="p">,</span> <span class="n">check_too_many_matches</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">SandQuery</span><span class="p">,</span> <span class="n">SandProduct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">write</span>
+
+<span class="c1"># BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore</span>
+
+<span class="c1"># M2M API endpoints : https://m2m.cr.usgs.gov/api/docs/reference/#download-search</span>
+<div class="viewcode-block" id="DownloadUSGS">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DownloadUSGS</span><span class="p">(</span><span class="n">BaseDownload</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Python interface to the USGS API (https://data.usgs.gov/)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provider</span> <span class="o">=</span> <span class="s1">&#39;usgs&#39;</span>
+        
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_login</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="c1"># Check if session is already set and set it up if not </span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;session&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_session</span><span class="p">()</span>
+            
+        <span class="n">auth</span> <span class="o">=</span> <span class="n">get_auth</span><span class="p">(</span><span class="s2">&quot;usgs.gov&quot;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;username&quot;</span><span class="p">:</span> <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">],</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">auth</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">],</span>
+            <span class="p">}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/login-token&quot;</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;errorCode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">API_key</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;X-Auth-Token&#39;</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Keycloak token creation failed. Reponse from the server was: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Log to API (https://m2m.cr.usgs.gov/)&#39;</span><span class="p">)</span>
+        
+
+<div class="viewcode-block" id="DownloadUSGS.query">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS.query">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">collection_sand</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Time</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">geo</span><span class="p">:</span> <span class="n">GeoType</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Name</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cloudcover_thres</span><span class="p">:</span> <span class="nb">int</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SandQuery</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="c1"># Retrieve api collections based on SAND collections</span>
+        <span class="k">if</span> <span class="n">api_collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name_constraint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_sand_collection_properties</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+            <span class="n">api_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name_constraint</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Format input time and geospatial constraints</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_time</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">time</span> <span class="ow">or</span> <span class="n">Time</span><span class="p">())</span>
+        
+        <span class="c1"># Define or complement constraint on naming</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span><span class="o">.</span><span class="n">add_contains</span><span class="p">(</span><span class="n">name_constraint</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">Name</span><span class="p">(</span><span class="n">contains</span><span class="o">=</span><span class="n">name_constraint</span><span class="p">)</span>
+        
+        <span class="c1"># Configure scene constraints for request        </span>
+        <span class="n">spatial_filter</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;filterType&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mbr&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">Geo</span><span class="o">.</span><span class="n">Point</span><span class="o">|</span><span class="n">Geo</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">geo</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;lowerLeft&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> 
+                                            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span>
+            <span class="n">spatial_filter</span><span class="p">[</span><span class="s2">&quot;upperRight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;latitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> 
+                                            <span class="s2">&quot;longitude&quot;</span><span class="p">:</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]}</span>
+        
+        <span class="n">acquisition_filter</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">time</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">start</span><span class="p">:</span>
+                <span class="n">acquisition_filter</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+                <span class="n">acquisition_filter</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+
+        <span class="n">cloud_cover_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;min&quot;</span> <span class="p">:</span> <span class="n">cloudcover_thres</span><span class="p">,</span>
+                              <span class="s2">&quot;max&quot;</span> <span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+                              <span class="s2">&quot;includeUnknown&quot;</span> <span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+
+        <span class="n">scene_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;acquisitionFilter&quot;</span><span class="p">:</span> <span class="n">acquisition_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;spatialFilter&quot;</span>    <span class="p">:</span> <span class="n">spatial_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;cloudCoverFilter&quot;</span> <span class="p">:</span> <span class="n">cloud_cover_filter</span><span class="p">,</span>
+                        <span class="s2">&quot;metadataFilter&quot;</span>   <span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="s2">&quot;seasonalFilter&quot;</span>   <span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="n">api_collection</span><span class="p">,</span>
+            <span class="s2">&quot;sceneFilter&quot;</span><span class="p">:</span> <span class="n">scene_filter</span><span class="p">,</span>
+            <span class="s2">&quot;maxResults&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span>
+            <span class="s2">&quot;metadataType&quot;</span><span class="p">:</span> <span class="s2">&quot;full&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># Request API for each dataset</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-search&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">check_too_many_matches</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">(),</span> <span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span><span class="s1">&#39;recordsReturned&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span><span class="s1">&#39;totalHits&#39;</span><span class="p">])</span>
+        <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">&#39;errorMessage&#39;</span><span class="p">],</span> <span class="n">e</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;results&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Filter products</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">r</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;displayId&#39;</span><span class="p">])]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span> <span class="o">=</span> <span class="n">api_collection</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">SandProduct</span><span class="p">(</span>
+                <span class="n">product_id</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;displayId&quot;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;entityId&quot;</span><span class="p">],</span>
+                <span class="n">date</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;temporalCoverage&#39;</span><span class="p">][</span><span class="s1">&#39;startDate&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">d</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span>
+        <span class="p">]</span>
+        
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s1"> products has been found&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SandQuery</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="DownloadUSGS.download_file">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS.download_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="c1"># Retrieve api collections based on SAND collections        </span>
+        <span class="k">if</span> <span class="n">api_collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">get_pattern</span><span class="p">(</span><span class="n">product_id</span><span class="p">)</span>
+            <span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span> <span class="n">get_level</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_sand_collection_properties</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span> <span class="o">=</span> <span class="p">[</span><span class="n">api_collection</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_contains</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="nd">@filegen</span><span class="p">(</span><span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;skip&#39;</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_dl</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="c1"># Retrieve entity_id based on display_id </span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">entity_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_id</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">)</span>
+            
+            <span class="c1"># Retrieve filter ID to use for this dataset</span>
+            <span class="n">url_data</span> <span class="o">=</span> <span class="s1">&#39;https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters&#39;</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;datasetName&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url_data</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">raise_api_error</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+            
+            <span class="n">filterid</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">dfilter</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="s1">&#39;Scene Identifier&#39;</span> <span class="ow">in</span> <span class="n">dfilter</span><span class="p">[</span><span class="s1">&#39;fieldLabel&#39;</span><span class="p">]:</span>
+                    <span class="n">filterid</span> <span class="o">=</span> <span class="n">dfilter</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+                    <span class="k">break</span>
+            
+            <span class="c1"># Compose the query </span>
+            <span class="n">scene_filter</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;metadataFilter&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;filterType&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;filterId&quot;</span><span class="p">:</span> <span class="n">filterid</span><span class="p">,</span>
+                    <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">entity_id</span><span class="p">,</span>
+                    <span class="s2">&quot;operand&quot;</span><span class="p">:</span> <span class="s2">&quot;like&quot;</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">,</span>
+                <span class="s2">&quot;sceneFilter&quot;</span><span class="p">:</span> <span class="n">scene_filter</span><span class="p">,</span>
+                <span class="s2">&quot;maxResults&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+                <span class="s2">&quot;metadataType&quot;</span><span class="p">:</span> <span class="s2">&quot;full&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+            
+            <span class="c1"># Request API for each dataset</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-search&quot;</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;results&#39;</span><span class="p">]:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No product found in collection </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="si">}</span><span class="s1"> &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;for </span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            
+            <span class="c1"># Format product to use download function</span>
+            <span class="n">product</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;results&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">product</span> <span class="o">=</span> <span class="n">SandProduct</span><span class="p">(</span>
+                <span class="n">product_id</span><span class="o">=</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;displayId&#39;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;entityId&#39;</span><span class="p">],</span>
+                <span class="n">date</span><span class="o">=</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;temporalCoverage&#39;</span><span class="p">][</span><span class="s1">&#39;startDate&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">product</span>
+            <span class="p">)</span>
+        
+            <span class="c1"># Find product in dataset</span>
+            <span class="n">dl_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dl_options</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+            
+            <span class="c1"># Find available acquisitions</span>
+            <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">dl_opt</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+                
+                <span class="c1"># Check if product is correct</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_product</span><span class="p">(</span><span class="n">product</span><span class="p">):</span> 
+                    <span class="k">continue</span>
+                
+                <span class="n">url</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dl_url</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+                <span class="k">return</span> 
+        
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="n">product_id</span>
+        <span class="n">_dl</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Product has been downloaded at : </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filename</span></div>
+
+    
+<div class="viewcode-block" id="DownloadUSGS.download">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span><span class="s1">&#39;backup&#39;</span><span class="p">,</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skip&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">product</span><span class="o">.</span><span class="n">product_id</span><span class="p">)</span>    
+        
+        <span class="c1"># Find product in dataset</span>
+        <span class="n">dl_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dl_options</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+        
+        <span class="c1"># Find available acquisitions</span>
+        <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="n">dl_opt</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+            
+            <span class="c1"># Check if product is correct</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_product</span><span class="p">(</span><span class="n">prod</span><span class="p">):</span> 
+                <span class="k">continue</span>
+            
+            <span class="n">url</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dl_url</span><span class="p">(</span><span class="n">prod</span><span class="p">)</span>
+            <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Product has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">target</span>
+        
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;No product immediately available.&#39;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dl_opt</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]):</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="s1">&#39; Your product is likely to be archived.&#39;</span>
+        <span class="k">raise</span> <span class="ne">ReferenceError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">compression_ext</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internal method to handle the actual download of files from USGS servers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Compression file path</span>
+        <span class="n">dl_target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">with_suffix</span><span class="p">(</span><span class="n">compression_ext</span><span class="p">)</span> <span class="k">if</span> <span class="n">compression_ext</span> <span class="k">else</span> <span class="n">target</span>
+        
+        <span class="c1"># Initialize session for download</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+
+        <span class="c1"># Try to request server</span>
+        <span class="n">niter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Requesting server for </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span> <span class="ow">and</span> <span class="n">niter</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;Location&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;status code : [</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">)</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Location&#39;</span><span class="p">]</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">niter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Download file</span>
+        <span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">dl_target</span><span class="p">)</span>
+            
+        <span class="c1"># Uncompress archive</span>
+        <span class="k">if</span> <span class="n">compression_ext</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Uncompress archive&#39;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">target</span> <span class="o">==</span> <span class="n">uncompress</span><span class="p">(</span><span class="n">dl_target</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">extract_to</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+            <span class="n">dl_target</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span> 
+    
+    
+<div class="viewcode-block" id="DownloadUSGS.quicklook">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS.quicklook">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quicklook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">product</span><span class="o">.</span><span class="n">product_id</span> <span class="o">+</span> <span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">assets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">product</span><span class="p">)[</span><span class="s1">&#39;Landsat Product Identifier L1&#39;</span><span class="p">]</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">assets</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Skipping quicklook </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">FileNotFoundError</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">product</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;browse&#39;</span><span class="p">]:</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">b</span><span class="p">[</span><span class="s1">&#39;browsePath&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="s1">&#39;type=refl&#39;</span> <span class="ow">in</span> <span class="n">url</span><span class="p">:</span>
+                    <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Quicklook has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">target</span>    </div>
+
+    
+    
+<div class="viewcode-block" id="DownloadUSGS.metadata">
+<a class="viewcode-back" href="../../sand.usgs.html#sand.usgs.DownloadUSGS.metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">meta</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">product</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;metadata&#39;</span><span class="p">]:</span> 
+            <span class="n">meta</span><span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;fieldName&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">meta</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">display_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert display ID (Product ID) to entity ID (Scene ID)</span>
+<span class="sd">        </span>
+<span class="sd">        Example: &#39;LT05_L1TP_114066_20030721_20200904_02_T1&#39; → &#39;LT51140662003202ASA01&#39;</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            display_id (str): Product ID (display ID) like &#39;LT05_L1TP_114066_20030721_20200904_02_T1&#39;</span>
+<span class="sd">            dataset (str, optional): Dataset name. If None, will auto-detect from display_id</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Entity ID (Scene ID) like &#39;LT51140662003202ASA01&#39;</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: If conversion fails or product not found</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="c1"># Use scene-list-add and scene-list-get to convert display ID to entity ID</span>
+        <span class="c1"># This is the recommended approach since the lookup endpoint was deprecated</span>
+        
+        <span class="n">list_id</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">choice</span><span class="p">(</span><span class="n">ascii_lowercase</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Add the display ID to a temporary scene list</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-add&quot;</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;listId&quot;</span><span class="p">:</span> <span class="n">list_id</span><span class="p">,</span>
+                <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">,</span>
+                <span class="s2">&quot;idField&quot;</span><span class="p">:</span> <span class="s2">&quot;displayId&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;entityId&quot;</span><span class="p">:</span> <span class="n">display_id</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            
+            <span class="c1"># Get the scene list to retrieve entity ID</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-get&quot;</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;listId&quot;</span><span class="p">:</span> <span class="n">list_id</span><span class="p">}</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            
+            <span class="n">scenes</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">scenes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No entity ID found for display ID: </span><span class="si">{</span><span class="n">display_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="n">entity_id</span> <span class="o">=</span> <span class="n">scenes</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;entityId&#39;</span><span class="p">]</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Converted </span><span class="si">{</span><span class="n">display_id</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">entity_id</span>
+            
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Always clean up the temporary scene list</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-remove&quot;</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;listId&quot;</span><span class="p">:</span> <span class="n">list_id</span><span class="p">}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># Ignore cleanup errors</span>
+        
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Check if product is available</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;available&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Check if product is a bundle </span>
+        <span class="n">is_bundle</span> <span class="o">=</span> <span class="s1">&#39;Bundle&#39;</span> <span class="ow">in</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;productName&#39;</span><span class="p">]</span> 
+        <span class="n">is_bundle</span> <span class="o">|=</span> <span class="nb">len</span><span class="p">(</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;secondaryDownloads&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span>      
+        
+        <span class="c1"># Only download folder or compressed archive</span>
+        <span class="n">is_folder</span> <span class="o">=</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;downloadSystem&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ls_zip&#39;</span><span class="p">,</span><span class="s1">&#39;folder&#39;</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">is_folder</span> <span class="o">&amp;</span> <span class="n">is_bundle</span> <span class="o">&amp;</span> <span class="n">available</span> 
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_dl_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">):</span>
+        
+        <span class="c1"># Find product in dataset</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/download-options&quot;</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;entityIds&#39;</span><span class="p">:</span> <span class="n">product</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;datasetName&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">API_key</span><span class="p">)</span>
+        <span class="n">dl_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">raise_api_error</span><span class="p">(</span><span class="n">dl_opt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dl_opt</span>        
+    
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_dl_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        
+        <span class="c1"># Determine if file is compressed</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="s1">&#39;.tar&#39;</span> <span class="k">if</span> <span class="n">product</span><span class="p">[</span><span class="s1">&#39;downloadSystem&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ls_zip&#39;</span> <span class="k">else</span> <span class="kc">None</span>   
+                    
+        <span class="c1"># Find one available product     </span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://m2m.cr.usgs.gov/api/api/json/stable/download-request&quot;</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span> <span class="c1"># Customized label using date time</span>
+        <span class="n">downloads</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;entityId&#39;</span><span class="p">:</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;entityId&#39;</span><span class="p">],</span> <span class="s1">&#39;productId&#39;</span><span class="p">:</span><span class="n">product</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]}]</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span> <span class="s1">&#39;downloads&#39;</span> <span class="p">:</span> <span class="n">downloads</span><span class="p">}</span>
+        <span class="n">dl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">dl</span> <span class="o">=</span> <span class="n">dl</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        
+        <span class="c1"># Collect url for download</span>
+        <span class="k">if</span> <span class="n">dl</span><span class="p">[</span><span class="s1">&#39;numInvalidScenes&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span> 
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="s1">&#39;failed&#39;</span> <span class="ow">in</span> <span class="n">dl</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="n">dl</span><span class="p">[</span><span class="s1">&#39;failed&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;errorMessage&#39;</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        
+        <span class="n">url</span> <span class="o">=</span> <span class="n">dl</span><span class="p">[</span><span class="s1">&#39;availableDownloads&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;url&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">ext</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

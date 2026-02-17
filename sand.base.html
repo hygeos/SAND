@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sand.base &mdash; sand 2.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=adc66a14"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sand.copernicus_dataspace" href="sand.copernicus_dataspace.html" />
+    <link rel="prev" title="sand package" href="sand.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            sand
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="sand.html">sand package</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">sand.base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sand.base.BaseDownload"><code class="docutils literal notranslate"><span class="pre">BaseDownload</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.session"><code class="docutils literal notranslate"><span class="pre">BaseDownload.session</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.ssl_ctx"><code class="docutils literal notranslate"><span class="pre">BaseDownload.ssl_ctx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.available_collection"><code class="docutils literal notranslate"><span class="pre">BaseDownload.available_collection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.api_collection"><code class="docutils literal notranslate"><span class="pre">BaseDownload.api_collection</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.name_contains"><code class="docutils literal notranslate"><span class="pre">BaseDownload.name_contains</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.download"><code class="docutils literal notranslate"><span class="pre">BaseDownload.download()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.download_all"><code class="docutils literal notranslate"><span class="pre">BaseDownload.download_all()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.download_file"><code class="docutils literal notranslate"><span class="pre">BaseDownload.download_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.get_available_collection"><code class="docutils literal notranslate"><span class="pre">BaseDownload.get_available_collection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.metadata"><code class="docutils literal notranslate"><span class="pre">BaseDownload.metadata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.query"><code class="docutils literal notranslate"><span class="pre">BaseDownload.query()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sand.base.BaseDownload.quicklook"><code class="docutils literal notranslate"><span class="pre">BaseDownload.quicklook()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#sand.base.RequestsError"><code class="docutils literal notranslate"><span class="pre">RequestsError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sand.base.check_too_many_matches"><code class="docutils literal notranslate"><span class="pre">check_too_many_matches()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sand.base.get_ssl_context"><code class="docutils literal notranslate"><span class="pre">get_ssl_context()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sand.base.raise_api_error"><code class="docutils literal notranslate"><span class="pre">raise_api_error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sand.copernicus_dataspace.html">sand.copernicus_dataspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.eumdac.html">sand.eumdac</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.geodes.html">sand.geodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.nasa.html">sand.nasa</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.results.html">sand.results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.sample_product.html">sand.sample_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.tinyfunc.html">sand.tinyfunc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sand.usgs.html">sand.usgs</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">sand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="sand.html">sand package</a></li>
+      <li class="breadcrumb-item active">sand.base</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/sand.base.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-sand.base">
+<span id="sand-base"></span><h1>sand.base<a class="headerlink" href="#module-sand.base" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sand.base.BaseDownload">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sand.base.</span></span><span class="sig-name descname"><span class="pre">BaseDownload</span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for satellite data providers API access and download functionality.</p>
+<p>This class provides a common interface for interacting with different satellite data
+providers. It handles authentication, querying products, downloading data and metadata
+retrieval. Child classes must implement the abstract methods for specific provider APIs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.session">
+<span class="sig-name descname"><span class="pre">session</span></span><a class="headerlink" href="#sand.base.BaseDownload.session" title="Link to this definition"></a></dt>
+<dd><p>HTTP session for making API requests</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>requests.Session</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.ssl_ctx">
+<span class="sig-name descname"><span class="pre">ssl_ctx</span></span><a class="headerlink" href="#sand.base.BaseDownload.ssl_ctx" title="Link to this definition"></a></dt>
+<dd><p>SSL context for secure connections</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ssl.SSLContext</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.available_collection">
+<span class="sig-name descname"><span class="pre">available_collection</span></span><a class="headerlink" href="#sand.base.BaseDownload.available_collection" title="Link to this definition"></a></dt>
+<dd><p>List of available collections from the provider</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.api_collection">
+<span class="sig-name descname"><span class="pre">api_collection</span></span><a class="headerlink" href="#sand.base.BaseDownload.api_collection" title="Link to this definition"></a></dt>
+<dd><p>Name of the collection in provider’s API format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.name_contains">
+<span class="sig-name descname"><span class="pre">name_contains</span></span><a class="headerlink" href="#sand.base.BaseDownload.name_contains" title="Link to this definition"></a></dt>
+<dd><p>List of naming constraints for products</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.download">
+<span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="sand.results.html#sand.results.SandProduct" title="sand.results.SandProduct"><span class="pre">SandProduct</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'skip'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.download" title="Link to this definition"></a></dt>
+<dd><p>Download a product from the API server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product</strong> (<em>dict</em>) – Product metadata obtained from query results</p></li>
+<li><p><strong>dir</strong> (<em>Path</em><em>|</em><em>str</em>) – Directory where to save the downloaded product</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the downloaded product file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.download_all">
+<span class="sig-name descname"><span class="pre">download_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">products</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">if_exists</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'skip'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'overwrite'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'backup'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'error'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'skip'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallelized</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.download_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.download_all" title="Link to this definition"></a></dt>
+<dd><p>Download all products from API server resulting from a query.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>products</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – List of product metadata from query results</p></li>
+<li><p><strong>dir</strong> (<em>Path</em><em>|</em><em>str</em>) – Directory where to save downloaded products</p></li>
+<li><p><strong>if_exists</strong> (<em>str</em><em>, </em><em>optional</em>) – Action to take if product exists:
+- ‘skip’: Skip download if file exists (default)
+- ‘overwrite’: Replace existing file
+- ‘raise’: Raise an error if file exists</p></li>
+<li><p><strong>parallelized</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, downloads products in parallel
+using multiple threads. Default is False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of paths to downloaded product files</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[Path]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.download_file">
+<span class="sig-name descname"><span class="pre">download_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_collection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.download_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.download_file" title="Link to this definition"></a></dt>
+<dd><p>Download a specific product from API server by its product identifier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product_id</strong> (<em>str</em>) – The identifier of the product to download with its extension
+(ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)</p></li>
+<li><p><strong>dir</strong> (<em>Path</em><em> | </em><em>str</em>) – Directory where to store the downloaded file</p></li>
+<li><p><strong>api_collection</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the API collection to query.
+If None, will determine from product_id pattern.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the downloaded file</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.get_available_collection">
+<span class="sig-name descname"><span class="pre">get_available_collection</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.get_available_collection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.get_available_collection" title="Link to this definition"></a></dt>
+<dd><p>Return every downloadable collections for selected provider</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="sand.results.html#sand.results.SandProduct" title="sand.results.SandProduct"><span class="pre">SandProduct</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.metadata" title="Link to this definition"></a></dt>
+<dd><p>Retrieve detailed metadata for a product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>product</strong> (<em>dict</em>) – Basic product metadata obtained from query results</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Detailed product metadata including:</dt><dd><ul class="simple">
+<li><p>attributes: Product attributes (e.g., cloud cover, quality flags)</p></li>
+<li><p>assets: Available product assets (e.g., bands, ancillary data)</p></li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.query">
+<span class="sig-name descname"><span class="pre">query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">collection_sand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">2</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Time</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Point</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Polygon</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Tile</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Name</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cloudcover_thres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_collection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="sand.results.html#sand.results.SandQuery" title="sand.results.SandQuery"><span class="pre">SandQuery</span></a></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.query" title="Link to this definition"></a></dt>
+<dd><p>Query products from the API server based on temporal and spatial constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>collection_sand</strong> (<em>str</em>) – SAND collection name (‘SENTINEL-2-MSI’, ‘SENTINEL-3-OLCI’, etc.)</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Processing level (1, 2, or 3)</p></li>
+<li><p><strong>time</strong> (<em>Time</em><em>, </em><em>optional</em>) – Time constraint.</p></li>
+<li><p><strong>geo</strong> (<em>Geo</em><em>, </em><em>optional</em>) – Spatial constraint.</p></li>
+<li><p><strong>name</strong> (<em>Name</em><em>, </em><em>optional</em>) – Constraints over product name.</p></li>
+<li><p><strong>cloudcover_thres</strong> (<em>int</em>) – Upper bound for cloud cover in percentage,</p></li>
+<li><p><strong>api_collection</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Name of deserved collection in API standard</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Query results containing matching products</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="sand.results.html#sand.results.SandQuery" title="sand.results.SandQuery">SandQuery</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sand.base.BaseDownload.quicklook">
+<span class="sig-name descname"><span class="pre">quicklook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="sand.results.html#sand.results.SandProduct" title="sand.results.SandProduct"><span class="pre">SandProduct</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="_modules/sand/base.html#BaseDownload.quicklook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.BaseDownload.quicklook" title="Link to this definition"></a></dt>
+<dd><p>Download a quicklook preview image for a product.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>product</strong> (<em>dict</em>) – Product metadata obtained from query results</p></li>
+<li><p><strong>dir</strong> (<em>Path</em><em>|</em><em>str</em>) – Directory where to save the quicklook image</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path to the downloaded quicklook image</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Path</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="sand.base.RequestsError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">sand.base.</span></span><span class="sig-name descname"><span class="pre">RequestsError</span></span><a class="reference internal" href="_modules/sand/base.html#RequestsError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.RequestsError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sand.base.check_too_many_matches">
+<span class="sig-prename descclassname"><span class="pre">sand.base.</span></span><span class="sig-name descname"><span class="pre">check_too_many_matches</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returned_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hit_tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/sand/base.html#check_too_many_matches"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.check_too_many_matches" title="Link to this definition"></a></dt>
+<dd><p>Check if an API query returned more matches than it can return in one response.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>response</strong> (<em>dict</em>) – API response containing result counts</p></li>
+<li><p><strong>returned_tag</strong> (<em>str</em><em>|</em><em>list</em><em>[</em><em>str</em><em>]</em>) – Path to the number of returned results in response</p></li>
+<li><p><strong>hit_tag</strong> (<em>str</em><em>|</em><em>list</em><em>[</em><em>str</em><em>]</em>) – Path to the total number of matches in response</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sand.base.get_ssl_context">
+<span class="sig-prename descclassname"><span class="pre">sand.base.</span></span><span class="sig-name descname"><span class="pre">get_ssl_context</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SSLContext</span></span></span><a class="reference internal" href="_modules/sand/base.html#get_ssl_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.get_ssl_context" title="Link to this definition"></a></dt>
+<dd><p>Returns an SSL context based on <code class="docutils literal notranslate"><span class="pre">ssl_verify</span></code> argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ssl_verify</strong> – <code class="xref py py-attr docutils literal notranslate"><span class="pre">ssl_verify</span></code> parameter</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An SSL context object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sand.base.raise_api_error">
+<span class="sig-prename descclassname"><span class="pre">sand.base.</span></span><span class="sig-name descname"><span class="pre">raise_api_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Response</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/sand/base.html#raise_api_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sand.base.raise_api_error" title="Link to this definition"></a></dt>
+<dd><p>Check HTTP response status code and raise appropriate error if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>response</strong> (<em>dict</em>) – HTTP response object with status_code attribute</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Status code if response is successful (status &lt; 300)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sand.html" class="btn btn-neutral float-left" title="sand package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sand.copernicus_dataspace.html" class="btn btn-neutral float-right" title="sand.copernicus_dataspace" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

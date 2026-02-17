@@ -1,0 +1,483 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sand.base &mdash; sand 2.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=adc66a14"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sand
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sand.html">sand package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sand.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sand.base</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="n">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.constraint</span><span class="w"> </span><span class="kn">import</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Name</span><span class="p">,</span> <span class="n">GeoType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">SandQuery</span><span class="p">,</span> <span class="n">SandProduct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">end_of_day</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_csv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ssl</span>
+
+
+<div class="viewcode-block" id="BaseDownload">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseDownload</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for satellite data providers API access and download functionality.</span>
+<span class="sd">    </span>
+<span class="sd">    This class provides a common interface for interacting with different satellite data</span>
+<span class="sd">    providers. It handles authentication, querying products, downloading data and metadata</span>
+<span class="sd">    retrieval. Child classes must implement the abstract methods for specific provider APIs.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        session (requests.Session): HTTP session for making API requests</span>
+<span class="sd">        ssl_ctx (ssl.SSLContext): SSL context for secure connections</span>
+<span class="sd">        available_collection (list): List of available collections from the provider</span>
+<span class="sd">        api_collection (str): Name of the collection in provider&#39;s API format</span>
+<span class="sd">        name_contains (list): List of naming constraints for products</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Main functions to implement for each provider</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_login</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Login to API server with credentials stored in .netrc file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span>
+
+<div class="viewcode-block" id="BaseDownload.query">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.query">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">collection_sand</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Time</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">geo</span><span class="p">:</span> <span class="n">GeoType</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Name</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cloudcover_thres</span><span class="p">:</span> <span class="nb">int</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SandQuery</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query products from the API server based on temporal and spatial constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            collection_sand (str): SAND collection name (&#39;SENTINEL-2-MSI&#39;, &#39;SENTINEL-3-OLCI&#39;, etc.)</span>
+<span class="sd">            level (int): Processing level (1, 2, or 3)</span>
+<span class="sd">            time (Time, optional): Time constraint. </span>
+<span class="sd">            geo (Geo, optional): Spatial constraint.</span>
+<span class="sd">            name (Name, optional): Constraints over product name.</span>
+<span class="sd">            cloudcover_thres (int): Upper bound for cloud cover in percentage, </span>
+<span class="sd">            api_collection (list[str]): Name of deserved collection in API standard</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            SandQuery: Query results containing matching products</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span></div>
+
+
+<div class="viewcode-block" id="BaseDownload.download">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span><span class="s1">&#39;backup&#39;</span><span class="p">,</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skip&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download a product from the API server.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            product (dict): Product metadata obtained from query results</span>
+<span class="sd">            dir (Path|str): Directory where to save the downloaded product</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Path: Path to the downloaded product file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span></div>
+
+
+<div class="viewcode-block" id="BaseDownload.quicklook">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.quicklook">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quicklook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download a quicklook preview image for a product.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            product (dict): Product metadata obtained from query results </span>
+<span class="sd">            dir (Path|str): Directory where to save the quicklook image</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Path: Path to the downloaded quicklook image</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span></div>
+
+
+<div class="viewcode-block" id="BaseDownload.metadata">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve detailed metadata for a product.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            product (dict): Basic product metadata obtained from query results</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Detailed product metadata including:</span>
+<span class="sd">                - attributes: Product attributes (e.g., cloud cover, quality flags)</span>
+<span class="sd">                - assets: Available product assets (e.g., bands, ancillary data)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span></div>
+
+    
+<div class="viewcode-block" id="BaseDownload.download_file">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.download_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download a specific product from API server by its product identifier</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            product_id (str): The identifier of the product to download with its extension</span>
+<span class="sd">                (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)</span>
+<span class="sd">            dir (Path | str): Directory where to store the downloaded file</span>
+<span class="sd">            api_collection (str, optional): Name of the API collection to query. </span>
+<span class="sd">                If None, will determine from product_id pattern.</span>
+<span class="sd">                </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Path: Path to the downloaded file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="bp">NotImplemented</span></div>
+
+        
+    <span class="c1"># Visible functions already implemented    </span>
+<div class="viewcode-block" id="BaseDownload.download_all">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.download_all">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_all</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">products</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span><span class="p">,</span> 
+        <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span><span class="s1">&#39;backup&#39;</span><span class="p">,</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skip&quot;</span><span class="p">,</span>
+        <span class="n">parallelized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download all products from API server resulting from a query.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            products (list[dict]): List of product metadata from query results</span>
+<span class="sd">            dir (Path|str): Directory where to save downloaded products</span>
+<span class="sd">            if_exists (str, optional): Action to take if product exists:</span>
+<span class="sd">                - &#39;skip&#39;: Skip download if file exists (default)</span>
+<span class="sd">                - &#39;overwrite&#39;: Replace existing file</span>
+<span class="sd">                - &#39;raise&#39;: Raise an error if file exists</span>
+<span class="sd">            parallelized (bool, optional): If True, downloads products in parallel</span>
+<span class="sd">                using multiple threads. Default is False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[Path]: List of paths to downloaded product files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parallelized</span><span class="p">:</span>
+            
+            <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+            
+            <span class="n">workers</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_worker</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">products</span><span class="p">))</span>
+            <span class="n">process</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="nb">dir</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">Pool</span><span class="p">(</span><span class="n">workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">process</span><span class="p">,</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">products</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()])</span>
+                <span class="c1"># tmp = pool.map(process, products)</span>
+                <span class="k">return</span> <span class="n">tmp</span>
+            
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">products</span><span class="p">:</span> 
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">product</span><span class="p">,</span> <span class="nb">dir</span><span class="p">,</span> <span class="n">if_exists</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">out</span> </div>
+
+    
+<div class="viewcode-block" id="BaseDownload.get_available_collection">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.BaseDownload.get_available_collection">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_available_collection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return every downloadable collections for selected provider</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get list of available collections if not already done</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;available_collection&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_provider_properties</span><span class="p">()</span>
+        
+        <span class="c1"># Join with global information contained</span>
+        <span class="n">current_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+        <span class="n">sensor</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="n">current_dir</span><span class="o">/</span><span class="s1">&#39;sensors.csv&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Collection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">available_collection</span> <span class="p">,</span> <span class="n">sensor</span><span class="p">)</span></div>
+
+    
+    <span class="c1"># Private functions </span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_provider_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load properties of the provider (collections, levels, etc)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">provider_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">/</span><span class="s1">&#39;collections&#39;</span><span class="o">/</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">provider</span><span class="si">}</span><span class="s1">.csv&#39;</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">provider_file</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="s1">&#39;Provider properties file is missing&#39;</span><span class="p">)</span>
+        <span class="n">provider_prop</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="n">provider_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">available_collection</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">provider_prop</span><span class="p">[</span><span class="s1">&#39;SAND_name&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">provider_prop</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_sand_collection_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve properties for a specific SAND collection</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_provider_properties</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_collec_properties</span><span class="p">(</span><span class="n">collection</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_retrieve_api_collec</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_name_constraint</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ssl_ctx</span> <span class="o">=</span> <span class="n">get_ssl_context</span><span class="p">()</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_collec_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns SAND collection properties</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find SAND collection name </span>
+        <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">collection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_collection</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Collection &#39;</span><span class="si">{</span><span class="n">collection</span><span class="si">}</span><span class="s2">&#39; does not exist for this downloader,&quot;</span>
+            <span class="s2">&quot; please use get_available_collection methods&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">ValueError</span><span class="p">)</span>
+        <span class="n">collecs</span> <span class="o">=</span> <span class="n">properties</span><span class="p">[</span><span class="n">properties</span><span class="p">[</span><span class="s1">&#39;SAND_name&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">collection</span><span class="p">]</span>
+        
+        <span class="c1"># Try to find specific level</span>
+        <span class="k">try</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">sand_props</span> <span class="o">=</span> <span class="n">collecs</span><span class="p">[</span><span class="n">collecs</span><span class="p">[</span><span class="s1">&#39;level&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">level</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span> 
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Level</span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s1"> products are not available for </span><span class="si">{</span><span class="n">collection</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                      <span class="n">e</span><span class="o">=</span><span class="ne">KeyError</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sand_props</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ReferenceError</span><span class="p">(</span><span class="s1">&#39;It is not possible to download &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;level-</span><span class="si">{</span><span class="n">level</span><span class="si">}</span><span class="s1"> product for </span><span class="si">{</span><span class="n">collection</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_retrieve_api_collec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns collection names used by API</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sand_props</span><span class="p">[</span><span class="s1">&#39;collec&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_name_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to add name constraint to list of user constraint</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">to_add</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sand_props</span><span class="p">[</span><span class="s1">&#39;contains&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[]</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">to_add</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;nan&#39;</span> <span class="k">else</span> <span class="n">to_add</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">check_funcs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">name</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">check_funcs</span><span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_format_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Time</span><span class="o">|</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Time</span><span class="o">|</span><span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to check and format main arguments of query method</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            t (Time, optional): Time constraint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if void</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">t</span>
+        
+        <span class="c1"># Open reference file</span>
+        <span class="n">ref_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">/</span><span class="s1">&#39;sensors.csv&#39;</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="n">ref_file</span><span class="p">)</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">ref</span><span class="p">[</span><span class="n">ref</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">collection</span><span class="p">]</span>
+        
+        <span class="c1"># Check format</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> 
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">ref</span><span class="p">[</span><span class="s1">&#39;launch_date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">time</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">date</span><span class="p">):</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="n">end_of_day</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">combine</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">time</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">datetime</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">datetime</span><span class="p">)</span>        
+        
+        <span class="k">return</span> <span class="n">t</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;session&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="raise_api_error">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.raise_api_error">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check HTTP response status code and raise appropriate error if needed.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        response (dict): HTTP response object with status_code attribute</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Status code if response is successful (status &lt; 300)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">response</span><span class="p">,</span><span class="s1">&#39;status_code&#39;</span><span class="p">),</span> <span class="s1">&#39;No status code in response&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">Exception</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="o">/</span><span class="s1">&#39;html_status_code.csv&#39;</span><span class="p">)</span>
+    
+    <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;[</span><span class="si">{}</span><span class="s1">] </span><span class="si">{}</span><span class="s1">&#39;</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">ref</span><span class="p">[</span><span class="n">ref</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">status</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">status</span> <span class="o">&gt;</span> <span class="mi">300</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="s1">&#39;tag&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">line</span><span class="p">[</span><span class="s1">&#39;explain&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> 
+                  <span class="n">e</span><span class="o">=</span><span class="n">RequestsError</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">status</span></div>
+
+
+<div class="viewcode-block" id="check_too_many_matches">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.check_too_many_matches">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_too_many_matches</span><span class="p">(</span><span class="n">response</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> 
+                           <span class="n">returned_tag</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> 
+                           <span class="n">hit_tag</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if an API query returned more matches than it can return in one response.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        response (dict): API response containing result counts</span>
+<span class="sd">        returned_tag (str|list[str]): Path to the number of returned results in response</span>
+<span class="sd">        hit_tag (str|list[str]): Path to the total number of matches in response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">returned</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">k</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">returned_tag</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span> 
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">k</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">hit_tag</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">returned</span> <span class="o">&gt;</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;The query returned too many matches (</span><span class="si">{</span><span class="n">matches</span><span class="si">}</span><span class="s2">) &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;and exceeded the limit (</span><span class="si">{</span><span class="n">returned</span><span class="si">}</span><span class="s2">) set by the provider.&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_ssl_context">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.get_ssl_context">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_ssl_context</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLContext</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns an SSL context based on ``ssl_verify`` argument.</span>
+
+<span class="sd">    :param ssl_verify: :attr:`~eodag.config.PluginConfig.ssl_verify` parameter</span>
+<span class="sd">    :returns: An SSL context object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">create_default_context</span><span class="p">()</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">check_hostname</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">verify_mode</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">CERT_REQUIRED</span>
+    <span class="k">return</span> <span class="n">ctx</span></div>
+
+
+
+<div class="viewcode-block" id="RequestsError">
+<a class="viewcode-back" href="../../sand.base.html#sand.base.RequestsError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RequestsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span> <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

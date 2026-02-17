@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sand.nasa &mdash; sand 2.0.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=adc66a14"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            sand
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sand.html">sand package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">sand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">sand.nasa</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sand.nasa</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">urlencode</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">re</span><span class="w"> </span><span class="kn">import</span> <span class="n">match</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">core</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.files</span><span class="w"> </span><span class="kn">import</span> <span class="n">filegen</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.table</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_xml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.geo.product_name</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_pattern</span><span class="p">,</span> <span class="n">get_level</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">write</span><span class="p">,</span> <span class="n">drop_extension</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.constraint</span><span class="w"> </span><span class="kn">import</span> <span class="n">Time</span><span class="p">,</span> <span class="n">Geo</span><span class="p">,</span> <span class="n">GeoType</span><span class="p">,</span> <span class="n">Name</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDownload</span><span class="p">,</span> <span class="n">raise_api_error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sand.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">SandQuery</span><span class="p">,</span> <span class="n">SandProduct</span>
+
+<span class="c1"># BASED ON : https://github.com/yannforget/landsatxplore/tree/master/landsatxplore</span>
+
+
+<div class="viewcode-block" id="DownloadNASA">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DownloadNASA</span><span class="p">(</span><span class="n">BaseDownload</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="s1">&#39;nasa&#39;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>        
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_login</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        
+        <span class="c1"># Check if session is already set and set it up if not </span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;session&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_session</span><span class="p">()</span>
+        
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No login required for NASA API (https://cmr.earthdata.nasa.gov/)&#39;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="DownloadNASA.query">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA.query">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">query</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">collection_sand</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Time</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">geo</span><span class="p">:</span> <span class="n">GeoType</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Name</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cloudcover_thres</span><span class="p">:</span> <span class="nb">int</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="c1"># Retrieve api collections based on SAND collections</span>
+        <span class="k">if</span> <span class="n">api_collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name_constraint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_sand_collection_properties</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+            <span class="n">api_collection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name_constraint</span> <span class="o">=</span> <span class="p">[]</span>
+            
+        <span class="c1"># Format input time and geospatial constraints</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_time</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">Geo</span><span class="o">.</span><span class="n">Point</span><span class="o">|</span><span class="n">Geo</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">geo</span><span class="o">.</span><span class="n">set_convention</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        
+        <span class="c1"># Define or complement constraint on naming</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">name</span><span class="o">.</span><span class="n">add_contains</span><span class="p">(</span><span class="n">name_constraint</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">Name</span><span class="p">(</span><span class="n">contains</span><span class="o">=</span><span class="n">name_constraint</span><span class="p">)</span>
+        
+        <span class="c1"># Initialise data dictionary</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+        
+        <span class="c1"># Configure scene constraints for request</span>
+        <span class="k">if</span> <span class="n">time</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">start</span><span class="p">:</span>
+            <span class="n">date_range</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;Z,&#39;</span>
+            <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
+                <span class="n">date_range</span> <span class="o">+=</span> <span class="n">time</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;Z&#39;</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;temporal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">date_range</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">Geo</span><span class="o">.</span><span class="n">Point</span><span class="o">|</span><span class="n">Geo</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;bounding_box&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">geo</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">geo</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,&quot;</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;bounding_box&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">geo</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">geo</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+        
+        <span class="c1"># Add constraint for cloud cover</span>
+        <span class="k">if</span> <span class="n">cloudcover_thres</span><span class="p">:</span> 
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;cloud_cover&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;,</span><span class="si">{</span><span class="n">cloudcover_thres</span><span class="si">}</span><span class="s2">&quot;</span>
+            
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">collec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">:</span>
+            
+            <span class="c1"># Query NASA API</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Query NASA API for collection </span><span class="si">{</span><span class="n">collec</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;concept_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">collec</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;page_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://cmr.earthdata.nasa.gov/search/granules&#39;</span>
+            <span class="n">url_encode</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url_encode</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;feed&#39;</span><span class="p">][</span><span class="s1">&#39;entry&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;page_size&#39;</span><span class="p">]:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span> 
+                    <span class="s2">&quot;The number of matches has reached the API limit on the maximum &quot;</span> 
+                    <span class="s2">&quot;number of items returned. This may mean that some hits are missing. &quot;</span>
+                    <span class="s2">&quot;Please refine your query.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;feed&#39;</span><span class="p">][</span><span class="s1">&#39;entry&#39;</span><span class="p">]</span>   
+            
+            <span class="c1"># Filter products</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">response</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])]</span>        
+            
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;producer_granule_id&#39;</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span> <span class="n">prod_id</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;producer_granule_id&#39;</span><span class="p">]</span> 
+                <span class="k">else</span><span class="p">:</span> <span class="n">prod_id</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SandProduct</span><span class="p">(</span>
+                    <span class="n">product_id</span><span class="o">=</span><span class="n">prod_id</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span>
+                    <span class="n">date</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;time_start&#39;</span><span class="p">],</span> <span class="n">metadata</span><span class="o">=</span><span class="n">d</span>
+                <span class="p">))</span>
+        
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="si">}</span><span class="s1"> products has been found&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SandQuery</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="DownloadNASA.download_file">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA.download_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">api_collection</span><span class="p">:</span> <span class="nb">str</span><span class="o">|</span><span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="c1"># Retrieve api collections based on SAND collections        </span>
+        <span class="k">if</span> <span class="n">api_collection</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">get_pattern</span><span class="p">(</span><span class="n">product_id</span><span class="p">)</span>
+            <span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;Name&#39;</span><span class="p">],</span> <span class="n">get_level</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_sand_collection_properties</span><span class="p">(</span><span class="n">collection_sand</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span> <span class="o">=</span> <span class="p">[</span><span class="n">api_collection</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_contains</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;page_size&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+        <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://cmr.earthdata.nasa.gov/search/granules&#39;</span>
+        
+        <span class="nd">@filegen</span><span class="p">(</span><span class="n">if_exists</span><span class="o">=</span><span class="s1">&#39;skip&#39;</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_dl</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">collec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_collection</span><span class="p">:</span>   
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;collection_concept_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">collec</span>
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;producer_granule_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">drop_extension</span><span class="p">(</span><span class="n">product_id</span><span class="p">)</span>
+                <span class="n">url_encode</span> <span class="o">=</span> <span class="n">url</span> <span class="o">+</span> <span class="s1">&#39;?&#39;</span> <span class="o">+</span> <span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url_encode</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;feed&#39;</span><span class="p">][</span><span class="s1">&#39;entry&#39;</span><span class="p">]</span>   
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">response</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">continue</span>          
+                
+                <span class="n">dl_url</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;links&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+                <span class="k">assert</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">Path</span><span class="p">(</span><span class="n">dl_url</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">dl_url</span><span class="p">)</span>
+                <span class="k">return</span>
+        
+            <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No file found with name </span><span class="si">{</span><span class="n">product_id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="n">product_id</span>
+        <span class="n">_dl</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Product has been downloaded at : </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filename</span></div>
+
+    
+<div class="viewcode-block" id="DownloadNASA.download">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA.download">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> 
+        <span class="n">if_exists</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;skip&#39;</span><span class="p">,</span><span class="s1">&#39;overwrite&#39;</span><span class="p">,</span><span class="s1">&#39;backup&#39;</span><span class="p">,</span><span class="s1">&#39;error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skip&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">links</span> <span class="o">=</span> <span class="n">product</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;links&#39;</span><span class="p">]</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">product</span><span class="o">.</span><span class="n">product_id</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="n">Path</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">if_exists</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Product has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">target</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internal method to handle the actual download of files from NASA servers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Try to request server</span>
+        <span class="n">niter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Requesting server for </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">301</span><span class="p">,</span> <span class="mi">302</span><span class="p">,</span> <span class="mi">303</span><span class="p">,</span> <span class="mi">307</span><span class="p">)</span> <span class="ow">and</span> <span class="n">niter</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Download content [Try </span><span class="si">{</span><span class="n">niter</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">/5]&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;Location&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;status code : [</span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">)</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Location&#39;</span><span class="p">]</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">niter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">raise_api_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="c1"># Download file</span>
+        <span class="n">write</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="DownloadNASA.quicklook">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA.quicklook">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quicklook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> 
+        <span class="n">product</span><span class="p">:</span> <span class="n">SandProduct</span><span class="p">,</span> 
+        <span class="nb">dir</span><span class="p">:</span> <span class="n">Path</span><span class="o">|</span><span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">links</span> <span class="o">=</span> <span class="n">product</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;links&#39;</span><span class="p">]</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">product</span><span class="o">.</span><span class="n">product_id</span> <span class="o">+</span> <span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="n">filegen</span><span class="p">(</span><span class="mi">0</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download</span><span class="p">)(</span><span class="n">target</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Quicklook has been downloaded at : </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">target</span></div>
+
+    
+    
+<div class="viewcode-block" id="DownloadNASA.metadata">
+<a class="viewcode-back" href="../../sand.nasa.html#sand.nasa.DownloadNASA.metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">product</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_login</span><span class="p">()</span>
+        
+        <span class="n">links</span> <span class="o">=</span> <span class="n">product</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;links&#39;</span><span class="p">]</span>
+        <span class="n">req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">product</span><span class="o">.</span><span class="n">product_id</span> <span class="o">+</span> <span class="s1">&#39;.*.xml&#39;</span><span class="p">)</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">req</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmpdir</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span><span class="o">/</span><span class="s1">&#39;meta.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">read_xml</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">)</span><span class="o">/</span><span class="s1">&#39;meta.xml&#39;</span><span class="p">)</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">liste</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Internal helper to find a value in a list of dictionaries by matching keys</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">liste</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;title&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">col</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Download </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">col</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]):</span>
+                <span class="k">return</span> <span class="n">col</span><span class="p">[</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">liste</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;href&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">col</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">match</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">col</span><span class="p">[</span><span class="s1">&#39;href&#39;</span><span class="p">]):</span>
+                <span class="k">return</span> <span class="n">col</span><span class="p">[</span><span class="s1">&#39;href&#39;</span><span class="p">]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> has not been found&#39;</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="ne">KeyError</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, HYGEOS.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
