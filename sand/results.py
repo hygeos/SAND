@@ -31,7 +31,7 @@ class SandQuery(Iterable):
     def __init__(self, json_values: list[SandProduct]):
         self.products = sorted(json_values, key=lambda p: p.index)
     
-    def __repr__(self):
+    def print(self):
         # If no product returns empty pandas DataFrame
         if len(self.products) == 0: 
             ascii_table(pd.DataFrame()).print()

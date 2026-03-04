@@ -8,6 +8,7 @@ from sand.constraint import Time, Name, GeoType
 from sand.results import Collection, SandQuery, SandProduct
 from sand.utils import end_of_day
 from core.table import read_csv
+from core.tools import only
 from core import log
 
 import requests
@@ -234,7 +235,7 @@ class BaseDownload:
             log.error(f'Level{level} products are not available for {collection}',
                       e=KeyError)
         
-        if len(self.sand_props)==0:
+        if len(self.sand_props) == 0:
             raise ReferenceError('It is not possible to download '
                                  f'level-{level} product for {collection}')
     
@@ -242,13 +243,13 @@ class BaseDownload:
         """
         Returns collection names used by API
         """
-        return self.sand_props['collec'].values[0].split(' ')
+        return only(self.sand_props['collec']).split(' ')
     
     def _set_name_constraint(self):
         """
         Function to add name constraint to list of user constraint
         """
-        to_add = self.sand_props['contains'].values[0]
+        to_add = only(self.sand_props['contains'])
         return [] if str(to_add) == 'nan' else to_add.split(' ')
     
     def _check_name(self, name, check_funcs) -> bool:
@@ -272,7 +273,7 @@ class BaseDownload:
         
         # Check format
         if t.start is None: 
-            t.start = datetime.fromisoformat(ref['launch_date'].values[0])
+            t.start = datetime.fromisoformat(only(ref['launch_date']))
         if isinstance(t.start, date):
             t.start = datetime.combine(t.start, time(0))
         if t.end is None:
@@ -304,8 +305,7 @@ def raise_api_error(response: requests.Response) -> int:
     status = response.status_code
     line = ref[ref['value']==status]
     if status > 300:
-        log.error(msg.format(line['tag'].values[0], line['explain'].values[0]), 
-                  e=RequestsError)
+        log.error(msg.format(only(line['tag']), only(line['explain']), e=RequestsError))
     return status
 
 def check_too_many_matches(response: dict, 
