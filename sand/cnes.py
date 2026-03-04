@@ -30,10 +30,11 @@ class DownloadCNES(BaseDownload):
         # Check if session is already set and set it up if not 
         if not hasattr(self, "session"):
             self._set_session()
-            
-        auth = get_auth("geodes.cnes.fr")     
-        self.tokens = auth['password']
-        log.debug('Log to API (https://geodes-portal.cnes.fr/)')
+        
+        if not hasattr(self, 'tokens'):  
+            auth = get_auth("geodes.cnes.fr")     
+            self.tokens = auth['password']
+            log.debug('Log to API (https://geodes-portal.cnes.fr/)')
 
     def query(
         self,

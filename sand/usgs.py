@@ -39,17 +39,18 @@ class DownloadUSGS(BaseDownload):
             "token": auth['password'],
             }
         
-        try:
-            url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
-            r = self.session.post(url, json=data)
-            r.raise_for_status()
-            assert r.json()['errorCode'] == None
-            self.API_key = {'X-Auth-Token': r.json()['data']}
-        except Exception:
-            raise Exception(
-                f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
-                )
-        log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
+        if not hasattr(self, 'API_key'):
+            try:
+                url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
+                r = self.session.post(url, json=data)
+                r.raise_for_status()
+                assert r.json()['errorCode'] == None
+                self.API_key = {'X-Auth-Token': r.json()['data']}
+            except Exception:
+                raise Exception(
+                    f"Keycloak token creation failed. Reponse from the server was: {r.json()}"
+                    )
+            log.debug(f'Log to API (https://m2m.cr.usgs.gov/)')
         
 
     def query(

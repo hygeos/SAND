@@ -34,10 +34,11 @@ class DownloadCDSE(BaseDownload):
         # Check if session is already set and set it up if not
         if not hasattr(self, "session"):
             self._set_session()
-
-        auth = get_auth("dataspace.copernicus.eu")
-        self._get_tokens(auth)
-        log.debug("Log to API (https://dataspace.copernicus.eu/)")
+        
+        if not hasattr(self, 'tokens'):
+            auth = get_auth("dataspace.copernicus.eu")
+            self._get_tokens(auth)
+            log.debug("Log to API (https://dataspace.copernicus.eu/)")
 
     def _get_tokens(self, auth: dict) -> None:
         """

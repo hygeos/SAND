@@ -35,17 +35,20 @@ class DownloadEumDAC(BaseDownload):
             
         auth = get_auth('data.eumetsat.int')
         
-        credentials = (auth['user'], auth['password'])
-        self.tokens = eumdac.AccessToken(credentials)
-        try:
-            if self.tokens.expiration < datetime.now():
-                msg = "Tokens has expired. Please refresh on https://api.eumetsat.int/api-key/#"
-                log.error(msg, e=RequestsError)
-        except requests.exceptions.HTTPError:
-            log.error("Invalid Credentials", e=RequestsError)  
+        if not hasattr(self, 'tokens'):
+            credentials = (auth['user'], auth['password'])
+            self.tokens = eumdac.AccessToken(credentials)
+            
+            try:
+                if self.tokens.expiration < datetime.now():
+                    msg = "Tokens has expired. Please refresh on https://api.eumetsat.int/api-key/#"
+                    log.error(msg, e=RequestsError)
+            except requests.exceptions.HTTPError:
+                log.error("Invalid Credentials", e=RequestsError)  
         
-        self.datastore = eumdac.DataStore(self.tokens)        
-        log.debug(f'Log to API (https://data.eumetsat.int/)')
+        if not hasattr(self, 'datastore'):
+            self.datastore = eumdac.DataStore(self.tokens)        
+            log.debug(f'Log to API (https://data.eumetsat.int/)')
     
     
     def query(
