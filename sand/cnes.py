@@ -71,9 +71,9 @@ class DownloadCNES(BaseDownload):
         
         # Time constraint
         if time and time.start:
-            query['start_datetime'] = {'gte':time.start.isoformat()+'Z'}
+            query['start_datetime'] = {'gte':time.start.isoformat()[:19]+'Z'}
         if time and time.end:
-            query['end_datetime'] = {'lte':time.end.isoformat()+'Z'}
+            query['end_datetime'] = {'lte':time.end.isoformat()[:19]+'Z'}
         
         # Spatial constraint
         if isinstance(geo, Geo.Point|Geo.Polygon): 
