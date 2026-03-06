@@ -70,9 +70,9 @@ class DownloadNASA(BaseDownload):
         
         # Configure scene constraints for request
         if time and time.start:
-            date_range = time.start.isoformat() + 'Z,'
+            date_range = time.start.isoformat()[:19] + 'Z,'
             if time.end:
-                date_range += time.end.isoformat() + 'Z'
+                date_range += time.end.isoformat()[:19] + 'Z'
             data['temporal'] = date_range
         
         if isinstance(geo, Geo.Point|Geo.Polygon):

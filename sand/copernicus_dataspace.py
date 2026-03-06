@@ -257,9 +257,9 @@ def _query_odata(params: _Request_params):
     ]
 
     if params.time and params.time.start:
-        query_lines.append(f"ContentDate/Start gt {params.time.start.isoformat()}Z")
+        query_lines.append(f"ContentDate/Start gt {params.time.start.isoformat()[:19]}Z")
     if params.time and params.time.end:
-        query_lines.append(f"ContentDate/Start lt {params.time.end.isoformat()}Z")
+        query_lines.append(f"ContentDate/Start lt {params.time.end.isoformat()[:19]}Z")
     if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
         query_lines.append(
             f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo.to_wkt()}')"

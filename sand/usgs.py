@@ -94,9 +94,9 @@ class DownloadUSGS(BaseDownload):
         acquisition_filter = {}
         if time:
             if time.start:
-                acquisition_filter["start"] = time.start.isoformat()
+                acquisition_filter["start"] = time.start.isoformat()[:19]
             if time.end:
-                acquisition_filter["end"] = time.end.isoformat()
+                acquisition_filter["end"] = time.end.isoformat()[:19]
 
         cloud_cover_filter = {"min" : cloudcover_thres,
                               "max" : 100,

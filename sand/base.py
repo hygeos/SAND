@@ -274,11 +274,11 @@ class BaseDownload:
         # Check format
         if t.start is None: 
             t.start = datetime.fromisoformat(only(ref['launch_date']))
-        if isinstance(t.start, date):
+        if isinstance(t.start, date) and not isinstance(t.start, datetime):
             t.start = datetime.combine(t.start, time(0))
         if t.end is None:
             t.end = datetime.now()
-        elif isinstance(t.end, date):
+        elif isinstance(t.end, date) and not isinstance(t.end, datetime):
             t.end = end_of_day(datetime.combine(t.end, time(0)))
         assert isinstance(t.start, datetime) and isinstance(t.end, datetime)        
         
