@@ -221,7 +221,16 @@ class DownloadUSGS(BaseDownload):
                 if not self._check_product(product): 
                     continue
                 
-                url, ext = self._get_dl_url(product)
+                
+                # It is required to wrap it with a try as some products have an inaccurate description 
+                try:
+                    url, ext = self._get_dl_url(product)
+                except ValueError as e:
+                    if 'The selected product is not a downloadable product' in str(e):
+                        continue
+                    else:
+                        raise e
+                
                 self._download(target, url, ext)
                 return 
         
@@ -251,7 +260,15 @@ class DownloadUSGS(BaseDownload):
             if not self._check_product(prod): 
                 continue
             
-            url, ext = self._get_dl_url(prod)
+            # It is required to wrap it with a try as some products have an inaccurate description 
+            try:
+                url, ext = self._get_dl_url(prod)
+            except ValueError as e:
+                if 'The selected product is not a downloadable product' in str(e):
+                    continue
+                else:
+                    raise e
+                
             filegen(0, if_exists=if_exists)(self._download)(target, url, ext)
             log.info(f'Product has been downloaded at : {target}')
             return target
@@ -406,6 +423,7 @@ class DownloadUSGS(BaseDownload):
         # Find product in dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/download-options"
         params = {'entityIds': product.index, "datasetName": self.api_collection}
+        params.update(includeSecondaryFileGroups=True)
         self.session.headers.update(self.API_key)
         dl_opt = self.session.get(url, json=params)
         raise_api_error(dl_opt)
