@@ -25,7 +25,7 @@ def test_invalid_level(collec):
 def test_latlon_change_convention(center, value):
     assert _change_lon_convention(210, center) == value
         
-@pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','geodes','usgs'])
+@pytest.mark.parametrize('provider', ['cdse','eumdac','nasa','cnes','usgs'])
 def test_provider_file(provider):
     p = str(Path(__file__).parent.parent/'sand'/'collections'/'{}.csv')
     read_csv(p.format(provider))

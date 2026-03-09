@@ -6,10 +6,9 @@ import pytest
 
 
 @pytest.mark.skip("Not implemented")
-@pytest.mark.parametrize('parallelized', [False, True])
-def test_download_all(parallelized):
+def test_download_all():
     with TemporaryDirectory() as tmpdir, Chrono():
         sensor = 'SENTINEL-3-OLCI-FR' 
         dl = DownloadEumDAC(sensor)
         ls = dl.query(**products[sensor]['level1'])
-        dl.download_all(ls.iloc[:4], tmpdir, parallelized=parallelized)
+        dl.download_all(ls.iloc[:4], tmpdir, parallelized=True)

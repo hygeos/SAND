@@ -42,3 +42,17 @@ def test_quicklook(request, downloader, collec, level, constraint):
         
 def test_download_file(downloader, product_id):
     eval_download_file(downloader, product_id)
+
+def test_session_manangement():
+    """
+    Login should not open a new session if already exist to prevent session limit
+    """
+    
+    # First login
+    dl = DownloadCDSE()
+    dl._login()
+    session = dl.session
+    
+    # Second login 
+    dl._login()
+    assert session == dl.session

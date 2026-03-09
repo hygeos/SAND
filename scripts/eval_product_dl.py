@@ -1,22 +1,22 @@
 from sand.constraint import Time
 from sand.sample_product import products
 from tempfile import TemporaryDirectory
+from core.import_utils import import_module
 from core import log
 import argparse
-import sand
 
-log.silence(sand)
-log.set_lvl(log.lvl.INFO)
+log.set_lvl(log.lvl.WARNING)
 
 
 dl = {
-    'CDSE': sand.DownloadCDSE,
-    'EUMDAC': sand.DownloadEumDAC,
-    'CNES': sand.DownloadCNES,
-    'NASA': sand.DownloadNASA,
-    'USGS': sand.DownloadUSGS,
+    'CDSE': 'sand.copernicus_dataspace.DownloadCDSE',
+    'EUMDAC': 'sand.eumdac.DownloadEumDAC',
+    'CNES': 'sand.cnes.DownloadCNES',
+    'NASA': 'sand.nasa.DownloadNASA',
+    'USGS': 'sand.usgs.DownloadUSGS',
 }
 
+# CLI interface
 parser = argparse.ArgumentParser(description="Check which product is available")
 parser.add_argument('-p', '--provider',
                     action = 'store',
@@ -26,16 +26,21 @@ parser.add_argument('-p', '--provider',
 parser.add_argument('-c', '--check_collec',
                     action = 'store_true',
                     help = 'Option to only check that collection is not empty')
-
 args = parser.parse_args()
 
-if args.provider: 
-    dl = {args.provider: dl[args.provider]}
 
+# Import only necessary downloader
+if args.provider: 
+    dl = {args.provider: import_module(dl[args.provider])}
+else:
+    dl = {p: import_module(d) for p,d in dl.items()}
+
+# Download every file in temporary directory
 with TemporaryDirectory() as tmpdir:
     for name, provider in dl.items():
         
-        log.info(log.rgb.cyan, '-'*5,f' Provider : {name} ','-'*5)
+        # Initialise downloader
+        print(log.rgb.cyan, '-'*5,f' Provider : {name} ','-'*5)
         dl = provider()
         collec_df = dl.get_available_collection()
         
@@ -61,18 +66,18 @@ with TemporaryDirectory() as tmpdir:
                 except ReferenceError as e:
                     continue
                 except Exception as e: 
-                    log.info(log.rgb.red, error_msg.format('query',e))
+                    print(log.rgb.red, error_msg.format('query',e))
                     continue
                 
                 if len(ls)==0: 
-                    log.info(log.rgb.red, error_msg.format('query','No product found by the query'))
+                    print(log.rgb.red, error_msg.format('query','No product found by the query'))
                     continue
                 
                 # Download
                 try: 
                     dl.download(ls[0], tmpdir)
                 except Exception as e: 
-                    log.info(log.rgb.red, error_msg.format('download',e))
+                    print(log.rgb.red, error_msg.format('download',e))
                     continue
             
-                log.info(log.rgb.green, msg_start+' successed')
+                print(log.rgb.green, msg_start+' successed')

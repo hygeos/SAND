@@ -1,17 +1,18 @@
 from sand.sample_product import products
 from tempfile import TemporaryDirectory
 from contextlib import contextmanager
+from core.import_utils import import_module
 from core import env
 
 import argparse
-import sand
+
 
 dl = {
-    'CDSE': sand.DownloadCDSE,
-    'EUMDAC': sand.DownloadEumDAC,
-    'CNES': sand.DownloadCNES,
-    'NASA': sand.DownloadNASA,
-    'USGS': sand.DownloadUSGS,
+    'CDSE': 'sand.copernicus_dataspace.DownloadCDSE',
+    'EUMDAC': 'sand.eumdac.DownloadEumDAC',
+    'CNES': 'sand.cnes.DownloadCNES',
+    'NASA': 'sand.nasa.DownloadNASA',
+    'USGS': 'sand.usgs.DownloadUSGS',
 }
 
 parser = argparse.ArgumentParser('try_dl', description='Try to download an example of a product')
@@ -32,9 +33,9 @@ with get_tempdir(args.keep) as tmpdir:
     # d = dl[args.dl]()
     # params = products[args.sensor]['constraint']
     # params.update(collection_sand=args.sensor, level=int(args.level))
-    d = dl['USGS']()
-    params = products['LANDSAT-1-MSS']['constraint']
-    params.update(collection_sand='LANDSAT-1-MSS', level=1)
-    params = dict(collection_sand='LANDSAT-1-MSS', level=1)
+    d = import_module(dl['USGS'])()
+    params = products['LANDSAT-9-OLI']['constraint']
+    params.update(collection_sand='LANDSAT-9-OLI', level=1)
     ls = d.query(**params)
     d.download(ls[0], tmpdir)
+    pass
