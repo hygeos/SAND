@@ -102,6 +102,10 @@ class Geo:
             self.bounds = [lat - dx, lon - dx, lat + dx, lon + dx]
             _check_latlon(lat=lat, lon=lon)
         
+        def __repr__(self) -> str:
+            """Return string representation of the Geo.Point constraint."""
+            return f"Geo.Point(center={self.center}, bounds={self.bounds})"
+        
     class Polygon(_Base):
         """
         Represents a rectangular polygon (bounding box).
@@ -132,11 +136,19 @@ class Geo:
             _check_latlon(lat=latmin, lon=lonmin)
             _check_latlon(lat=latmax, lon=lonmax)
         
+        def __repr__(self) -> str:
+            """Return string representation of the Geo.Polygon constraint."""
+            return f"Geo.Polygon(center={self.center}, bounds={self.bounds})"
+        
     class Tile:
         
         def __init__(self, MGRS: str|None = None, venus: str|None = None):
             self.venus = venus
             self.MGRS = MGRS
+        
+        def __repr__(self) -> str:
+            """Return string representation of the Geo.Tile constraint."""
+            return f"Geo.Tile(MGRS={self.MGRS}, venus={self.venus})"
 
 GeoType: TypeAlias = Geo.Point | Geo.Polygon | Geo.Tile
 
@@ -165,6 +177,11 @@ class Name:
         ]
         return all(f(name, params) for f, params in checker)
 
+    def __repr__(self) -> str:
+        """Return string representation of the Name constraint."""
+        return (f"Name(contains={self.contains}, startswith='{self.startswith}', "
+                f"endswith='{self.endswith}', glob='{self.glob}')")
+    
 
 def _check_latlon(lat: float = 0, lon: float = 0) -> None:
     
