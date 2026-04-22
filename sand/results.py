@@ -1,7 +1,47 @@
 import pandas as pd
+from core.files.cache import cachefunc
 from core.ascii_table import ascii_table
 from dataclasses import dataclass, asdict
-from typing import Iterable
+from typing import Iterable, Literal
+from pathlib import Path
+import json
+
+
+def cache_sandquery(
+        cache_file: Path | str,
+        inputs: Literal["check", "store", "ignore"] = "check"
+    ):
+    """
+    Decorator that caches the result of a query function of SAND Downloader.
+
+    inputs:
+        "check" [default]: store and check the function inputs
+        "store": store but don't check the function inputs
+        "ignore": ignore the function inputs
+    """
+    
+    def deserializer(filename) -> SandQuery:
+        with open(filename) as fp:
+            dico = json.load(fp)
+            list_prod = [SandProduct(**p) for p in dico['output']]
+            dico['output'] = SandQuery(list_prod)
+            return dico            
+
+    def serializer(filename, output: SandQuery, input_args, input_kwargs):
+        with open(filename, 'w') as fp:
+            content = {}
+            if inputs in ['store', 'check']:
+                content['input'] = {'args': input_args, 'kwargs': input_kwargs}
+            content['output'] = [p.to_dict() for p in output.products]
+            json.dump(content, fp, indent=4, default=str)
+
+    return cachefunc(
+        cache_file,
+        reader=deserializer,
+        writer=serializer,
+        check_in=(lambda x, y : x == y) if (inputs == 'check') else None,
+        check_out=lambda x, y : x.equals(y)
+    )
 
 
 @dataclass

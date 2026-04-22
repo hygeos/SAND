@@ -1,17 +1,6 @@
-from sand.copernicus_dataspace import DownloadCDSE
-from sand.constraint import Time, Geo, Name
-from sand.results import SandQuery, SandProduct
-
-
-def test_query_results():
-    dl = DownloadCDSE()
-    ls = dl.query(
-        collection_sand='SENTINEL-2-MSI',
-        time = Time('2024-01-01', '2024-02-01'),
-        geo = Geo.Point(-8.5, 119),
-        name = Name(contains=['_MSIL1C_'])
-    )
-    print(ls)
+from sand.results import SandQuery, SandProduct, cache_sandquery
+from tempfile import TemporaryDirectory
+from pathlib import Path
 
 
 def test_sandquery_indexing():
@@ -75,3 +64,20 @@ def test_sandquery_iteration():
         assert isinstance(product, SandProduct)
         count += 1
     assert count == 5
+
+
+def test_sandquery_cache_property():
+    """Test that SandQuery is compatible with cache_json"""
+    
+    def fake_query():
+        products = [
+            SandProduct(product_id=f"product_{i%10}", date="2024-01-01", metadata={}, index=str(i%10))
+            for i in range(5,15)
+        ]
+        return SandQuery(products)
+    
+    with TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir)/'test.json'
+        cache_sandquery(path)(fake_query)()
+        assert path.exists()
+        
