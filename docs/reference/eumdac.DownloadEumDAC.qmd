@@ -1,0 +1,7 @@
+# eumdac.DownloadEumDAC { #sand.eumdac.DownloadEumDAC }
+
+```python
+eumdac.DownloadEumDAC(verbose=True)
+```
+
+Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)

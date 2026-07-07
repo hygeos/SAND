@@ -1,0 +1,6 @@
+# usgs.DownloadUSGS { #sand.usgs.DownloadUSGS }
+
+```python
+usgs.DownloadUSGS(verbose=True)
+```
+

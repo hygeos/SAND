@@ -1,0 +1,10 @@
+# constraint.Time { #sand.constraint.Time }
+
+```python
+constraint.Time(start=None, end=None)
+```
+
+Represents a temporal constraint with start and end datetime.
+
+This class defines a time range for querying satellite data products.
+Dates can be provided as datetime objects or ISO format strings.

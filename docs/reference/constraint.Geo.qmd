@@ -1,0 +1,46 @@
+# constraint.Geo { #sand.constraint.Geo }
+
+```python
+constraint.Geo()
+```
+
+Container class for geographic constraint types.
+
+This class provides different geometry types for defining spatial constraints
+in satellite data queries. It includes Point and Polygon classes for defining
+areas of interest.
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [Point](#sand.constraint.Geo.Point) | Represents a point location with optional buffer zone. |
+| [Polygon](#sand.constraint.Geo.Polygon) | Represents a rectangular polygon (bounding box). |
+
+### Point { #sand.constraint.Geo.Point }
+
+```python
+constraint.Geo.Point(lat, lon, extend_factor=0.1)
+```
+
+Represents a point location with optional buffer zone.
+
+This class defines a point constraint that can be diluted to create
+a small bounding box around the central point. This is useful for
+querying data that intersects with or is near a specific location.
+
+Attributes:
+    center (tuple): Center coordinates as (latitude, longitude)
+    bounds (tuple): Bounding box as (latmin, lonmin, latmax, lonmax)
+
+### Polygon { #sand.constraint.Geo.Polygon }
+
+```python
+constraint.Geo.Polygon(latmin, latmax, lonmin, lonmax)
+```
+
+Represents a rectangular polygon (bounding box).
+
+This class defines a rectangular area of interest using minimum and
+maximum latitude and longitude values. It's commonly used for querying
+satellite data over a specific geographic region.

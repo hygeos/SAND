@@ -12,7 +12,7 @@ dependencies = [
     "shapely", 
     'pillow', 
     "pandas"
-]
+, "eoread[git] @ git+https://github.com/hygeos/eoread"]
 
 [project.optional-dependencies]
 git = [
@@ -27,13 +27,15 @@ channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [tool.pixi.environments]
-default = { features = ["hyp", "sys"], solve-group = "default" }
+default = { features = ['sys', 'dev', 'sub'], solve-group = "default" }
 
 [tool.pixi.tasks]
 tests = "pytest tests"
 dl = "python3 scripts/try_dl.py"
 check_product = "python3 scripts/eval_product_dl.py"
-build_docs = "sphinx-build -b html /home/nathan/proj/sand/docs/source /home/nathan/proj/sand/docs/build -q"
+docs-build = "quartodoc build --config docs/_quarto.yml"
+docs-render = { cmd = "quarto render docs/", depends-on = ["docs-build"] }
+docs-preview = { cmd = "quarto preview docs/", depends-on = ["docs-build"] }
 
 [tool.pixi.pypi-dependencies]
 sand = { path = ".", editable = true, extras = ["git"] }
@@ -46,11 +48,31 @@ ipykernel = "*"
 matplotlib = "*"
 numba = "*"
 
-[tool.pixi.feature.hyp.dependencies]
+quartodoc = "*"
+nbformat = "*"
+nbclient = "*"
+griffe = ">=1.0,<2.0"  # quartodoc 0.11.1 is not yet compatible with griffe 2.x
+jupyter-cache = "*"
+libgdal-jp2openjpeg = "*"
+
+[tool.pixi.feature.sub.dependencies]
+numba = "*"
+rioxarray = "*"
+h5py = "*"
+netcdf4 = "*"
+xarray = "*"
+dask = "*"
+scipy = "*"
+zarr = "*"
+
 [tool.pixi.feature.sys.dependencies]
 sphinx = "*"
 sphinx_rtd_theme = "*"
+libgdal-jp2openjpeg = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+# automatically added by hyp
+[tool.pixi.feature.dev.dependencies]

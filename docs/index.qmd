@@ -1,0 +1,73 @@
+---
+title: SAND
+subtitle: "Satellite Acquisition Normative Downloader"
+---
+
+```{=openxml}
+<!-- LOGO -->
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="img/SAND_dark_theme.svg" width="200">
+<source media="(prefers-color-scheme: light)" srcset="img/SAND_light_theme.svg" width="200">
+</picture>
+```
+
+## What is SAND ?
+
+**SAND** is a Python module that simplifies the downloading of satellite data from various providers.
+It acts as a unified proxy for executing API requests, with a minimal dependency footprint suitable for production pipelines.
+
+### Supported providers
+
+| Provider | URL | Auth |
+| --- | --- | --- |
+| CDSE | [dataspace.copernicus.eu](https://dataspace.copernicus.eu/) | `.netrc` |
+| CNES | [geodes.cnes.fr](https://geodes-portal.cnes.fr/) | `.netrc` + token |
+| EumDAC | [data.eumetsat.int](https://data.eumetsat.int) | `.netrc` + token |
+| NASA | [cmr.earthdata.nasa.gov](https://cmr.earthdata.nasa.gov/search) | `.netrc` |
+| USGS | [m2m.cr.usgs.gov](https://ers.cr.usgs.gov/) | `.netrc` + token |
+
+## Installation
+
+```bash
+pip install https://github.com/hygeos/SAND.git
+```
+
+## Quickstart
+
+The following example searches for and downloads LANDSAT acquisitions from USGS :
+
+```python
+from sand.usgs import DownloadUSGS
+from sand.constraint import Time, Geo
+from datetime import datetime
+
+# Initialize provider
+dl = DownloadUSGS('LANDSAT-5-TM', level=1)
+
+# Search
+results = dl.query(
+    time=Time(datetime(2000, 12, 10), datetime(2005, 12, 10)),
+    geo=Geo.Point(119.514442, -8.411750),
+)
+
+# Download first result
+dl.download(results[0], './data')
+```
+
+## Documentation
+
+- [@ref](reference) — Référence API complète (classes, méthodes, fonctions)
+- [@ref](articles/getting-started) — Guide de démarrage
+- [@ref](articles/providers) — Configuration par provider
+
+## Configuration
+
+Tous les providers utilisent le fichier `~/.netrc` pour l'authentification :
+
+```bash
+machine dataspace.copernicus.eu
+    login your@email.com
+    password your_password
+```
+
+Voir la section [providers](articles/providers.qmd) pour les détails par provider.

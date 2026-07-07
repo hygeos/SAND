@@ -1,0 +1,181 @@
+---
+title: "Getting Started"
+description: "Quick guide to using SAND for satellite data download"
+---
+
+## Installation
+
+Install SAND from the GitHub repository:
+
+```bash
+pip install https://github.com/hygeos/SAND.git
+```
+
+## Authentication
+
+SAND uses the `~/.netrc` file for authentication. Create or edit this file with your provider credentials:
+
+```bash
+machine dataspace.copernicus.eu
+    login your@email.com
+    password your_password
+
+machine geodes.cnes.fr
+    login your@email.com
+    password your_token_secret
+
+machine data.eumetsat.int
+    login your_api_key
+    password your_api_secret
+
+machine urs.earthdata.nasa.gov
+    login your_username
+    password your_password
+
+machine m2m.cr.usgs.gov
+    login your@email.com
+    password your_api_token
+```
+
+> **Note:** Ensure the file has restricted permissions:
+> ```bash
+> chmod 600 ~/.netrc
+> ```
+
+## Basic workflow
+
+The typical SAND workflow has three steps :
+
+1. **Initialize** a provider
+2. **Query** for products matching your constraints
+3. **Download** the selected products
+
+### Step 1: Initialize a provider
+
+```python
+from sand.usgs import DownloadUSGS
+
+# Create a downloader instance
+dl = DownloadUSGS()
+```
+
+Available providers :
+
+* `DownloadCDSE` — Copernicus Data Space
+* `DownloadCNES` — CNES Geodes
+* `DownloadEumDAC` — EUMETSAT Data Store
+* `DownloadNASA` — NASA CMR
+* `DownloadUSGS` — USGS M2M API
+
+### Step 2: Query products
+
+Use the `query()` method with temporal, spatial, and naming constraints :
+
+```python
+from sand.constraint import Time, Geo
+from datetime import datetime
+
+results = dl.query(
+    collection_sand="LANDSAT-8-OLI",
+    level=1,
+    time=Time(
+        start=datetime(2020, 1, 1),
+        end=datetime(2020, 12, 31)
+    ),
+    geo=Geo.Point(lat=48.8566, lon=2.3522),  # Paris
+    cloudcover_thres=20,
+)
+
+# Print results
+results.print()
+
+# Access individual products
+for product in results:
+    print(product.product_id, product.date)
+```
+
+### Step 3: Download
+
+```python
+from pathlib import Path
+
+# Download a single product
+path = dl.download(results[0], dir="./data")
+print(f"Downloaded to: {path}")
+
+# Download all products
+paths = dl.download_all(results, dir="./data", if_exists="skip")
+```
+
+## Constraints
+
+### Temporal constraints
+
+```python
+from sand.constraint import Time
+from datetime import datetime
+
+# Full datetime
+t = Time(start="2024-01-01", end="2024-06-30")
+
+# Date only (end of day is applied automatically)
+from datetime import date
+t = Time(start=date(2024, 1, 1), end=date(2024, 6, 30))
+```
+
+### Spatial constraints
+
+```python
+from sand.constraint import Geo
+
+# Point with buffer (~11km at equator)
+point = Geo.Point(lat=48.8566, lon=2.3522, extend_factor=0.1)
+
+# Bounding box
+polygon = Geo.Polygon(lat_min=48.8, lat_max=48.9, lon_min=2.3, lon_max=2.4)
+
+# MGRS/VENUS tile
+tile = Geo.Tile("31TUU")
+```
+
+### Naming constraints
+
+```python
+from sand.constraint import Name
+
+# Name contains all of these strings
+name = Name(contains=["T31", "S2A"])
+
+# Name starts with prefix
+name = Name(startswith="S2A_MSIL2A")
+
+# Name matches glob pattern
+name = Name(glob="*T31TUU*")
+```
+
+## Caching query results
+
+Use the `cache_sandquery` decorator to cache query results to JSON :
+
+```python
+from sand.results import cache_sandquery
+
+@cache_sandquery("./cache.json")
+def my_query():
+    return dl.query(
+        collection_sand="SENTINEL-2-MSI",
+        time=Time(start="2024-01-01", end="2024-01-31"),
+        geo=Geo.Point(lat=48.8566, lon=2.3522),
+    )
+
+# First call executes the query and caches results
+results = my_query()
+
+# Subsequent calls load from cache
+results = my_query()
+```
+
+## Next steps
+
+- See the [Providers](providers.qmd) guide for provider-specific configuration
+- Browse the [API Reference](../reference/) for detailed class and method documentation

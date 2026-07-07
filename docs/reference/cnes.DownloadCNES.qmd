@@ -1,0 +1,7 @@
+# cnes.DownloadCNES { #sand.cnes.DownloadCNES }
+
+```python
+cnes.DownloadCNES(verbose=True)
+```
+
+Python interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)

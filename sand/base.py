@@ -18,7 +18,7 @@ import ssl
 class BaseDownload:
     """
     Base class for satellite data providers API access and download functionality.
-    
+
     This class provides a common interface for interacting with different satellite data
     providers. It handles authentication, querying products, downloading data and metadata
     retrieval. Child classes must implement the abstract methods for specific provider APIs.
@@ -30,9 +30,12 @@ class BaseDownload:
         api_collection (str): Name of the collection in provider's API format
         name_contains (list): List of naming constraints for products
     """
-    
+
+    def __init__(self, verbose: bool):
+        self.verbose = verbose
+
     # Main functions to implement for each provider
-    
+
     def _login(self) -> None:
         """
         Login to API server with credentials stored in .netrc file.
@@ -42,12 +45,12 @@ class BaseDownload:
     def query(
         self,
         collection_sand: str,
-        level: Literal[1,2,3] = 1,
-        time: Time|None = None,
-        geo: GeoType|None = None,
-        name: Name|None = None,
-        cloudcover_thres: int|None = None,
-        api_collection: str|None = None
+        level: Literal[1, 2, 3] = 1,
+        time: Time | None = None,
+        geo: GeoType | None = None,
+        name: Name | None = None,
+        cloudcover_thres: int | None = None,
+        api_collection: str | None = None,
     ) -> SandQuery:
         """
         Query products from the API server based on temporal and spatial constraints.
@@ -55,10 +58,10 @@ class BaseDownload:
         Args:
             collection_sand (str): SAND collection name ('SENTINEL-2-MSI', 'SENTINEL-3-OLCI', etc.)
             level (int): Processing level (1, 2, or 3)
-            time (Time, optional): Time constraint. 
+            time (Time, optional): Time constraint.
             geo (Geo, optional): Spatial constraint.
             name (Name, optional): Constraints over product name.
-            cloudcover_thres (int): Upper bound for cloud cover in percentage, 
+            cloudcover_thres (int): Upper bound for cloud cover in percentage,
             api_collection (list[str]): Name of deserved collection in API standard
 
         Returns:
@@ -67,10 +70,10 @@ class BaseDownload:
         raise NotImplemented
 
     def download(
-        self, 
-        product: SandProduct, 
-        dir: Path | str, 
-        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+        self,
+        product: SandProduct,
+        dir: Path | str,
+        if_exists: Literal["skip", "overwrite", "backup", "error"] = "skip",
     ) -> Path:
         """
         Download a product from the API server.
@@ -84,16 +87,12 @@ class BaseDownload:
         """
         raise NotImplemented
 
-    def quicklook(
-        self, 
-        product: SandProduct, 
-        dir: Path|str
-    ) -> Path:
+    def quicklook(self, product: SandProduct, dir: Path | str) -> Path:
         """
         Download a quicklook preview image for a product.
 
         Args:
-            product (dict): Product metadata obtained from query results 
+            product (dict): Product metadata obtained from query results
             dir (Path|str): Directory where to save the quicklook image
 
         Returns:
@@ -101,10 +100,7 @@ class BaseDownload:
         """
         raise NotImplemented
 
-    def metadata(
-        self, 
-        product: SandProduct
-    ) -> dict:
+    def metadata(self, product: SandProduct) -> dict:
         """
         Retrieve detailed metadata for a product.
 
@@ -117,35 +113,32 @@ class BaseDownload:
                 - assets: Available product assets (e.g., bands, ancillary data)
         """
         raise NotImplemented
-    
+
     def download_file(
-        self, 
-        product_id: str, 
-        dir: Path | str, 
-        api_collection: str|None = None
+        self, product_id: str, dir: Path | str, api_collection: str | None = None
     ) -> Path:
         """
         Download a specific product from API server by its product identifier
-        
+
         Args:
             product_id (str): The identifier of the product to download with its extension
                 (ex: S2A_MSIL1C_20190305T050701_N0207_R019_T44QLH_20190305T103028)
             dir (Path | str): Directory where to store the downloaded file
-            api_collection (str, optional): Name of the API collection to query. 
+            api_collection (str, optional): Name of the API collection to query.
                 If None, will determine from product_id pattern.
-                
+
         Returns:
             Path: Path to the downloaded file
         """
         raise NotImplemented
-        
-    # Visible functions already implemented    
+
+    # Visible functions already implemented
     def download_all(
-        self, 
-        products, 
-        dir: Path|str, 
-        if_exists: Literal['skip','overwrite','backup','error'] = "skip",
-        parallelized: bool = False
+        self,
+        products,
+        dir: Path | str,
+        if_exists: Literal["skip", "overwrite", "backup", "error"] = "skip",
+        parallelized: bool = False,
     ) -> list[Path]:
         """
         Download all products from API server resulting from a query.
@@ -164,47 +157,46 @@ class BaseDownload:
             list[Path]: List of paths to downloaded product files
         """
         if parallelized:
-            
             from multiprocessing import Pool
             from functools import partial
-            
+
             workers = min(self.nb_worker, len(products))
             process = partial(self.download, dir=dir, if_exists=if_exists)
             with Pool(workers) as pool:
                 tmp = pool.map(process, [p[1] for p in products.iterrows()])
                 # tmp = pool.map(process, products)
                 return tmp
-            
+
         out = []
-        for product in products: 
+        for product in products:
             out.append(self.download(product, dir, if_exists))
-        return out 
-    
+        return out
+
     def get_available_collection(self) -> DataFrame:
         """
         Return every downloadable collections for selected provider
         """
         # Get list of available collections if not already done
-        if not hasattr(self, 'available_collection'):
+        if not hasattr(self, "available_collection"):
             self._load_provider_properties()
-        
+
         # Join with global information contained
         current_dir = Path(__file__).parent
-        sensor = read_csv(current_dir/'sensors.csv')
-        return Collection(self.available_collection , sensor)
-    
-    # Private functions 
-    
+        sensor = read_csv(current_dir / "sensors.csv")
+        return Collection(self.available_collection, sensor)
+
+    # Private functions
+
     def _load_provider_properties(self):
         """
         Load properties of the provider (collections, levels, etc)
         """
-        provider_file = Path(__file__).parent/'collections'/f'{self.provider}.csv'
-        log.check(provider_file.exists(), 'Provider properties file is missing')
+        provider_file = Path(__file__).parent / "collections" / f"{self.provider}.csv"
+        log.check(provider_file.exists(), "Provider properties file is missing")
         provider_prop = read_csv(provider_file)
-        self.available_collection = list(provider_prop['SAND_name'])
+        self.available_collection = list(provider_prop["SAND_name"])
         return provider_prop
-        
+
     def _load_sand_collection_properties(self, collection: str, level: int):
         """
         Retrieve properties for a specific SAND collection
@@ -213,49 +205,54 @@ class BaseDownload:
         self._get_collec_properties(collection, level, props)
         self.api_collection = self._retrieve_api_collec()
         return self._set_name_constraint()
-    
-    def _set_session(self): 
+
+    def _set_session(self):
         self.session = requests.Session()
         self.ssl_ctx = get_ssl_context()
-    
+
     def _get_collec_properties(self, collection, level, properties):
         """
         Returns SAND collection properties
         """
-        # Find SAND collection name 
-        log.check(collection in self.available_collection,
+        # Find SAND collection name
+        log.check(
+            collection in self.available_collection,
             f"Collection '{collection}' does not exist for this downloader,"
-            " please use get_available_collection methods", e=ValueError)
-        collecs = properties[properties['SAND_name']==collection]
-        
+            " please use get_available_collection methods",
+            e=ValueError,
+        )
+        collecs = properties[properties["SAND_name"] == collection]
+
         # Try to find specific level
-        try: 
-            self.sand_props = collecs[collecs['level']==level]
-        except AssertionError: 
-            log.error(f'Level{level} products are not available for {collection}',
-                      e=KeyError)
-        
+        try:
+            self.sand_props = collecs[collecs["level"] == level]
+        except AssertionError:
+            log.error(
+                f"Level{level} products are not available for {collection}", e=KeyError
+            )
+
         if len(self.sand_props) == 0:
-            raise ReferenceError('It is not possible to download '
-                                 f'level-{level} product for {collection}')
-    
+            raise ReferenceError(
+                f"It is not possible to download level-{level} product for {collection}"
+            )
+
     def _retrieve_api_collec(self):
         """
         Returns collection names used by API
         """
-        return only(self.sand_props['collec']).split(' ')
-    
+        return only(self.sand_props["collec"]).split(" ")
+
     def _set_name_constraint(self):
         """
         Function to add name constraint to list of user constraint
         """
-        to_add = only(self.sand_props['contains'])
-        return [] if str(to_add) == 'nan' else to_add.split(' ')
-    
+        to_add = only(self.sand_props["contains"])
+        return [] if str(to_add) == "nan" else to_add.split(" ")
+
     def _check_name(self, name, check_funcs) -> bool:
         return all(c[0](name, c[1]) for c in check_funcs)
-    
-    def _format_time(self, collection: str, t: Time|None) -> Time|None:
+
+    def _format_time(self, collection: str, t: Time | None) -> Time | None:
         """
         Function to check and format main arguments of query method
 
@@ -265,68 +262,73 @@ class BaseDownload:
         # Check if void
         if t is None:
             return t
-        
+
         # Open reference file
-        ref_file = Path(__file__).parent/'sensors.csv'
+        ref_file = Path(__file__).parent / "sensors.csv"
         ref = read_csv(ref_file)
-        ref = ref[ref['Name'] == collection]
-        
+        ref = ref[ref["Name"] == collection]
+
         # Check format
-        if t.start is None: 
-            t.start = datetime.fromisoformat(only(ref['launch_date']))
+        if t.start is None:
+            t.start = datetime.fromisoformat(only(ref["launch_date"]))
         if isinstance(t.start, date) and not isinstance(t.start, datetime):
             t.start = datetime.combine(t.start, time(0))
         if t.end is None:
             t.end = datetime.now()
         elif isinstance(t.end, date) and not isinstance(t.end, datetime):
             t.end = end_of_day(datetime.combine(t.end, time(0)))
-        assert isinstance(t.start, datetime) and isinstance(t.end, datetime)        
-        
+        assert isinstance(t.start, datetime) and isinstance(t.end, datetime)
+
         return t
-    
+
     def __del__(self):
-        if hasattr(self, 'session'):
+        if hasattr(self, "session"):
             self.session.close()
+
 
 def raise_api_error(response: requests.Response) -> int:
     """
     Check HTTP response status code and raise appropriate error if needed.
-    
+
     Args:
         response (dict): HTTP response object with status_code attribute
-    
+
     Returns:
         int: Status code if response is successful (status < 300)
     """
-    log.check(hasattr(response,'status_code'), 'No status code in response', e=Exception)
-    ref = read_csv(Path(__file__).parent/'html_status_code.csv')
-    
-    msg = '[{}] {}'
+    log.check(
+        hasattr(response, "status_code"), "No status code in response", e=Exception
+    )
+    ref = read_csv(Path(__file__).parent / "html_status_code.csv")
+
+    msg = "[{}] {}"
     status = response.status_code
-    line = ref[ref['value']==status]
+    line = ref[ref["value"] == status]
     if status > 300:
-        log.error(msg.format(only(line['tag']), only(line['explain']), e=RequestsError))
+        log.error(msg.format(only(line["tag"]), only(line["explain"]), e=RequestsError))
     return status
 
-def check_too_many_matches(response: dict, 
-                           returned_tag: str|list[str], 
-                           hit_tag: str|list[str]) -> None:
+
+def check_too_many_matches(
+    response: dict, returned_tag: str | list[str], hit_tag: str | list[str]
+) -> None:
     """
     Check if an API query returned more matches than it can return in one response.
-    
+
     Args:
         response (dict): API response containing result counts
         returned_tag (str|list[str]): Path to the number of returned results in response
         hit_tag (str|list[str]): Path to the total number of matches in response
     """
-    returned = reduce(lambda x,k: x[k], returned_tag, response) 
-    matches = reduce(lambda x,k: x[k], hit_tag, response)
-    
+    returned = reduce(lambda x, k: x[k], returned_tag, response)
+    matches = reduce(lambda x, k: x[k], hit_tag, response)
+
     if returned > matches:
         log.warning(
             f"The query returned too many matches ({matches}) "
             f"and exceeded the limit ({returned}) set by the provider."
         )
+
 
 def get_ssl_context() -> ssl.SSLContext:
     """
@@ -341,4 +343,5 @@ def get_ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-class RequestsError(Exception): pass
+class RequestsError(Exception):
+    pass

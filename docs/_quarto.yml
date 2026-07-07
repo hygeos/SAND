@@ -1,0 +1,109 @@
+project:
+  type: website
+  preview:
+    port: 8000
+    browser: false
+
+# tell quarto to read the generated sidebar and styles
+metadata-files:
+  - reference/_sidebar.yml
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    css:
+      - _extensions/hygeos-docs/css/hygeos-docs.css
+    toc: true
+
+execute:
+  echo: false
+  cache: true
+  warning: false
+
+
+website:
+  title: "SAND"
+  site-url: "https://hygeos.github.io/SAND/"
+  repo-url: "https://github.com/hygeos/SAND"
+  repo-actions: [issue]
+  page-navigation: true
+  open-graph: true
+  search:
+    location: navbar
+    type: overlay
+  navbar:
+    background: primary
+    search: true
+    logo: _extensions/hygeos-docs/logo-carre-blanc.png
+    logo-alt: "HYGEOS"
+    left:
+      - text: "Home"
+        file: index.qmd
+      - text: "Reference"
+        href: reference/
+      - text: "Guides"
+        menu:
+          - text: "Getting Started"
+            file: articles/getting-started.qmd
+          - text: "Providers"
+            file: articles/providers.qmd
+          - text: "Download Product"
+            file: articles/download.qmd
+    right:
+      - icon: github
+        href: "https://github.com/hygeos/SAND"
+        aria-label: "GitHub Repository"
+  page-footer:
+    center: |
+      Powered by [HYGEOS](https://www.hygeos.com) | SAND &copy; 2026
+  sidebar:
+    - title: "Overview"
+      contents:
+        - index.qmd
+    - title: "Guides"
+      contents:
+        - articles/getting-started.qmd
+        - articles/providers.qmd
+        - articles/download.qmd
+
+
+quartodoc:
+  package: sand
+  dir: reference
+  title: API Reference
+
+  # write sidebar and style data
+  sidebar: reference/_sidebar.yml
+  css: reference/_styles-quartodoc.css
+
+  sections:
+    - title: Constraint
+      desc: Temporal, spatial, and naming constraints for querying satellite data products
+      contents:
+        - name: constraint
+          children: linked
+        - constraint.Time
+        - constraint.Geo
+        - constraint.Name
+    - title: Results
+      desc: Query result containers, product dataclasses, collections, and caching utilities
+      contents:
+        - name: results
+          children: linked
+        - results.SandProduct
+        - results.SandQuery
+        - results.Collection
+    - title: Utils
+      desc: Name matching helpers for filtering products (contains, startswith, endswith, glob)
+      contents:
+        - utils
+    - title: Providers
+      desc: Download providers
+      contents:
+        - copernicus_dataspace.DownloadCDSE
+        - cnes.DownloadCNES
+        - eumdac.DownloadEumDAC
+        - nasa.DownloadNASA
+        - usgs.DownloadUSGS

@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 from shapely.ops import transform
 from re import search, fullmatch
+
 # from hashlib import blake2b
 from pathlib import Path
 from numpy import log2
@@ -10,62 +11,66 @@ from core import log
 def check_name_contains(name: str, elements: list[str]) -> bool:
     """
     Check if a name contains all elements from a list of strings
-    
+
     Args:
         name (str): The name to check
         elements (list[str]): List of strings that should be present in the name
-        
+
     Returns:
         bool: True if all elements are found in the name, False otherwise
     """
     return all(e in name for e in elements)
 
+
 def check_name_startswith(name: str, prefix: str) -> bool:
     """
     Check if a name starts with the given prefix
-    
+
     Args:
         name (str): The name to check
         prefix (str): The prefix to look for
-        
+
     Returns:
         bool: True if name starts with prefix, False otherwise
     """
     return name.startswith(prefix)
 
+
 def check_name_endswith(name: str, suffix: str) -> bool:
     """
     Check if a name ends with the given suffix
-    
+
     Args:
         name (str): The name to check
         suffix (str): The suffix to look for
-        
+
     Returns:
         bool: True if name ends with suffix, False otherwise
     """
     return name.endswith(suffix)
 
+
 def check_name_glob(name: str, regexp: str) -> bool:
     """
     Check if a name matches a regular expression pattern
-    
+
     Args:
         name (str): The name to check
         regexp (str): Regular expression pattern to match against
-        
+
     Returns:
         bool: True if name matches the pattern exactly, False otherwise
     """
     return bool(fullmatch(regexp, name))
 
+
 def end_of_day(date: datetime) -> datetime:
     """
     Adjust a datetime to the end of the day if it's set to midnight
-    
+
     Args:
         date (datetime): The datetime object to adjust
-        
+
     Returns:
         datetime: If input is midnight (00:00:00), returns 23:59:59 of the same day.
                  Otherwise returns the input unchanged.
@@ -75,45 +80,53 @@ def end_of_day(date: datetime) -> datetime:
         return date
     return date
 
+
 def flip_coords(geo):
     """
     Flip x and y coordinates in a geometry
-    
+
     Args:
         geo: A shapely geometry object
-        
+
     Returns:
         Transformed geometry with x and y coordinates swapped
-        
+
     Note:
         Useful for converting between (x,y) and (lat,lon) coordinate orders
     """
-    return transform(lambda x,y: (y,x), geom=geo)
+    return transform(lambda x, y: (y, x), geom=geo)
 
-def write(response, filepath):
-    log.debug('Start writing on device')
-    chunk = 2 ** round(log2(len(response.content)/100))
-    pbar = log.pbar(list(response.iter_content(chunk_size=chunk)), 'writing')
-    with open(filepath, 'wb') as f:
+
+def write(response, filepath: str | Path, verbose: bool):
+    log.debug("Start writing on device")
+    chunk = 2 ** round(log2(len(response.content) / 100))
+
+    # Configure progress bar
+    pbar = list(response.iter_content(chunk_size=chunk))
+    pbar = log.pbar(pbar, "writing") if verbose else pbar
+    with open(filepath, "wb") as f:
         [f.write(chunk) for chunk in pbar if chunk]
 
+
 def get_compression_suffix(filename):
-    possible = ['zip','tgz','tar','tar.gz','gz','bz2','Z','rar']
+    possible = ["zip", "tgz", "tar", "tar.gz", "gz", "bz2", "Z", "rar"]
     if search(f".*.({'|'.join(possible)})", filename):
         return Path(filename).suffix
     else:
         return None
 
+
 def drop_extension(filename: str) -> str:
-    possible_extensions = ['.nc','.h5']
+    possible_extensions = [".nc", ".h5"]
     for ext in possible_extensions:
         if filename.endswith(ext):
-            return filename[:-len(ext)]
+            return filename[: -len(ext)]
     return filename
+
 
 # def get_hash(query: dict) -> str:
 #     h = blake2b(digest_size=64)	    # hasher
 #     l = [f'{k}:{v}' for k,v in query.items()]
 #     s = ";".join(l)			        # concatenated inputs
-#     h.update(s).encode('utf-8')		# hash 
+#     h.update(s).encode('utf-8')		# hash
 #     return h.hexdigest()            # get digest

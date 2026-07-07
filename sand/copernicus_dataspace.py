@@ -27,15 +27,15 @@ class DownloadCDSE(BaseDownload):
 
     provider = "cdse"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, verbose: bool = True):
+        super().__init__(verbose)
 
     def _login(self):
         # Check if session is already set and set it up if not
         if not hasattr(self, "session"):
             self._set_session()
-        
-        if not hasattr(self, 'tokens'):
+
+        if not hasattr(self, "tokens"):
             auth = get_auth("dataspace.copernicus.eu")
             self._get_tokens(auth)
             log.debug("Log to API (https://dataspace.copernicus.eu/)")
@@ -63,12 +63,12 @@ class DownloadCDSE(BaseDownload):
     def query(
         self,
         collection_sand: str,
-        level: Literal[1,2,3] = 1,
-        time: Time|None = None,
-        geo: GeoType|None = None,
-        name: Name|None = None,
-        cloudcover_thres: int|None = None,
-        api_collection: str|None = None
+        level: Literal[1, 2, 3] = 1,
+        time: Time | None = None,
+        geo: GeoType | None = None,
+        name: Name | None = None,
+        cloudcover_thres: int | None = None,
+        api_collection: str | None = None,
     ):
         self._login()
 
@@ -83,7 +83,7 @@ class DownloadCDSE(BaseDownload):
 
         # Format input time and geospatial constraints
         time = self._format_time(collection_sand, time)
-        if isinstance(geo, Geo.Point|Geo.Polygon):
+        if isinstance(geo, Geo.Point | Geo.Polygon):
             geo.set_convention(0)
 
         # Assert that time has been provided
@@ -119,10 +119,10 @@ class DownloadCDSE(BaseDownload):
         return SandQuery(out)
 
     def download(
-        self, 
-        product: SandProduct, 
-        dir: Path | str, 
-        if_exists: Literal['skip','overwrite','backup','error'] = "skip"
+        self,
+        product: SandProduct,
+        dir: Path | str,
+        if_exists: Literal["skip", "overwrite", "backup", "error"] = "skip",
     ) -> Path:
         self._login()
 
@@ -135,7 +135,9 @@ class DownloadCDSE(BaseDownload):
         log.info(f"Product has been downloaded at : {target}")
         return target
 
-    def _download(self, target: Path, url: str, compression_ext: str|None = None) -> None:
+    def _download(
+        self, target: Path, url: str, compression_ext: str | None = None
+    ) -> None:
         """
         Internal method to download a file from Copernicus Data Space.
         """
@@ -170,16 +172,16 @@ class DownloadCDSE(BaseDownload):
                 self._get_tokens(auth)
 
         # Download compressed file
-        write(response, dl_target)
+        write(response, dl_target, self.verbose)
 
         # Uncompress archive
         if compression_ext:
             log.debug("Uncompress archive")
-            assert target == uncompress(dl_target, target.parent, extract_to='auto')
+            assert target == uncompress(dl_target, target.parent, extract_to="auto")
             dl_target.unlink()
 
     def download_file(
-        self, product_id: str, dir: Path | str, api_collection: str|None = None
+        self, product_id: str, dir: Path | str, api_collection: str | None = None
     ) -> Path:
         self._login()
 
@@ -188,28 +190,24 @@ class DownloadCDSE(BaseDownload):
         collection_sand, level = p["Name"], get_level(product_id, p)
         self._load_sand_collection_properties(collection_sand, level)
         name = Name(contains=[product_id])
-        
+
         if api_collection:
             self.api_collection = [api_collection]
             self.name_contains = []
-        
-        @filegen(if_exists='skip')
+
+        @filegen(if_exists="skip")
         def _dl(target):
             ls = self.query(collection_sand=collection_sand, level=level, name=name)
             assert len(ls) == 1, "Multiple products found"
             assert ls[0].product_id in target.name
             url = "https://catalogue.dataspace.copernicus.eu/odata/v1/"
             url += f"Products({ls[0].index})/$value"
-            self._download(target, url, '.zip')
-        
-        _dl(Path(dir)/product_id)
-        return Path(dir)/product_id
+            self._download(target, url, ".zip")
 
-    def quicklook(
-        self, 
-        product: SandProduct, 
-        dir: Path|str
-    ) -> Path:
+        _dl(Path(dir) / product_id)
+        return Path(dir) / product_id
+
+    def quicklook(self, product: SandProduct, dir: Path | str) -> Path:
         self._login()
 
         target = Path(dir) / (product.product_id + ".jpeg")
@@ -224,10 +222,7 @@ class DownloadCDSE(BaseDownload):
         log.info(f"Quicklook has been downloaded at : {target}")
         return target
 
-    def metadata(
-        self, 
-        product: SandProduct
-    ) -> dict:
+    def metadata(self, product: SandProduct) -> dict:
         self._login()
 
         req = (
@@ -243,10 +238,10 @@ class DownloadCDSE(BaseDownload):
 @dataclass
 class _Request_params:
     collection: str
-    time: Time|None
-    geo: GeoType|None
-    name: Name|None
-    cloudcover_thres: int|None
+    time: Time | None
+    geo: GeoType | None
+    name: Name | None
+    cloudcover_thres: int | None
 
 
 def _query_odata(params: _Request_params):
@@ -257,10 +252,12 @@ def _query_odata(params: _Request_params):
     ]
 
     if params.time and params.time.start:
-        query_lines.append(f"ContentDate/Start gt {params.time.start.isoformat()[:19]}Z")
+        query_lines.append(
+            f"ContentDate/Start gt {params.time.start.isoformat()[:19]}Z"
+        )
     if params.time and params.time.end:
         query_lines.append(f"ContentDate/Start lt {params.time.end.isoformat()[:19]}Z")
-    if params.geo is not None and isinstance(params.geo, Geo.Point|Geo.Polygon):
+    if params.geo is not None and isinstance(params.geo, Geo.Point | Geo.Polygon):
         query_lines.append(
             f"OData.CSC.Intersects(area=geography'SRID=4326;{params.geo.to_wkt()}')"
         )
@@ -287,9 +284,11 @@ def _query_odata(params: _Request_params):
 
     raise_api_error(response)
     if len(response.json()["value"]) >= top:
-        raise RequestsError("The number of matches has reached the API limit on"
-        " the maximum number of items returned. This may mean that some hits are"
-        " missing. Please refine your query.")
+        raise RequestsError(
+            "The number of matches has reached the API limit on"
+            " the maximum number of items returned. This may mean that some hits are"
+            " missing. Please refine your query."
+        )
     return response.json()["value"]
 
 

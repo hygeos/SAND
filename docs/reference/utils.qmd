@@ -1,0 +1,108 @@
+# utils { #sand.utils }
+
+`utils`
+
+
+
+## Functions
+
+| Name | Description |
+| --- | --- |
+| [check_name_contains](#sand.utils.check_name_contains) | Check if a name contains all elements from a list of strings |
+| [check_name_endswith](#sand.utils.check_name_endswith) | Check if a name ends with the given suffix |
+| [check_name_glob](#sand.utils.check_name_glob) | Check if a name matches a regular expression pattern |
+| [check_name_startswith](#sand.utils.check_name_startswith) | Check if a name starts with the given prefix |
+| [end_of_day](#sand.utils.end_of_day) | Adjust a datetime to the end of the day if it's set to midnight |
+| [flip_coords](#sand.utils.flip_coords) | Flip x and y coordinates in a geometry |
+
+### check_name_contains { #sand.utils.check_name_contains }
+
+```python
+utils.check_name_contains(name, elements)
+```
+
+Check if a name contains all elements from a list of strings
+
+Args:
+    name (str): The name to check
+    elements (list[str]): List of strings that should be present in the name
+
+Returns:
+    bool: True if all elements are found in the name, False otherwise
+
+### check_name_endswith { #sand.utils.check_name_endswith }
+
+```python
+utils.check_name_endswith(name, suffix)
+```
+
+Check if a name ends with the given suffix
+
+Args:
+    name (str): The name to check
+    suffix (str): The suffix to look for
+
+Returns:
+    bool: True if name ends with suffix, False otherwise
+
+### check_name_glob { #sand.utils.check_name_glob }
+
+```python
+utils.check_name_glob(name, regexp)
+```
+
+Check if a name matches a regular expression pattern
+
+Args:
+    name (str): The name to check
+    regexp (str): Regular expression pattern to match against
+
+Returns:
+    bool: True if name matches the pattern exactly, False otherwise
+
+### check_name_startswith { #sand.utils.check_name_startswith }
+
+```python
+utils.check_name_startswith(name, prefix)
+```
+
+Check if a name starts with the given prefix
+
+Args:
+    name (str): The name to check
+    prefix (str): The prefix to look for
+
+Returns:
+    bool: True if name starts with prefix, False otherwise
+
+### end_of_day { #sand.utils.end_of_day }
+
+```python
+utils.end_of_day(date)
+```
+
+Adjust a datetime to the end of the day if it's set to midnight
+
+Args:
+    date (datetime): The datetime object to adjust
+
+Returns:
+    datetime: If input is midnight (00:00:00), returns 23:59:59 of the same day.
+             Otherwise returns the input unchanged.
+
+### flip_coords { #sand.utils.flip_coords }
+
+```python
+utils.flip_coords(geo)
+```
+
+Flip x and y coordinates in a geometry
+
+Args:
+    geo: A shapely geometry object
+
+Returns:
+    Transformed geometry with x and y coordinates swapped
+
+Note:
+    Useful for converting between (x,y) and (lat,lon) coordinate orders

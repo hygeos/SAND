@@ -1,0 +1,6 @@
+# constraint.Name { #sand.constraint.Name }
+
+```python
+constraint.Name(contains=[], startswith='', endswith='', glob='.*')
+```
+

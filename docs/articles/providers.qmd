@@ -1,0 +1,222 @@
+---
+title: "Providers"
+description: "Provider-specific configuration and usage details"
+---
+
+## Overview
+
+SAND supports five satellite data providers, each with specific authentication and configuration requirements.
+
+| Provider | Class | URL | Auth method |
+| --- | --- | --- | --- |
+| CDSE | `DownloadCDSE` | dataspace.copernicus.eu | Email + Password |
+| CNES | `DownloadCNES` | geodes-portal.cnes.fr | Email + Token |
+| EumDAC | `DownloadEumDAC` | data.eumetsat.int | API Key + Secret |
+| NASA | `DownloadNASA` | cmr.earthdata.nasa.gov | Username + Password |
+| USGS | `DownloadUSGS` | m2m.cr.usgs.gov | Email + API Token |
+
+## CDSE — Copernicus Data Space
+
+**Registration:** [dataspace.copernicus.eu](https://dataspace.copernicus.eu/)
+
+### Authentication
+
+```bash
+machine dataspace.copernicus.eu
+    login your@email.com
+    password your_password
+```
+
+### Usage
+
+```python
+from sand.copernicus_dataspace import DownloadCDSE
+
+dl = DownloadCDSE()
+results = dl.query(
+    collection_sand="SENTINEL-2-MSI",
+    level=2,
+    time=Time(start="2024-01-01", end="2024-01-31"),
+    geo=Geo.Point(lat=48.8566, lon=2.3522),
+)
+```
+
+### Notes
+
+- Uses OAuth2 token-based authentication (handled automatically)
+- Supports both OData and OpenSearch APIs
+
+## CNES — Geodes
+
+**Registration:** [geodes-portal.cnes.fr](https://geodes-portal.cnes.fr/)
+
+### Authentication
+
+1. Register on Geodes portal
+2. Generate an API token from your account settings
+3. Configure `.netrc`:
+
+```bash
+machine geodes.cnes.fr
+    login your@email.com
+    password your_token_secret
+```
+
+### Usage
+
+```python
+from sand.cnes import DownloadCNES
+
+dl = DownloadCNES()
+results = dl.query(
+    collection_sand="SENTINEL-1-SAR",
+    level=1,
+    time=Time(start="2024-01-01", end="2024-01-31"),
+    geo=Geo.Polygon(lat_min=48.8, lat_max=48.9, lon_min=2.3, lon_max=2.4),
+)
+```
+
+## EumDAC — EUMETSAT Data Store
+
+**Registration:** [data.eumetsat.int](https://data.eumetsat.int)
+
+### Authentication
+
+1. Register on EUMETSAT Data Store
+2. Create an API key from the dashboard
+3. Configure `.netrc`:
+
+```bash
+machine data.eumetsat.int
+    login your_api_key
+    password your_api_secret
+```
+
+### Usage
+
+```python
+from sand.eumdac import DownloadEumDAC
+
+dl = DownloadEumDAC()
+results = dl.query(
+    collection_sand="SENTINEL-3-OLCI",
+    level=2,
+    time=Time(start="2024-01-01", end="2024-01-31"),
+    geo=Geo.Point(lat=48.8566, lon=2.3522),
+)
+```
+
+### Notes
+
+- Uses the official `eumdac` Python library under the hood
+- Tokens expire and are automatically refreshed
+
+## NASA — CMR
+
+**Registration:** [urs.earthdata.nasa.gov](https://urs.earthdata.nasa.gov/)
+
+### Authentication
+
+```bash
+machine urs.earthdata.nasa.gov
+    login your_username
+    password your_password
+```
+
+### Usage
+
+```python
+from sand.nasa import DownloadNASA
+
+dl = DownloadNASA()
+results = dl.query(
+    collection_sand="LANDSAT-8-OLI",
+    level=1,
+    time=Time(start="2024-01-01", end="2024-01-31"),
+    geo=Geo.Point(lat=48.8566, lon=2.3522),
+)
+```
+
+### Notes
+
+- No login required for search queries
+- Authentication is only needed for downloads
+
+## USGS — M2M API
+
+**Registration:** [ers.cr.usgs.gov](https://ers.cr.usgs.gov/)
+
+### Authentication
+
+1. Register on USGS EarthExplorer
+2. Request access to M2M API datasets
+3. Generate an API token
+4. Configure `.netrc`:
+
+```bash
+machine m2m.cr.usgs.gov
+    login your@email.com
+    password your_api_token
+```
+
+### Usage
+
+```python
+from sand.usgs import DownloadUSGS
+
+dl = DownloadUSGS()
+results = dl.query(
+    collection_sand="LANDSAT-8-OLI",
+    level=1,
+    time=Time(start="2024-01-01", end="2024-01-31"),
+    geo=Geo.Point(lat=48.8566, lon=2.3522),
+    cloudcover_thres=10,
+)
+```
+
+### Notes
+
+- Requires explicit access request to M2M API datasets
+- Rate limits may apply
+
+## Common patterns
+
+### Listing available collections
+
+```python
+# Get available collections as a DataFrame
+df = dl.get_available_collection()
+print(df)
+```
+
+### Filtering collections
+
+```python
+from sand.results import Collection
+
+# Filter collections by provider
+collections = Collection(dl.get_available_collection(), provider="usgs")
+print(collections)
+```
+
+### Download options
+
+```python
+# Download with different conflict handling
+dl.download(product, dir="./data", if_exists="skip")      # Skip existing files
+dl.download(product, dir="./data", if_exists="overwrite")  # Overwrite existing
+dl.download(product, dir="./data", if_exists="backup")     # Backup then overwrite
+dl.download(product, dir="./data", if_exists="error")      # Raise error if exists
+```
+
+### Parallel downloads
+
+```python
+# Download multiple products in parallel
+paths = dl.download_all(results, dir="./data", parallelized=True)
+```
+
+## Next steps
+
+- See the [API Reference](../reference/) for detailed class documentation
+- See [Getting Started](getting-started.qmd) for basic usage

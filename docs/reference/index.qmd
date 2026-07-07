@@ -1,0 +1,43 @@
+# API Reference {.doc .doc-index}
+
+## Constraint
+
+Temporal, spatial, and naming constraints for querying satellite data products
+
+| | |
+| --- | --- |
+| [constraint](constraint.qmd#sand.constraint) |  |
+| [constraint.Time](constraint.Time.qmd#sand.constraint.Time) | Represents a temporal constraint with start and end datetime. |
+| [constraint.Geo](constraint.Geo.qmd#sand.constraint.Geo) | Container class for geographic constraint types. |
+| [constraint.Name](constraint.Name.qmd#sand.constraint.Name) |  |
+
+## Results
+
+Query result containers, product dataclasses, collections, and caching utilities
+
+| | |
+| --- | --- |
+| [results](results.qmd#sand.results) |  |
+| [results.SandProduct](results.SandProduct.qmd#sand.results.SandProduct) | Result for a query using any SAND downloader. |
+| [results.SandQuery](results.SandQuery.qmd#sand.results.SandQuery) | Format a list of product dictionaries. |
+| [results.Collection](results.Collection.qmd#sand.results.Collection) | Extract a selection of collections from a reference table as pandas DataFrame |
+
+## Utils
+
+Name matching helpers for filtering products (contains, startswith, endswith, glob)
+
+| | |
+| --- | --- |
+| [utils](utils.qmd#sand.utils) |  |
+
+## Providers
+
+Download providers
+
+| | |
+| --- | --- |
+| [copernicus_dataspace.DownloadCDSE](copernicus_dataspace.DownloadCDSE.qmd#sand.copernicus_dataspace.DownloadCDSE) | Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/) |
+| [cnes.DownloadCNES](cnes.DownloadCNES.qmd#sand.cnes.DownloadCNES) | Python interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/) |
+| [eumdac.DownloadEumDAC](eumdac.DownloadEumDAC.qmd#sand.eumdac.DownloadEumDAC) | Python interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/) |
+| [nasa.DownloadNASA](nasa.DownloadNASA.qmd#sand.nasa.DownloadNASA) | Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/) |
+| [usgs.DownloadUSGS](usgs.DownloadUSGS.qmd#sand.usgs.DownloadUSGS) |  |

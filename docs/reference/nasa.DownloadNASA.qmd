@@ -1,0 +1,7 @@
+# nasa.DownloadNASA { #sand.nasa.DownloadNASA }
+
+```python
+nasa.DownloadNASA(verbose=True)
+```
+
+Python interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)

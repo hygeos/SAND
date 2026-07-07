@@ -1,0 +1,10 @@
+# copernicus_dataspace.DownloadCDSE { #sand.copernicus_dataspace.DownloadCDSE }
+
+```python
+copernicus_dataspace.DownloadCDSE(verbose=True)
+```
+
+Python interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)
+
+This class implements the BaseDownload interface for accessing and downloading
+satellite data from Copernicus Data Space. It supports both OData and OpenSearch APIs.

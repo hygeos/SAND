@@ -1,0 +1,32 @@
+# results.Collection { #sand.results.Collection }
+
+```python
+results.Collection(selection, collec_table)
+```
+
+Extract a selection of collections from a reference table as pandas DataFrame
+
+This function filters a reference table of collections to include only the
+requested collections, verifying that all requested collections exist.
+
+Args:
+    selection (list[str]): List of collection names to select
+    collec_table (pd.DataFrame): Reference table containing collection information.
+        Must have a 'Name' column containing collection names.
+
+Returns:
+    pd.DataFrame: Filtered table containing only the selected collections,
+        sorted by collection name
+
+Raises:
+    AssertionError: If any requested collection name is not found in the reference table
+
+Example:
+    >>> ref_table = pd.DataFrame({
+    ...     'Name': ['LANDSAT-5-TM', 'SENTINEL-2', 'VENUS'],
+    ...     'Level': [1, 2, 1]
+    ... })
+    >>> selected = Collection(['LANDSAT-5-TM', 'VENUS'], ref_table)
+    >>> print(selected['Name'])
+    0    LANDSAT-5-TM
+    1    VENUS

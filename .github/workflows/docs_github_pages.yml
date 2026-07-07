@@ -3,7 +3,7 @@ name: docs
 # execute this workflow automatically when a we push to master
 on:
   push:
-    branches: [ main ] # ⚠️ Renseigner le nom de votre branche principale
+    branches: [ main ]
  
 jobs:
  
@@ -16,21 +16,24 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.x # ⚠️ Vérifier que la version python est conforme
- 
-      - name: Install dependencies
+          python-version: 3.13
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.10.0
+
+      - name: Install quarto and ghp-import (with pixi)
+        run: pixi add quarto ghp-import
+
+      - name: Initialize Data Directory
+        run: echo "DIR_DATA=${{ runner.temp }}/data" >> $GITHUB_ENV
+
+      - name: Create the subfolder
         run: |
-          python -m pip install uv
-          python -m uv pip install sphinx sphinx-rtd-theme sphinxcontrib-napoleon
-          python -m uv pip install nbsphinx numpydoc
-          python -m uv pip install ghp-import
-          python -m uv pip install -r pyproject.toml
-          python -m uv pip install .[git]
+          mkdir -p "$DIR_DATA"
 
       - name: Generate the docs
-        run: |
-          sphinx-build docs/source docs/build -b html -q
+        run: pixi run docs-render
         
       - name: Run ghp-import
         run: |
-          ghp-import -n -p -f docs/build
+          pixi run ghp-import -n -p -f docs/_site/

@@ -1,0 +1,19 @@
+# results { #sand.results }
+
+`results`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [](`~sand.results.SandProduct`) | Result for a query using any SAND downloader. |
+| [](`~sand.results.SandQuery`) | Format a list of product dictionaries. |
+
+## Functions
+
+| Name | Description |
+| --- | --- |
+| [](`~sand.results.Collection`) | Extract a selection of collections from a reference table as pandas DataFrame |
+| [](`~sand.results.cache_sandquery`) | Decorator that caches the result of a query function of SAND Downloader. |

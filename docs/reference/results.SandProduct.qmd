@@ -1,0 +1,7 @@
+# results.SandProduct { #sand.results.SandProduct }
+
+```python
+results.SandProduct(product_id, date, metadata, index=None)
+```
+
+Result for a query using any SAND downloader.

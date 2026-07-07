@@ -1,0 +1,12 @@
+# constraint { #sand.constraint }
+
+`constraint`
+
+
+
+## Classes
+
+| Name | Description |
+| --- | --- |
+| [](`~sand.constraint.Geo`) | Container class for geographic constraint types. |
+| [](`~sand.constraint.Time`) | Represents a temporal constraint with start and end datetime. |

@@ -1,0 +1,13 @@
+# results.SandQuery { #sand.results.SandQuery }
+
+```python
+results.SandQuery(json_values)
+```
+
+Format a list of product dictionaries.
+
+This class is fully serializable using pickle for saving and loading query results.
+
+Args:
+    json_value (list[dict]): List of dictionaries, each representing a product
+        with keys like 'id', 'name', 'links', etc.
