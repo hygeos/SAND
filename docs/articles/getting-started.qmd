@@ -37,10 +37,9 @@ machine m2m.cr.usgs.gov
     password your_api_token
 ```
 
-> **Note:** Ensure the file has restricted permissions:
-> ```bash
-> chmod 600 ~/.netrc
-> ```
+::: {.callout-tip}
+Ensure the file has restricted permissions: `chmod 600 ~/.netrc`
+:::
 
 ## Basic workflow
 

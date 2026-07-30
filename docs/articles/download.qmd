@@ -352,9 +352,6 @@ archive_path = dl.download(product, out_dir / "nasa")
 ds = Level_L8_OLI(archive_path, verbose=False)
 ```
 
-```bash
-```
-
 ### Quicklook
 
 The cell below downloads the product's embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.

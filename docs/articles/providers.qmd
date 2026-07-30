@@ -41,10 +41,10 @@ results = dl.query(
 )
 ```
 
-### Notes
-
+::: {.callout-tip}
 - Uses OAuth2 token-based authentication (handled automatically)
 - Supports both OData and OpenSearch APIs
+:::
 
 ## CNES — Geodes
 
@@ -106,10 +106,10 @@ results = dl.query(
 )
 ```
 
-### Notes
-
+::: {.callout-tip}
 - Uses the official `eumdac` Python library under the hood
 - Tokens expire and are automatically refreshed
+:::
 
 ## NASA — CMR
 
@@ -137,10 +137,10 @@ results = dl.query(
 )
 ```
 
-### Notes
-
+::: {.callout-tip}
 - No login required for search queries
 - Authentication is only needed for downloads
+:::
 
 ## USGS — M2M API
 
@@ -174,10 +174,10 @@ results = dl.query(
 )
 ```
 
-### Notes
-
+::: {.callout-tip}
 - Requires explicit access request to M2M API datasets
 - Rate limits may apply
+:::
 
 ## Common patterns
 
