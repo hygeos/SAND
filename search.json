@@ -1,0 +1,557 @@
+[
+  {
+    "objectID": "reference/results.html",
+    "href": "reference/results.html",
+    "title": "results",
+    "section": "",
+    "text": "results\n\n\n\n\n\nName\nDescription\n\n\n\n\n\nResult for a query using any SAND downloader.\n\n\n\nFormat a list of product dictionaries.\n\n\n\n\n\n\n\n\n\nName\nDescription\n\n\n\n\n\nExtract a selection of collections from a reference table as pandas DataFrame\n\n\n\nDecorator that caches the result of a query function of SAND Downloader.",
+    "crumbs": [
+      "Results",
+      "results"
+    ]
+  },
+  {
+    "objectID": "reference/results.html#classes",
+    "href": "reference/results.html#classes",
+    "title": "results",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\n\nResult for a query using any SAND downloader.\n\n\n\nFormat a list of product dictionaries.",
+    "crumbs": [
+      "Results",
+      "results"
+    ]
+  },
+  {
+    "objectID": "reference/results.html#functions",
+    "href": "reference/results.html#functions",
+    "title": "results",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\n\nExtract a selection of collections from a reference table as pandas DataFrame\n\n\n\nDecorator that caches the result of a query function of SAND Downloader.",
+    "crumbs": [
+      "Results",
+      "results"
+    ]
+  },
+  {
+    "objectID": "reference/index.html",
+    "href": "reference/index.html",
+    "title": "API Reference",
+    "section": "",
+    "text": "Temporal, spatial, and naming constraints for querying satellite data products\n\n\n\nconstraint\n\n\n\nconstraint.Time\nRepresents a temporal constraint with start and end datetime.\n\n\nconstraint.Geo\nContainer class for geographic constraint types.\n\n\nconstraint.Name\n\n\n\n\n\n\n\nQuery result containers, product dataclasses, collections, and caching utilities\n\n\n\nresults\n\n\n\nresults.SandProduct\nResult for a query using any SAND downloader.\n\n\nresults.SandQuery\nFormat a list of product dictionaries.\n\n\nresults.Collection\nExtract a selection of collections from a reference table as pandas DataFrame\n\n\n\n\n\n\nName matching helpers for filtering products (contains, startswith, endswith, glob)\n\n\n\nutils\n\n\n\n\n\n\n\nDownload providers\n\n\n\ncopernicus_dataspace.DownloadCDSE\nPython interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)\n\n\ncnes.DownloadCNES\nPython interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)\n\n\neumdac.DownloadEumDAC\nPython interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)\n\n\nnasa.DownloadNASA\nPython interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)\n\n\nusgs.DownloadUSGS",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#constraint",
+    "href": "reference/index.html#constraint",
+    "title": "API Reference",
+    "section": "",
+    "text": "Temporal, spatial, and naming constraints for querying satellite data products\n\n\n\nconstraint\n\n\n\nconstraint.Time\nRepresents a temporal constraint with start and end datetime.\n\n\nconstraint.Geo\nContainer class for geographic constraint types.\n\n\nconstraint.Name",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#results",
+    "href": "reference/index.html#results",
+    "title": "API Reference",
+    "section": "",
+    "text": "Query result containers, product dataclasses, collections, and caching utilities\n\n\n\nresults\n\n\n\nresults.SandProduct\nResult for a query using any SAND downloader.\n\n\nresults.SandQuery\nFormat a list of product dictionaries.\n\n\nresults.Collection\nExtract a selection of collections from a reference table as pandas DataFrame",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#utils",
+    "href": "reference/index.html#utils",
+    "title": "API Reference",
+    "section": "",
+    "text": "Name matching helpers for filtering products (contains, startswith, endswith, glob)\n\n\n\nutils",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/index.html#providers",
+    "href": "reference/index.html#providers",
+    "title": "API Reference",
+    "section": "",
+    "text": "Download providers\n\n\n\ncopernicus_dataspace.DownloadCDSE\nPython interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)\n\n\ncnes.DownloadCNES\nPython interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)\n\n\neumdac.DownloadEumDAC\nPython interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)\n\n\nnasa.DownloadNASA\nPython interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)\n\n\nusgs.DownloadUSGS",
+    "crumbs": [
+      "API Reference"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.Geo.html",
+    "href": "reference/constraint.Geo.html",
+    "title": "constraint.Geo",
+    "section": "",
+    "text": "constraint.Geo()\nContainer class for geographic constraint types.\nThis class provides different geometry types for defining spatial constraints in satellite data queries. It includes Point and Polygon classes for defining areas of interest.\n\n\n\n\n\nName\nDescription\n\n\n\n\nPoint\nRepresents a point location with optional buffer zone.\n\n\nPolygon\nRepresents a rectangular polygon (bounding box).\n\n\n\n\n\nconstraint.Geo.Point(lat, lon, extend_factor=0.1)\nRepresents a point location with optional buffer zone.\nThis class defines a point constraint that can be diluted to create a small bounding box around the central point. This is useful for querying data that intersects with or is near a specific location.\nAttributes: center (tuple): Center coordinates as (latitude, longitude) bounds (tuple): Bounding box as (latmin, lonmin, latmax, lonmax)\n\n\n\nconstraint.Geo.Polygon(latmin, latmax, lonmin, lonmax)\nRepresents a rectangular polygon (bounding box).\nThis class defines a rectangular area of interest using minimum and maximum latitude and longitude values. It’s commonly used for querying satellite data over a specific geographic region.",
+    "crumbs": [
+      "Constraint",
+      "constraint.Geo"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.Geo.html#classes",
+    "href": "reference/constraint.Geo.html#classes",
+    "title": "constraint.Geo",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\nPoint\nRepresents a point location with optional buffer zone.\n\n\nPolygon\nRepresents a rectangular polygon (bounding box).\n\n\n\n\n\nconstraint.Geo.Point(lat, lon, extend_factor=0.1)\nRepresents a point location with optional buffer zone.\nThis class defines a point constraint that can be diluted to create a small bounding box around the central point. This is useful for querying data that intersects with or is near a specific location.\nAttributes: center (tuple): Center coordinates as (latitude, longitude) bounds (tuple): Bounding box as (latmin, lonmin, latmax, lonmax)\n\n\n\nconstraint.Geo.Polygon(latmin, latmax, lonmin, lonmax)\nRepresents a rectangular polygon (bounding box).\nThis class defines a rectangular area of interest using minimum and maximum latitude and longitude values. It’s commonly used for querying satellite data over a specific geographic region.",
+    "crumbs": [
+      "Constraint",
+      "constraint.Geo"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.Time.html",
+    "href": "reference/constraint.Time.html",
+    "title": "constraint.Time",
+    "section": "",
+    "text": "constraint.Time\nconstraint.Time(start=None, end=None)\nRepresents a temporal constraint with start and end datetime.\nThis class defines a time range for querying satellite data products. Dates can be provided as datetime objects or ISO format strings.",
+    "crumbs": [
+      "Constraint",
+      "constraint.Time"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.Name.html",
+    "href": "reference/constraint.Name.html",
+    "title": "constraint.Name",
+    "section": "",
+    "text": "constraint.Name\nconstraint.Name(contains=[], startswith='', endswith='', glob='.*')",
+    "crumbs": [
+      "Constraint",
+      "constraint.Name"
+    ]
+  },
+  {
+    "objectID": "reference/nasa.DownloadNASA.html",
+    "href": "reference/nasa.DownloadNASA.html",
+    "title": "nasa.DownloadNASA",
+    "section": "",
+    "text": "nasa.DownloadNASA\nnasa.DownloadNASA(verbose=True)\nPython interface to the NASA CMR API (https://cmr.earthdata.nasa.gov/)",
+    "crumbs": [
+      "Providers",
+      "nasa.DownloadNASA"
+    ]
+  },
+  {
+    "objectID": "reference/results.SandProduct.html",
+    "href": "reference/results.SandProduct.html",
+    "title": "results.SandProduct",
+    "section": "",
+    "text": "results.SandProduct\nresults.SandProduct(product_id, date, metadata, index=None)\nResult for a query using any SAND downloader.",
+    "crumbs": [
+      "Results",
+      "results.SandProduct"
+    ]
+  },
+  {
+    "objectID": "reference/results.SandQuery.html",
+    "href": "reference/results.SandQuery.html",
+    "title": "results.SandQuery",
+    "section": "",
+    "text": "results.SandQuery\nresults.SandQuery(json_values)\nFormat a list of product dictionaries.\nThis class is fully serializable using pickle for saving and loading query results.\nArgs: json_value (list[dict]): List of dictionaries, each representing a product with keys like ‘id’, ‘name’, ‘links’, etc.",
+    "crumbs": [
+      "Results",
+      "results.SandQuery"
+    ]
+  },
+  {
+    "objectID": "articles/download.html",
+    "href": "articles/download.html",
+    "title": "Download Products",
+    "section": "",
+    "text": "SAND provides three ways to retrieve product data from any provider:\nThis guide demonstrates each operation using a representative product from every provider.",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#copernicus-data-space-downloadcdse",
+    "href": "articles/download.html#copernicus-data-space-downloadcdse",
+    "title": "Download Products",
+    "section": "Copernicus Data Space (DownloadCDSE)",
+    "text": "Copernicus Data Space (DownloadCDSE)\nThis example demonstrates the workflow for a MSI (MultiSpectral Instrument) product from the Copernicus Data Space. The query searches for Sentinel-2 Level 2A acquisitions over Paris, France, with less than 30% cloud cover.\nThe cell below returns a SandProduct representing the first matching acquisition. Its string summary shows the product ID, acquisition date, and geographic footprint.\nfrom sand.copernicus_dataspace import DownloadCDSE\nfrom sand.constraint import Time, Geo\n\ndl = DownloadCDSE(verbose=False)\n\nresults = dl.query(\n    collection_sand=\"SENTINEL-2-MSI\",\n    level=2,\n    time=Time(\"2024-01-01\", \"2024-01-10\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n    cloudcover_thres=30,\n)\nproduct = results[0]\n\nAcquisition\nThe cell below downloads the full Sentinel-2 archive (a ZIP file) and opens it with eoread. The output is an xarray.Dataset that displays the spatial dimensions, band coordinates, and all data variables (reflectance bands, masks, etc.) ready for analysis.\nfrom eoread.msi import Level1_MSI\n\narchive_path = dl.download(product, out_dir / \"cdse\")\nds = Level1_MSI(archive_path, verbose=False)\n&lt;xarray.Dataset&gt; Size: 335MB\nDimensions:      (tie_rows: 23, tie_columns: 23, bands: 13, y: 1830, x: 1830)\nCoordinates:\n  * tie_rows     (tie_rows) int32 92B 0 83 166 249 332 ... 1579 1662 1745 1829\n  * tie_columns  (tie_columns) int32 92B 0 83 166 249 ... 1579 1662 1745 1829\n  * bands        (bands) &lt;U3 156B 'B1' 'B2' 'B3' 'B4' ... 'B9' 'B10' 'B11' 'B12'\n    bands_group  (bands) &lt;U9 468B 'bands_60m' 'bands_10m' ... 'bands_20m'\n  * y            (y) int64 15kB 0 1 2 3 4 5 6 ... 1824 1825 1826 1827 1828 1829\n  * x            (x) int64 15kB 0 1 2 3 4 5 6 ... 1824 1825 1826 1827 1828 1829\nData variables:\n    Rtoa         (bands, y, x) float32 174MB dask.array&lt;chunksize=(1, 457, 457), meta=np.ndarray&gt;\n    longitude    (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    latitude     (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    sza_tie      (tie_rows, tie_columns) float32 2kB 73.56 73.55 ... 72.37 72.36\n    sza          (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    saa_tie      (tie_rows, tie_columns) float32 2kB 165.3 165.3 ... 166.6 166.7\n    saa          (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    vza_tie      (tie_rows, tie_columns) float32 2kB 9.868 9.491 ... 2.176 2.346\n    vza          (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    vaa_tie      (tie_rows, tie_columns) float32 2kB 94.08 93.81 ... 217.1 226.1\n    vaa          (y, x) float64 27MB dask.array&lt;chunksize=(457, 457), meta=np.ndarray&gt;\n    cwav         (bands) float64 104B 442.3 492.3 559.0 ... 1.61e+03 2.186e+03\nAttributes: (12/14)\n    totalheight:       1830\n    totalwidth:        1830\n    datetime:          2024-01-05T10:57:28.322388Z\n    platform:          Sentinel-2B\n    resolution:        60\n    sensor:            MSI\n    ...                ...\n    user_guide:        https://sentinels.copernicus.eu/documents/247904/68521...\n    metadata_granule:  {'attributes': {'{http://www.w3.org/2001/XMLSchema-ins...\n    metadata:          {'attributes': {'{http://www.w3.org/2001/XMLSchema-ins...\n    _flag_reader:      eoread.msi.FlagsReader_MSI\n    _srf_getter:       eotools.srf.get_SRF_eumetsat\n    _srf_getter_arg:   sentinel2_2_msi\n\n\nQuicklook\nThe cell below downloads the product’s embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.\nfrom PIL import Image\nfrom tempfile import TemporaryDirectory\nimport matplotlib.pyplot as plt\n\nwith TemporaryDirectory() as tmpdir: \n    ql_path = dl.quicklook(product, tmpdir)\n    img = Image.open(ql_path)\n    plt.figure()\n    plt.title(ql_path.stem, fontdict={'fontsize': 8})\n    plt.imshow(img)\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\n\n\n\nExample of quicklook for MSI product\n\n\n\n\nMetadata\nThe cell below retrieves the complete product metadata as a Python dictionary. The output shows a selection of key fields such as the product ID, title, acquisition timestamp, and cloud cover percentage.\nmeta = dl.metadata(product)",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#cnes-geodes-downloadcnes",
+    "href": "articles/download.html#cnes-geodes-downloadcnes",
+    "title": "Download Products",
+    "section": "CNES Geodes (DownloadCNES)",
+    "text": "CNES Geodes (DownloadCNES)\nThis example demonstrates the workflow for a VENUS (Véhicule d’Expérimentation pour le Nouveau Système) product from CNES Geodes. The query searches for Level 2 VENUS acquisitions over Paris, France.\nThe cell below returns a SandProduct representing the first matching acquisition. Its string summary shows the product ID, acquisition date, and geographic footprint.\nfrom sand.cnes import DownloadCNES\n\ndl = DownloadCNES(verbose=False)\n\nresults = dl.query(\n    collection_sand=\"VENUS\",\n    level=1,\n    time=Time(\"2024-01-01\", \"2025-01-01\"),\n    geo=Geo.Tile(venus='VILAINE'),\n)\nproduct = results[0]\n\nAcquisition\nThe cell below downloads the full VENUS product archive and opens it with eoread. The output is an xarray.Dataset that displays the spatial dimensions, spectral bands, and all data variables (reflectance, atmospheric corrections, etc.) ready for analysis.\nfrom eoread.venus import Level_VENUS\n\narchive_path = dl.download(product, out_dir / \"cnes\")\nds = Level_VENUS(archive_path, verbose=False)\n&lt;xarray.Dataset&gt; Size: 25GB\nDimensions:      (bands: 12, bands_angle: 4, x_tie: 27, y_tie: 24, y: 11400,\n                  x: 12781)\nCoordinates:\n  * bands        (bands) &lt;U3 144B 'B1' 'B2' 'B3' 'B4' ... 'B9' 'B10' 'B11' 'B12'\n    bands_group  (bands) &lt;U10 480B 'bands_vnir' 'bands_vnir' ... 'bands_vnir'\n  * bands_angle  (bands_angle) int64 32B 1 2 3 4\n  * x_tie        (x_tie) float64 216B 5.091e+05 5.111e+05 ... 5.611e+05\n  * y_tie        (y_tie) float64 192B 5.269e+06 5.267e+06 ... 5.223e+06\n  * y            (y) int64 91kB 0 1 2 3 4 5 ... 11395 11396 11397 11398 11399\n  * x            (x) int64 102kB 0 1 2 3 4 5 ... 12776 12777 12778 12779 12780\nData variables:\n    cwav         (bands) int64 96B 424 447 492 555 620 ... 702 741 782 861 909\n    SOL_ALL      (bands_angle, y_tie, x_tie) float32 10kB dask.array&lt;chunksize=(4, 24, 27), meta=np.ndarray&gt;\n    VIE_ALL      (bands_angle, y_tie, x_tie) float32 10kB dask.array&lt;chunksize=(4, 24, 27), meta=np.ndarray&gt;\n    Rtoa         (bands, y, x) float32 7GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    longitude    (y, x) float64 1GB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    latitude     (y, x) float64 1GB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    CLA_ALL      (y, x) float32 583MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    CLD_XS       (y, x) float32 583MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    USI_XS       (y, x) float32 583MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    PIX          (bands, y, x) float32 7GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    SAT          (bands, y, x) float32 7GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\nAttributes: (12/14)\n    totalheight:       11400\n    totalwidth:        12781\n    datetime:          2024-01-08T10:55:16.000\n    platform:          VENUS\n    resolution:        4\n    sensor:            VENUS\n    ...                ...\n    metadata_granule:  {'attributes': {'{http://www.w3.org/2001/XMLSchema-ins...\n    metadata:          {'attributes': {'{http://www.w3.org/2001/XMLSchema-ins...\n    user_guide:        https://www.cesbio.cnrs.fr/multitemp/ven%c2%b5s-produc...\n    _flag_reader:      eoread.venus.FlagsReader_VENUS\n    _srf_getter:       eoread.venus.get_SRF\n    _srf_getter_arg:   None\n\n\nQuicklook\nThe cell below downloads the product’s embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.\nfrom PIL import Image\nfrom tempfile import TemporaryDirectory\nimport matplotlib.pyplot as plt\n\nwith TemporaryDirectory() as tmpdir: \n    ql_path = dl.quicklook(product, tmpdir)\n    img = Image.open(ql_path)\n    plt.figure()\n    plt.title(ql_path.stem, fontdict={'fontsize': 8})\n    plt.imshow(img)\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\n\n\n\nExample of quicklook for VENµS product\n\n\n\n\nMetadata\nThe cell below retrieves the complete product metadata as a Python dictionary. The output shows key fields such as the product ID, geometry (footprint), and properties (acquisition parameters, sensor settings, etc.).\nmeta = dl.metadata(product)",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#eumetsat-data-store-downloadeumdac",
+    "href": "articles/download.html#eumetsat-data-store-downloadeumdac",
+    "title": "Download Products",
+    "section": "EUMETSAT Data Store (DownloadEumDAC)",
+    "text": "EUMETSAT Data Store (DownloadEumDAC)\nThis example demonstrates the workflow for an OLCI (Ocean and Land Colour Instrument) product from the EUMETSAT Data Store. The query searches for Sentinel-3 Level 2 acquisitions over Paris, France.\nThe cell below returns a SandProduct representing the first matching acquisition. Its string summary shows the product ID, acquisition date, and geographic footprint.\nfrom sand.eumdac import DownloadEumDAC\n\ndl = DownloadEumDAC(verbose=False)\n\nresults = dl.query(\n    collection_sand=\"SENTINEL-3-OLCI-FR\",\n    level=1,\n    time=Time(\"2024-06-01\", \"2024-06-10\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n)\nproduct = results[0]\n\nAcquisition\nThe cell below downloads the full Sentinel-3 OLCI product archive and opens it with eoread. The output is an xarray.Dataset that displays the spatial dimensions, spectral bands, and all data variables (reflectance, temperature, quality flags, etc.) ready for analysis.\nfrom eoread.olci import Level1_OLCI\n\narchive_path = dl.download(product, out_dir / \"eumdac\")\nds = Level1_OLCI(archive_path, verbose=False)\n&lt;xarray.Dataset&gt; Size: 10GB\nDimensions:                          (bands: 21, y: 4091, x: 4865,\n                                      tie_columns: 77, tie_rows: 4091,\n                                      detectors: 3700)\nCoordinates:\n  * bands                            (bands) &lt;U4 336B 'Oa01' 'Oa02' ... 'Oa21'\n    bands_group                      (bands) &lt;U10 840B dask.array&lt;chunksize=(1,), meta=np.ndarray&gt;\n  * y                                (y) int64 33kB 0 1 2 3 ... 4088 4089 4090\n  * x                                (x) int64 39kB 0 1 2 3 ... 4862 4863 4864\n  * tie_columns                      (tie_columns) int64 616B 0 64 ... 4800 4864\n  * tie_rows                         (tie_rows) int64 33kB 0 1 2 ... 4089 4090\nDimensions without coordinates: detectors\nData variables: (12/31)\n    cwav                             (bands) float64 168B dask.array&lt;chunksize=(1,), meta=np.ndarray&gt;\n    Ltoa                             (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    altitude                         (y, x) float32 80MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    latitude                         (y, x) float32 80MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    longitude                        (y, x) float32 80MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    sza                              (y, x) float64 159MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    ...                               ...\n    lambda0                          (bands, detectors) float32 311kB dask.array&lt;chunksize=(1, 3700), meta=np.ndarray&gt;\n    solar_flux                       (bands, detectors) float32 311kB dask.array&lt;chunksize=(1, 3700), meta=np.ndarray&gt;\n    quality_flags                    (y, x) uint32 80MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    wav                              (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    F0                               (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    Rtoa                             (bands, y, x) float64 3GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\nAttributes:\n    metadata:         {'attributes': {'version': 'esa/safe/sentinel/sentinel-...\n    footprint_lat:    (41.9714, 41.8936, 41.8118, 41.7241, 41.6322, 41.5321, ...\n    footprint_lon:    (-2.45334, -1.61412, -0.794523, 0.023626, 0.847814, 1.6...\n    datetime:         2024-06-01T09:52:17.556382+00:00\n    platform:         Sentinel-3A\n    resolution:       500\n    sensor:           OLCI\n    product_name:     S3A_OL_1_EFR____20240601T095048_20240601T095348_2024092...\n    input_directory:  tmpdir/S3A_OL_1_EFR____20240601T095048_20240601T095348_...\n    _flag_reader:     eoread.olci.FlagsReader_OLCI\n    _srf_getter:      eotools.srf.get_SRF_olci\n    _srf_getter_arg:  sentinel3_1_olci\n\n\nQuicklook\nThe cell below downloads the product’s embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.\nfrom PIL import Image\nfrom tempfile import TemporaryDirectory\nimport matplotlib.pyplot as plt\n\nwith TemporaryDirectory() as tmpdir: \n    ql_path = dl.quicklook(product, tmpdir)\n    img = Image.open(ql_path)\n    plt.figure()\n    plt.title(ql_path.stem, fontdict={'fontsize': 8})\n    plt.imshow(img)\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\n\n\n\nExample of quicklook for OLCI product\n\n\n\n\nMetadata\nThe cell below retrieves the complete product metadata as a Python dictionary. The output shows a selection of key fields such as the product ID, title, acquisition timestamp, and processing level.\nmeta = dl.metadata(product)\n{key: meta[key] for key in list(meta.keys())[:8]}",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#nasa-earthdata-downloadnasa",
+    "href": "articles/download.html#nasa-earthdata-downloadnasa",
+    "title": "Download Products",
+    "section": "NASA Earthdata (DownloadNASA)",
+    "text": "NASA Earthdata (DownloadNASA)\nThis example demonstrates the workflow for an OLI (Operational Land Imager) product from NASA Earthdata. The query searches for Landsat-8 Level 2 surface reflectance acquisitions over Paris, France, with less than 20% cloud cover.\nThe cell below returns a SandProduct representing the first matching acquisition. Its string summary shows the product ID, acquisition date, and geographic footprint.\nfrom sand.nasa import DownloadNASA\n\ndl = DownloadNASA(verbose=False)\n\nresults = dl.query(\n    collection_sand=\"ISS-ECOSTRESS\",\n    level=1,\n    time=Time(\"2024-07-01\", \"2024-08-10\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n)\nproduct = results[0]\n\nAcquisition\nThe cell below downloads the full Landsat-8 product archive and opens it with eoread. The output is an xarray.Dataset that displays the spatial dimensions, spectral bands, and all data variables (surface reflectance, thermal bands, pixel quality, etc.) ready for analysis.\nfrom eoread.landsat8_oli import Level_L8_OLI\n\narchive_path = dl.download(product, out_dir / \"nasa\")\nds = Level_L8_OLI(archive_path, verbose=False)\n\n\nQuicklook\nThe cell below downloads the product’s embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.\nfrom PIL import Image\nfrom tempfile import TemporaryDirectory\nimport matplotlib.pyplot as plt\n\nwith TemporaryDirectory() as tmpdir: \n    ql_path = dl.quicklook(product, tmpdir)\n    img = Image.open(ql_path)\n    plt.figure()\n    plt.title(ql_path.stem, fontdict={'fontsize': 8})\n    plt.imshow(img)\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\n\n\nMetadata\nThe cell below retrieves the complete product metadata as a Python dictionary. The output shows key fields such as the product ID, title, summary description, and the URLs to access the product assets.\nmeta = dl.metadata(product)\n{key: meta[key] for key in list(meta.keys())[:8]}",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#usgs-downloadusgs",
+    "href": "articles/download.html#usgs-downloadusgs",
+    "title": "Download Products",
+    "section": "USGS (DownloadUSGS)",
+    "text": "USGS (DownloadUSGS)\nThis example demonstrates the workflow for an OLI (Operational Land Imager) product from USGS. The query searches for Landsat-9 Level 1 surface reflectance acquisitions over Paris, France, with less than 20% cloud cover.\nThe cell below returns a SandProduct representing the first matching acquisition. Its string summary shows the product ID, acquisition date, and geographic footprint.\nfrom sand.usgs import DownloadUSGS\n\ndl = DownloadUSGS(verbose=False)\n\nresults = dl.query(\n    collection_sand=\"LANDSAT-9-OLI\",\n    level=1,\n    time=Time(\"2024-06-01\", \"2025-06-10\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n    cloudcover_thres=20,\n)\nproduct = results[0]\n\nAcquisition\nThe cell below downloads the full Landsat-9 product archive and opens it with eoread. The output is an xarray.Dataset that displays the spatial dimensions, spectral bands, and all data variables (surface reflectance, thermal bands, pixel quality, etc.) ready for analysis.\nfrom eoread.landsat9_oli import Level_L9_OLI\n\narchive_path = dl.download(product, out_dir / \"usgs\")\nds = Level_L9_OLI(archive_path, verbose=False)\n&lt;xarray.Dataset&gt; Size: 11GB\nDimensions:       (y: 7911, x: 7821, x_pan: 15821, y_pan: 15641, bands: 10)\nCoordinates:\n  * y             (y) int64 63kB 0 1 2 3 4 5 6 ... 7905 7906 7907 7908 7909 7910\n  * x             (x) int64 63kB 0 1 2 3 4 5 6 ... 7815 7816 7817 7818 7819 7820\n  * bands         (bands) &lt;U2 80B '1' '2' '3' '4' '5' '6' '7' '9' '10' '11'\n    bands_group   (bands) &lt;U10 400B 'bands_vnir' 'bands_vnir' ... 'bands_ir'\nDimensions without coordinates: x_pan, y_pan\nData variables: (12/13)\n    saa           (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    sza           (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    vaa           (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    vza           (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    QA_RADSAT     (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    QA_PIXEL      (y, x) float32 247MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    ...            ...\n    Ltoa          (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    Rtoa          (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    BT            (bands, y, x) float32 2GB dask.array&lt;chunksize=(1, 500, 500), meta=np.ndarray&gt;\n    latitude      (y, x) float64 495MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    longitude     (y, x) float64 495MB dask.array&lt;chunksize=(500, 500), meta=np.ndarray&gt;\n    cwav          (bands) float64 80B 443.0 482.0 561.4 ... 1.09e+04 1.205e+04\nAttributes:\n    metadata:         {'PRODUCT_CONTENTS': {'ORIGIN': 'Image courtesy of the ...\n    datetime:         2024-02-09T10:34:57.5923370Z\n    totalheight:      7911\n    totalwidth:       7821\n    platform:         LANDSAT_9\n    sensor:           OLI_TIRS\n    product_name:     LC09_L1GT_198026_20240209_20240209_02_T2\n    resolution:       30\n    user_guide:       https://greenpolicy360.net/images/Landsat8DataUsersHand...\n    _flag_reader:     eoread.oli.FlagsReader_OLI\n    _srf_getter:      eoread.oli.get_srf_landsat_oli\n    _srf_getter_arg:  landsat_9_oli\n\n\nQuicklook\nThe cell below downloads the product’s embedded thumbnail and renders it. The output is a true-color preview image, useful for visually confirming the scene quality before downloading the full acquisition.\nfrom PIL import Image\nfrom tempfile import TemporaryDirectory\nimport matplotlib.pyplot as plt\n\nwith TemporaryDirectory() as tmpdir: \n    ql_path = dl.quicklook(product, tmpdir)\n    img = Image.open(ql_path)\n    plt.figure()\n    plt.title(ql_path.stem, fontdict={'fontsize': 8})\n    plt.imshow(img)\n    plt.axis(\"off\")\n    plt.tight_layout()\n    plt.show()\n\n\n\nExample of quicklook for Landsat-9 product\n\n\n\n\nMetadata\nThe cell below retrieves the complete product metadata as a Python dictionary. The output shows a selection of key fields such as the product ID, path/row, acquisition timestamp, and cloud cover percentage.\nmeta = dl.metadata(product)\n{key: meta[key] for key in list(meta.keys())[:8]}",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/download.html#summary",
+    "href": "articles/download.html#summary",
+    "title": "Download Products",
+    "section": "Summary",
+    "text": "Summary\n\n\n\n\n\n\n\n\n\nProvider\nCollection\neoread reader\nLevel class\n\n\n\n\nDownloadCDSE\nSENTINEL-2-MSI\neoread.msi.Level1_MSI\nLevel1_MSI\n\n\nDownloadCNES\nVENUS\neoread.venus.Level1_VENUS\nLevel1_VENUS\n\n\nDownloadEumDAC\nSENTINEL-3-OLCI-FR\neoread.olci.Level1_OLCI\nLevel1_OLCI\n\n\nDownloadNASA\nLANDSAT-8-OLI\neoread.oli.Level1_OLI\nLevel1_OLI\n\n\nDownloadUSGS\nLANDSAT-9-OLI\neoread.oli.Level1_OLI\nLevel1_OLI\n\n\n\nNot all collections have an eoread reader. Refer to the API Reference for the full list of supported collections per provider.",
+    "crumbs": [
+      "Download Products"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html",
+    "href": "articles/providers.html",
+    "title": "Providers",
+    "section": "",
+    "text": "SAND supports five satellite data providers, each with specific authentication and configuration requirements.\n\n\n\nProvider\nClass\nURL\nAuth method\n\n\n\n\nCDSE\nDownloadCDSE\ndataspace.copernicus.eu\nEmail + Password\n\n\nCNES\nDownloadCNES\ngeodes-portal.cnes.fr\nEmail + Token\n\n\nEumDAC\nDownloadEumDAC\ndata.eumetsat.int\nAPI Key + Secret\n\n\nNASA\nDownloadNASA\ncmr.earthdata.nasa.gov\nUsername + Password\n\n\nUSGS\nDownloadUSGS\nm2m.cr.usgs.gov\nEmail + API Token",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#overview",
+    "href": "articles/providers.html#overview",
+    "title": "Providers",
+    "section": "",
+    "text": "SAND supports five satellite data providers, each with specific authentication and configuration requirements.\n\n\n\nProvider\nClass\nURL\nAuth method\n\n\n\n\nCDSE\nDownloadCDSE\ndataspace.copernicus.eu\nEmail + Password\n\n\nCNES\nDownloadCNES\ngeodes-portal.cnes.fr\nEmail + Token\n\n\nEumDAC\nDownloadEumDAC\ndata.eumetsat.int\nAPI Key + Secret\n\n\nNASA\nDownloadNASA\ncmr.earthdata.nasa.gov\nUsername + Password\n\n\nUSGS\nDownloadUSGS\nm2m.cr.usgs.gov\nEmail + API Token",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#cdse-copernicus-data-space",
+    "href": "articles/providers.html#cdse-copernicus-data-space",
+    "title": "Providers",
+    "section": "CDSE — Copernicus Data Space",
+    "text": "CDSE — Copernicus Data Space\nRegistration: dataspace.copernicus.eu\n\nAuthentication\nmachine dataspace.copernicus.eu\n    login your@email.com\n    password your_password\n\n\nUsage\nfrom sand.copernicus_dataspace import DownloadCDSE\n\ndl = DownloadCDSE()\nresults = dl.query(\n    collection_sand=\"SENTINEL-2-MSI\",\n    level=2,\n    time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n)\n\n\n\n\n\n\nTip\n\n\n\n\nUses OAuth2 token-based authentication (handled automatically)\nSupports both OData and OpenSearch APIs",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#cnes-geodes",
+    "href": "articles/providers.html#cnes-geodes",
+    "title": "Providers",
+    "section": "CNES — Geodes",
+    "text": "CNES — Geodes\nRegistration: geodes-portal.cnes.fr\n\nAuthentication\n\nRegister on Geodes portal\nGenerate an API token from your account settings\nConfigure .netrc:\n\nmachine geodes.cnes.fr\n    login your@email.com\n    password your_token_secret\n\n\nUsage\nfrom sand.cnes import DownloadCNES\n\ndl = DownloadCNES()\nresults = dl.query(\n    collection_sand=\"SENTINEL-1-SAR\",\n    level=1,\n    time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n    geo=Geo.Polygon(lat_min=48.8, lat_max=48.9, lon_min=2.3, lon_max=2.4),\n)",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#eumdac-eumetsat-data-store",
+    "href": "articles/providers.html#eumdac-eumetsat-data-store",
+    "title": "Providers",
+    "section": "EumDAC — EUMETSAT Data Store",
+    "text": "EumDAC — EUMETSAT Data Store\nRegistration: data.eumetsat.int\n\nAuthentication\n\nRegister on EUMETSAT Data Store\nCreate an API key from the dashboard\nConfigure .netrc:\n\nmachine data.eumetsat.int\n    login your_api_key\n    password your_api_secret\n\n\nUsage\nfrom sand.eumdac import DownloadEumDAC\n\ndl = DownloadEumDAC()\nresults = dl.query(\n    collection_sand=\"SENTINEL-3-OLCI\",\n    level=2,\n    time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n)\n\n\n\n\n\n\nTip\n\n\n\n\nUses the official eumdac Python library under the hood\nTokens expire and are automatically refreshed",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#nasa-cmr",
+    "href": "articles/providers.html#nasa-cmr",
+    "title": "Providers",
+    "section": "NASA — CMR",
+    "text": "NASA — CMR\nRegistration: urs.earthdata.nasa.gov\n\nAuthentication\nmachine urs.earthdata.nasa.gov\n    login your_username\n    password your_password\n\n\nUsage\nfrom sand.nasa import DownloadNASA\n\ndl = DownloadNASA()\nresults = dl.query(\n    collection_sand=\"LANDSAT-8-OLI\",\n    level=1,\n    time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n)\n\n\n\n\n\n\nTip\n\n\n\n\nNo login required for search queries\nAuthentication is only needed for downloads",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#usgs-m2m-api",
+    "href": "articles/providers.html#usgs-m2m-api",
+    "title": "Providers",
+    "section": "USGS — M2M API",
+    "text": "USGS — M2M API\nRegistration: ers.cr.usgs.gov\n\nAuthentication\n\nRegister on USGS EarthExplorer\nRequest access to M2M API datasets\nGenerate an API token\nConfigure .netrc:\n\nmachine m2m.cr.usgs.gov\n    login your@email.com\n    password your_api_token\n\n\nUsage\nfrom sand.usgs import DownloadUSGS\n\ndl = DownloadUSGS()\nresults = dl.query(\n    collection_sand=\"LANDSAT-8-OLI\",\n    level=1,\n    time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),\n    cloudcover_thres=10,\n)\n\n\n\n\n\n\nTip\n\n\n\n\nRequires explicit access request to M2M API datasets\nRate limits may apply",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#common-patterns",
+    "href": "articles/providers.html#common-patterns",
+    "title": "Providers",
+    "section": "Common patterns",
+    "text": "Common patterns\n\nListing available collections\n# Get available collections as a DataFrame\ndf = dl.get_available_collection()\nprint(df)\n\n\nFiltering collections\nfrom sand.results import Collection\n\n# Filter collections by provider\ncollections = Collection(dl.get_available_collection(), provider=\"usgs\")\nprint(collections)\n\n\nDownload options\n# Download with different conflict handling\ndl.download(product, dir=\"./data\", if_exists=\"skip\")      # Skip existing files\ndl.download(product, dir=\"./data\", if_exists=\"overwrite\")  # Overwrite existing\ndl.download(product, dir=\"./data\", if_exists=\"backup\")     # Backup then overwrite\ndl.download(product, dir=\"./data\", if_exists=\"error\")      # Raise error if exists\n\n\nParallel downloads\n# Download multiple products in parallel\npaths = dl.download_all(results, dir=\"./data\", parallelized=True)",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/providers.html#next-steps",
+    "href": "articles/providers.html#next-steps",
+    "title": "Providers",
+    "section": "Next steps",
+    "text": "Next steps\n\nSee the API Reference for detailed class documentation\nSee Getting Started for basic usage",
+    "crumbs": [
+      "Providers"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html",
+    "href": "articles/getting-started.html",
+    "title": "Getting Started",
+    "section": "",
+    "text": "Install SAND from the GitHub repository:\npip install https://github.com/hygeos/SAND.git",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#installation",
+    "href": "articles/getting-started.html#installation",
+    "title": "Getting Started",
+    "section": "",
+    "text": "Install SAND from the GitHub repository:\npip install https://github.com/hygeos/SAND.git",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#authentication",
+    "href": "articles/getting-started.html#authentication",
+    "title": "Getting Started",
+    "section": "Authentication",
+    "text": "Authentication\nSAND uses the ~/.netrc file for authentication. Create or edit this file with your provider credentials:\nmachine dataspace.copernicus.eu\n    login your@email.com\n    password your_password\n\nmachine geodes.cnes.fr\n    login your@email.com\n    password your_token_secret\n\nmachine data.eumetsat.int\n    login your_api_key\n    password your_api_secret\n\nmachine urs.earthdata.nasa.gov\n    login your_username\n    password your_password\n\nmachine m2m.cr.usgs.gov\n    login your@email.com\n    password your_api_token\n\n\n\n\n\n\nTip\n\n\n\nEnsure the file has restricted permissions: chmod 600 ~/.netrc",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#basic-workflow",
+    "href": "articles/getting-started.html#basic-workflow",
+    "title": "Getting Started",
+    "section": "Basic workflow",
+    "text": "Basic workflow\nThe typical SAND workflow has three steps :\n\nInitialize a provider\nQuery for products matching your constraints\nDownload the selected products\n\n\nStep 1: Initialize a provider\nfrom sand.usgs import DownloadUSGS\n\n# Create a downloader instance\ndl = DownloadUSGS()\nAvailable providers :\n\nDownloadCDSE — Copernicus Data Space\nDownloadCNES — CNES Geodes\nDownloadEumDAC — EUMETSAT Data Store\nDownloadNASA — NASA CMR\nDownloadUSGS — USGS M2M API\n\n\n\nStep 2: Query products\nUse the query() method with temporal, spatial, and naming constraints :\nfrom sand.constraint import Time, Geo\nfrom datetime import datetime\n\nresults = dl.query(\n    collection_sand=\"LANDSAT-8-OLI\",\n    level=1,\n    time=Time(\n        start=datetime(2020, 1, 1),\n        end=datetime(2020, 12, 31)\n    ),\n    geo=Geo.Point(lat=48.8566, lon=2.3522),  # Paris\n    cloudcover_thres=20,\n)\n\n# Print results\nresults.print()\n\n# Access individual products\nfor product in results:\n    print(product.product_id, product.date)\n\n\nStep 3: Download\nfrom pathlib import Path\n\n# Download a single product\npath = dl.download(results[0], dir=\"./data\")\nprint(f\"Downloaded to: {path}\")\n\n# Download all products\npaths = dl.download_all(results, dir=\"./data\", if_exists=\"skip\")",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#constraints",
+    "href": "articles/getting-started.html#constraints",
+    "title": "Getting Started",
+    "section": "Constraints",
+    "text": "Constraints\n\nTemporal constraints\nfrom sand.constraint import Time\nfrom datetime import datetime\n\n# Full datetime\nt = Time(start=\"2024-01-01\", end=\"2024-06-30\")\n\n# Date only (end of day is applied automatically)\nfrom datetime import date\nt = Time(start=date(2024, 1, 1), end=date(2024, 6, 30))\n\n\nSpatial constraints\nfrom sand.constraint import Geo\n\n# Point with buffer (~11km at equator)\npoint = Geo.Point(lat=48.8566, lon=2.3522, extend_factor=0.1)\n\n# Bounding box\npolygon = Geo.Polygon(lat_min=48.8, lat_max=48.9, lon_min=2.3, lon_max=2.4)\n\n# MGRS/VENUS tile\ntile = Geo.Tile(\"31TUU\")\n\n\nNaming constraints\nfrom sand.constraint import Name\n\n# Name contains all of these strings\nname = Name(contains=[\"T31\", \"S2A\"])\n\n# Name starts with prefix\nname = Name(startswith=\"S2A_MSIL2A\")\n\n# Name matches glob pattern\nname = Name(glob=\"*T31TUU*\")",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#caching-query-results",
+    "href": "articles/getting-started.html#caching-query-results",
+    "title": "Getting Started",
+    "section": "Caching query results",
+    "text": "Caching query results\nUse the cache_sandquery decorator to cache query results to JSON :\nfrom sand.results import cache_sandquery\n\n@cache_sandquery(\"./cache.json\")\ndef my_query():\n    return dl.query(\n        collection_sand=\"SENTINEL-2-MSI\",\n        time=Time(start=\"2024-01-01\", end=\"2024-01-31\"),\n        geo=Geo.Point(lat=48.8566, lon=2.3522),\n    )\n\n# First call executes the query and caches results\nresults = my_query()\n\n# Subsequent calls load from cache\nresults = my_query()",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "articles/getting-started.html#next-steps",
+    "href": "articles/getting-started.html#next-steps",
+    "title": "Getting Started",
+    "section": "Next steps",
+    "text": "Next steps\n\nSee the Providers guide for provider-specific configuration\nBrowse the API Reference for detailed class and method documentation",
+    "crumbs": [
+      "Getting Started"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "SAND",
+    "section": "",
+    "text": "SAND is a Python module that simplifies the downloading of satellite data from various providers. It acts as a unified proxy for executing API requests, with a minimal dependency footprint suitable for production pipelines.\n\n\n\n\n\nProvider\nURL\nAuth\n\n\n\n\nCDSE\ndataspace.copernicus.eu\n.netrc\n\n\nCNES\ngeodes.cnes.fr\n.netrc + token\n\n\nEumDAC\ndata.eumetsat.int\n.netrc + token\n\n\nNASA\ncmr.earthdata.nasa.gov\n.netrc\n\n\nUSGS\nm2m.cr.usgs.gov\n.netrc + token",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "index.html#what-is-sand",
+    "href": "index.html#what-is-sand",
+    "title": "SAND",
+    "section": "",
+    "text": "SAND is a Python module that simplifies the downloading of satellite data from various providers. It acts as a unified proxy for executing API requests, with a minimal dependency footprint suitable for production pipelines.\n\n\n\n\n\nProvider\nURL\nAuth\n\n\n\n\nCDSE\ndataspace.copernicus.eu\n.netrc\n\n\nCNES\ngeodes.cnes.fr\n.netrc + token\n\n\nEumDAC\ndata.eumetsat.int\n.netrc + token\n\n\nNASA\ncmr.earthdata.nasa.gov\n.netrc\n\n\nUSGS\nm2m.cr.usgs.gov\n.netrc + token",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "SAND",
+    "section": "Installation",
+    "text": "Installation\npip install https://github.com/hygeos/SAND.git",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "index.html#quickstart",
+    "href": "index.html#quickstart",
+    "title": "SAND",
+    "section": "Quickstart",
+    "text": "Quickstart\nThe following example searches for and downloads LANDSAT acquisitions from USGS :\nfrom sand.usgs import DownloadUSGS\nfrom sand.constraint import Time, Geo\nfrom datetime import datetime\n\n# Initialize provider\ndl = DownloadUSGS('LANDSAT-5-TM', level=1)\n\n# Search\nresults = dl.query(\n    time=Time(datetime(2000, 12, 10), datetime(2005, 12, 10)),\n    geo=Geo.Point(119.514442, -8.411750),\n)\n\n# Download first result\ndl.download(results[0], './data')",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "index.html#documentation",
+    "href": "index.html#documentation",
+    "title": "SAND",
+    "section": "Documentation",
+    "text": "Documentation\n\n@ref — Référence API complète (classes, méthodes, fonctions)\n@ref — Guide de démarrage\n@ref — Configuration par provider",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "index.html#configuration",
+    "href": "index.html#configuration",
+    "title": "SAND",
+    "section": "Configuration",
+    "text": "Configuration\nTous les providers utilisent le fichier ~/.netrc pour l’authentification :\nmachine dataspace.copernicus.eu\n    login your@email.com\n    password your_password\nVoir la section providers pour les détails par provider.",
+    "crumbs": [
+      "Home",
+      "SAND"
+    ]
+  },
+  {
+    "objectID": "reference/usgs.DownloadUSGS.html",
+    "href": "reference/usgs.DownloadUSGS.html",
+    "title": "usgs.DownloadUSGS",
+    "section": "",
+    "text": "usgs.DownloadUSGS\nusgs.DownloadUSGS(verbose=True)",
+    "crumbs": [
+      "Providers",
+      "usgs.DownloadUSGS"
+    ]
+  },
+  {
+    "objectID": "reference/copernicus_dataspace.DownloadCDSE.html",
+    "href": "reference/copernicus_dataspace.DownloadCDSE.html",
+    "title": "copernicus_dataspace.DownloadCDSE",
+    "section": "",
+    "text": "copernicus_dataspace.DownloadCDSE\ncopernicus_dataspace.DownloadCDSE(verbose=True)\nPython interface to the Copernicus Data Space (https://dataspace.copernicus.eu/)\nThis class implements the BaseDownload interface for accessing and downloading satellite data from Copernicus Data Space. It supports both OData and OpenSearch APIs.",
+    "crumbs": [
+      "Providers",
+      "copernicus_dataspace.DownloadCDSE"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.html",
+    "href": "reference/constraint.html",
+    "title": "constraint",
+    "section": "",
+    "text": "constraint\n\n\n\n\n\nName\nDescription\n\n\n\n\n\nContainer class for geographic constraint types.\n\n\n\nRepresents a temporal constraint with start and end datetime.",
+    "crumbs": [
+      "Constraint",
+      "constraint"
+    ]
+  },
+  {
+    "objectID": "reference/constraint.html#classes",
+    "href": "reference/constraint.html#classes",
+    "title": "constraint",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\n\nContainer class for geographic constraint types.\n\n\n\nRepresents a temporal constraint with start and end datetime.",
+    "crumbs": [
+      "Constraint",
+      "constraint"
+    ]
+  },
+  {
+    "objectID": "reference/results.Collection.html",
+    "href": "reference/results.Collection.html",
+    "title": "results.Collection",
+    "section": "",
+    "text": "results.Collection\nresults.Collection(selection, collec_table)\nExtract a selection of collections from a reference table as pandas DataFrame\nThis function filters a reference table of collections to include only the requested collections, verifying that all requested collections exist.\nArgs: selection (list[str]): List of collection names to select collec_table (pd.DataFrame): Reference table containing collection information. Must have a ‘Name’ column containing collection names.\nReturns: pd.DataFrame: Filtered table containing only the selected collections, sorted by collection name\nRaises: AssertionError: If any requested collection name is not found in the reference table\nExample: &gt;&gt;&gt; ref_table = pd.DataFrame({ … ‘Name’: [‘LANDSAT-5-TM’, ‘SENTINEL-2’, ‘VENUS’], … ‘Level’: [1, 2, 1] … }) &gt;&gt;&gt; selected = Collection([‘LANDSAT-5-TM’, ‘VENUS’], ref_table) &gt;&gt;&gt; print(selected[‘Name’]) 0 LANDSAT-5-TM 1 VENUS",
+    "crumbs": [
+      "Results",
+      "results.Collection"
+    ]
+  },
+  {
+    "objectID": "reference/utils.html",
+    "href": "reference/utils.html",
+    "title": "utils",
+    "section": "",
+    "text": "utils\n\n\n\n\n\nName\nDescription\n\n\n\n\ncheck_name_contains\nCheck if a name contains all elements from a list of strings\n\n\ncheck_name_endswith\nCheck if a name ends with the given suffix\n\n\ncheck_name_glob\nCheck if a name matches a regular expression pattern\n\n\ncheck_name_startswith\nCheck if a name starts with the given prefix\n\n\nend_of_day\nAdjust a datetime to the end of the day if it’s set to midnight\n\n\nflip_coords\nFlip x and y coordinates in a geometry\n\n\n\n\n\nutils.check_name_contains(name, elements)\nCheck if a name contains all elements from a list of strings\nArgs: name (str): The name to check elements (list[str]): List of strings that should be present in the name\nReturns: bool: True if all elements are found in the name, False otherwise\n\n\n\nutils.check_name_endswith(name, suffix)\nCheck if a name ends with the given suffix\nArgs: name (str): The name to check suffix (str): The suffix to look for\nReturns: bool: True if name ends with suffix, False otherwise\n\n\n\nutils.check_name_glob(name, regexp)\nCheck if a name matches a regular expression pattern\nArgs: name (str): The name to check regexp (str): Regular expression pattern to match against\nReturns: bool: True if name matches the pattern exactly, False otherwise\n\n\n\nutils.check_name_startswith(name, prefix)\nCheck if a name starts with the given prefix\nArgs: name (str): The name to check prefix (str): The prefix to look for\nReturns: bool: True if name starts with prefix, False otherwise\n\n\n\nutils.end_of_day(date)\nAdjust a datetime to the end of the day if it’s set to midnight\nArgs: date (datetime): The datetime object to adjust\nReturns: datetime: If input is midnight (00:00:00), returns 23:59:59 of the same day. Otherwise returns the input unchanged.\n\n\n\nutils.flip_coords(geo)\nFlip x and y coordinates in a geometry\nArgs: geo: A shapely geometry object\nReturns: Transformed geometry with x and y coordinates swapped\nNote: Useful for converting between (x,y) and (lat,lon) coordinate orders",
+    "crumbs": [
+      "Utils",
+      "utils"
+    ]
+  },
+  {
+    "objectID": "reference/utils.html#functions",
+    "href": "reference/utils.html#functions",
+    "title": "utils",
+    "section": "",
+    "text": "Name\nDescription\n\n\n\n\ncheck_name_contains\nCheck if a name contains all elements from a list of strings\n\n\ncheck_name_endswith\nCheck if a name ends with the given suffix\n\n\ncheck_name_glob\nCheck if a name matches a regular expression pattern\n\n\ncheck_name_startswith\nCheck if a name starts with the given prefix\n\n\nend_of_day\nAdjust a datetime to the end of the day if it’s set to midnight\n\n\nflip_coords\nFlip x and y coordinates in a geometry\n\n\n\n\n\nutils.check_name_contains(name, elements)\nCheck if a name contains all elements from a list of strings\nArgs: name (str): The name to check elements (list[str]): List of strings that should be present in the name\nReturns: bool: True if all elements are found in the name, False otherwise\n\n\n\nutils.check_name_endswith(name, suffix)\nCheck if a name ends with the given suffix\nArgs: name (str): The name to check suffix (str): The suffix to look for\nReturns: bool: True if name ends with suffix, False otherwise\n\n\n\nutils.check_name_glob(name, regexp)\nCheck if a name matches a regular expression pattern\nArgs: name (str): The name to check regexp (str): Regular expression pattern to match against\nReturns: bool: True if name matches the pattern exactly, False otherwise\n\n\n\nutils.check_name_startswith(name, prefix)\nCheck if a name starts with the given prefix\nArgs: name (str): The name to check prefix (str): The prefix to look for\nReturns: bool: True if name starts with prefix, False otherwise\n\n\n\nutils.end_of_day(date)\nAdjust a datetime to the end of the day if it’s set to midnight\nArgs: date (datetime): The datetime object to adjust\nReturns: datetime: If input is midnight (00:00:00), returns 23:59:59 of the same day. Otherwise returns the input unchanged.\n\n\n\nutils.flip_coords(geo)\nFlip x and y coordinates in a geometry\nArgs: geo: A shapely geometry object\nReturns: Transformed geometry with x and y coordinates swapped\nNote: Useful for converting between (x,y) and (lat,lon) coordinate orders",
+    "crumbs": [
+      "Utils",
+      "utils"
+    ]
+  },
+  {
+    "objectID": "reference/eumdac.DownloadEumDAC.html",
+    "href": "reference/eumdac.DownloadEumDAC.html",
+    "title": "eumdac.DownloadEumDAC",
+    "section": "",
+    "text": "eumdac.DownloadEumDAC\neumdac.DownloadEumDAC(verbose=True)\nPython interface to the EuMetSat Data Access API Client (https://data.eumetsat.int/)",
+    "crumbs": [
+      "Providers",
+      "eumdac.DownloadEumDAC"
+    ]
+  },
+  {
+    "objectID": "reference/cnes.DownloadCNES.html",
+    "href": "reference/cnes.DownloadCNES.html",
+    "title": "cnes.DownloadCNES",
+    "section": "",
+    "text": "cnes.DownloadCNES\ncnes.DownloadCNES(verbose=True)\nPython interface to the CNES Geodes Data Center (https://geodes-portal.cnes.fr/)",
+    "crumbs": [
+      "Providers",
+      "cnes.DownloadCNES"
+    ]
+  }
+]
