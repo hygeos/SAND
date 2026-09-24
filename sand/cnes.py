@@ -92,7 +92,9 @@ class DownloadCNES(BaseDownload):
         data["query"] = query
         self.session.headers.update({"X-API-Key": self.tokens})
         self.session.headers.update({"Content-type": "application/json"})
-        response = self.session.post(server_url, json=data, verify=True)
+        response = self.session.post(
+            server_url, json=data, verify=True, timeout=self.TIMEOUT
+        )
         raise_api_error(response)
 
         # Filter products
@@ -158,7 +160,7 @@ class DownloadCNES(BaseDownload):
 
         # Download compressed file
         self.session.headers.update({"X-API-Key": self.tokens})
-        response = self.session.get(url["href"], verify=True)
+        response = self.session.get(url["href"], verify=True, timeout=self.TIMEOUT)
 
         raise_api_error(response)
         write(response, dl_target, self.verbose)
@@ -192,7 +194,9 @@ class DownloadCNES(BaseDownload):
             self.session.headers.update({"X-API-Key": self.tokens})
             self.session.headers.update({"Content-type": "application/json"})
 
-            response = self.session.post(server_url, json=data, verify=False)
+            response = self.session.post(
+                server_url, json=data, verify=False, timeout=self.TIMEOUT
+            )
             raise_api_error(response)
             r = response.json()["features"]
             assert len(r) > 0, f"No product named {product_id}"
@@ -238,7 +242,9 @@ class DownloadCNES(BaseDownload):
 
         self.session.headers.update({"X-API-Key": self.tokens})
         self.session.headers.update({"Content-type": "application/json"})
-        response = self.session.post(server_url, json=data, verify=True)
+        response = self.session.post(
+            server_url, json=data, verify=True, timeout=self.TIMEOUT
+        )
         raise_api_error(response)
 
         return response.json()["features"][0]["properties"]

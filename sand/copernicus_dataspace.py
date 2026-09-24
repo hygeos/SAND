@@ -51,7 +51,7 @@ class DownloadCDSE(BaseDownload):
             "grant_type": "password",
         }
         url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
-        r = requests.post(url, data=data)
+        r = requests.post(url, data=data, timeout=self.TIMEOUT)
         try:
             r.raise_for_status()
         except Exception:
@@ -69,7 +69,7 @@ class DownloadCDSE(BaseDownload):
         name: Name | None = None,
         cloudcover_thres: int | None = None,
         api_collection: str | None = None,
-    ):
+    ) -> SandQuery:
         self._login()
 
         # Retrieve api collections based on SAND collections
@@ -145,31 +145,8 @@ class DownloadCDSE(BaseDownload):
         # Compression file path
         dl_target = Path(str(target) + compression_ext) if compression_ext else target
 
-        status = False
-        while not status:
-            try:
-                # Initialize session for download
-                self.session.headers.update({"Authorization": f"Bearer {self.tokens}"})
-
-                # Try to request server
-                niter = 0
-                response = self.session.get(url, allow_redirects=False)
-                log.debug(f"Requesting server for {target.name}")
-                while response.status_code in (301, 302, 303, 307) and niter < 5:
-                    log.debug(f"Download content [Try {niter + 1}/5]")
-                    if "Location" not in response.headers:
-                        raise ValueError(f"status code : [{response.status_code}]")
-                    url = response.headers["Location"]
-                    response = self.session.get(url, verify=True, allow_redirects=True)
-                    niter += 1
-                response.raise_for_status()
-                status = True
-
-            except Exception as e:
-                # Refresh session tokens
-                self.session = requests.Session()
-                auth = get_auth("dataspace.copernicus.eu")
-                self._get_tokens(auth)
+        log.debug(f"Requesting server for {target.name}")
+        response = self._get_authenticated(url)
 
         # Download compressed file
         write(response, dl_target, self.verbose)
@@ -179,6 +156,35 @@ class DownloadCDSE(BaseDownload):
             log.debug("Uncompress archive")
             assert target == uncompress(dl_target, target.parent, extract_to="auto")
             dl_target.unlink()
+
+    def _get_authenticated(self, url: str, max_retries: int = 3) -> requests.Response:
+        """
+        GET a URL with the Bearer token, following redirects.
+
+        The token is refreshed at most once in case of an authentication error
+        (401/403); any other error raises immediately.
+
+        Args:
+            url (str): URL to request
+            max_retries (int): Maximum number of attempts before giving up
+
+        Returns:
+            requests.Response: Final successful response
+        """
+        refreshed = False
+        for attempt in range(max_retries):
+            self.session.headers.update({"Authorization": f"Bearer {self.tokens}"})
+            response = self._get_with_redirects(url)
+            if response.status_code in (401, 403) and not refreshed:
+                # Refresh session tokens once on authentication failure
+                self.session = requests.Session()
+                auth = get_auth("dataspace.copernicus.eu")
+                self._get_tokens(auth)
+                refreshed = True
+                continue
+            raise_api_error(response)
+            return response
+        raise RequestsError(f"Failed to download {url} after {max_retries} attempts")
 
     def download_file(
         self, product_id: str, dir: Path | str, api_collection: str | None = None
@@ -229,7 +235,7 @@ class DownloadCDSE(BaseDownload):
             "https://catalogue.dataspace.copernicus.eu/odata/v1/Products?$filter=Id"
             f" eq '{product.index}'&$expand=Attributes&$expand=Assets"
         )
-        json = requests.get(req).json()
+        json = requests.get(req, timeout=self.TIMEOUT).json()
 
         assert len(json["value"]) == 1
         return json["value"][0]
@@ -280,7 +286,7 @@ def _query_odata(params: _Request_params):
 
     top = 1000  # maximum value of number of retrieved values
     req = (" and ".join(query_lines)) + f"&$top={top}"
-    response = requests.get(requote_uri(req), verify=True)
+    response = requests.get(requote_uri(req), verify=True, timeout=BaseDownload.TIMEOUT)
 
     raise_api_error(response)
     if len(response.json()["value"]) >= top:

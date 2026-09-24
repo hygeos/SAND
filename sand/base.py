@@ -31,6 +31,12 @@ class BaseDownload:
         name_contains (list): List of naming constraints for products
     """
 
+    # (connect_timeout, read_timeout) in seconds — override in a subclass if needed
+    TIMEOUT = (10, 60)
+
+    # Number of worker processes used by download_all(parallelized=True)
+    nb_worker: int = 4
+
     def __init__(self, verbose: bool):
         self.verbose = verbose
 
@@ -144,28 +150,32 @@ class BaseDownload:
         Download all products from API server resulting from a query.
 
         Args:
-            products (list[dict]): List of product metadata from query results
+            products (SandQuery | list[SandProduct]): Products to download
             dir (Path|str): Directory where to save downloaded products
             if_exists (str, optional): Action to take if product exists:
                 - 'skip': Skip download if file exists (default)
                 - 'overwrite': Replace existing file
-                - 'raise': Raise an error if file exists
+                - 'backup': Backup existing file before overwriting
+                - 'error': Raise an error if file exists
             parallelized (bool, optional): If True, downloads products in parallel
-                using multiple threads. Default is False.
+                using multiple processes. Default is False.
 
         Returns:
             list[Path]: List of paths to downloaded product files
         """
+        products = list(products)
+        if not products:
+            return []
+
         if parallelized:
             from multiprocessing import Pool
-            from functools import partial
 
             workers = min(self.nb_worker, len(products))
-            process = partial(self.download, dir=dir, if_exists=if_exists)
-            with Pool(workers) as pool:
-                tmp = pool.map(process, [p[1] for p in products.iterrows()])
-                # tmp = pool.map(process, products)
-                return tmp
+            with Pool(
+                workers, initializer=_init_worker, initargs=(type(self), self.verbose)
+            ) as pool:
+                args = [(p, str(dir), if_exists) for p in products]
+                return pool.map(_worker_download, args)
 
         out = []
         for product in products:
@@ -209,6 +219,33 @@ class BaseDownload:
     def _set_session(self):
         self.session = requests.Session()
         self.ssl_ctx = get_ssl_context()
+
+    def _get_with_redirects(
+        self, url: str, max_hops: int = 5, **kwargs
+    ) -> requests.Response:
+        """
+        GET a URL, following redirects manually up to max_hops.
+
+        Args:
+            url (str): Initial URL to request
+            max_hops (int): Maximum number of redirects to follow
+            **kwargs: Extra keyword arguments passed to session.get
+
+        Returns:
+            requests.Response: Final response after following redirects
+        """
+        kwargs.setdefault("timeout", self.TIMEOUT)
+        response = self.session.get(url, allow_redirects=False, **kwargs)
+        hops = 0
+        while response.status_code in (301, 302, 303, 307, 308) and hops < max_hops:
+            if "Location" not in response.headers:
+                raise ValueError(
+                    f"Redirect without Location header (status {response.status_code})"
+                )
+            url = response.headers["Location"]
+            response = self.session.get(url, verify=True, allow_redirects=True, **kwargs)
+            hops += 1
+        return response
 
     def _get_collec_properties(self, collection, level, properties):
         """
@@ -340,3 +377,19 @@ def get_ssl_context() -> ssl.SSLContext:
 
 class RequestsError(Exception):
     pass
+
+
+# Process-local downloader instance for parallel downloads (one per worker process).
+_WORKER_DOWNLOADER = None
+
+
+def _init_worker(downloader_cls, verbose):
+    """Initializer run once per worker process: build a fresh downloader instance."""
+    global _WORKER_DOWNLOADER
+    _WORKER_DOWNLOADER = downloader_cls(verbose=verbose)
+
+
+def _worker_download(args):
+    """Worker task: download a single product using the process-local downloader."""
+    product, dir, if_exists = args
+    return _WORKER_DOWNLOADER.download(product, dir, if_exists)

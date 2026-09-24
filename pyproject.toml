@@ -12,7 +12,7 @@ dependencies = [
     "shapely", 
     'pillow', 
     "pandas"
-, "eoread[git] @ git+https://github.com/hygeos/eoread"]
+]
 
 [project.optional-dependencies]
 git = [

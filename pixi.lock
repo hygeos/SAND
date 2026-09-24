@@ -384,11 +384,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - pypi: ./
       - pypi: git+https://github.com/hygeos/core.git#b2f7023cdbd260666ca522d19bd428af594e578a
-      - pypi: git+https://github.com/hygeos/eoread#33b6ae0d3500c9ed3ee4385eb33397817dd4bb33
       - pypi: https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/2f/36/a0c98f268b68c1d04ffca23db492a9d384105a81271eaa90b6cfa40cf8ad/pyepr-1.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/71/d4/d9440ff5da6547ac2587f93a9af7e779be0aed78e1f0734dede94e440f6b/pysolar-0.13-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/90/91/2b767766af8dc7bf7dec23994c147a98ee611f82f28f24ce0173a730f6f4/h5netcdf-1.8.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b9/37/e781683abac55dde9771e086b790e554811a71ed0b2b8a1e789b7430dd44/shapely-2.1.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/c4/cb/00451c3cf31790287768bb12c6bec834f5d292eaf3022afc88e14b8afc94/paho_mqtt-2.1.0-py3-none-any.whl
@@ -6053,7 +6050,6 @@ packages:
   - shapely
   - pillow
   - pandas
-  - eoread[git] @ git+https://github.com/hygeos/eoread
   - core @ git+https://github.com/hygeos/core.git ; extra == 'git'
   requires_python: '>=3.10,<3.14'
 - pypi: git+https://github.com/hygeos/core.git#b2f7023cdbd260666ca522d19bd428af594e578a
@@ -6069,20 +6065,6 @@ packages:
   - lxml
   - scipy
   requires_python: '>=3.10'
-- pypi: git+https://github.com/hygeos/eoread#33b6ae0d3500c9ed3ee4385eb33397817dd4bb33
-  name: eoread
-  version: 0.5.0
-  requires_dist:
-  - lxml
-  - pyproj
-  - pysolar
-  - pyepr
-  - rioxarray
-  - h5netcdf
-  - h5py
-  - netcdf4
-  - core @ git+https://github.com/hygeos/core.git ; extra == 'git'
-  requires_python: <3.14
 - pypi: https://files.pythonhosted.org/packages/14/1b/a298b06749107c305e1fe0f814c6c74aea7b2f1e10989cb30f544a1b3253/python_dotenv-1.2.1-py3-none-any.whl
   name: python-dotenv
   version: 1.2.1
@@ -6090,24 +6072,11 @@ packages:
   requires_dist:
   - click>=5.0 ; extra == 'cli'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/2f/36/a0c98f268b68c1d04ffca23db492a9d384105a81271eaa90b6cfa40cf8ad/pyepr-1.3.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
-  name: pyepr
-  version: 1.3.0
-  sha256: b3d51cd208967024956c60412f639461698c47962102737bf75401ac45043535
-  requires_dist:
-  - numpy>=1.26.4
-  requires_python: '>=3.10,<4'
 - pypi: https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl
   name: toml
   version: 0.10.2
   sha256: 806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b
   requires_python: '>=2.6,!=3.0.*,!=3.1.*,!=3.2.*'
-- pypi: https://files.pythonhosted.org/packages/71/d4/d9440ff5da6547ac2587f93a9af7e779be0aed78e1f0734dede94e440f6b/pysolar-0.13-py3-none-any.whl
-  name: pysolar
-  version: '0.13'
-  sha256: 9019323af1a4db0b1cd5df5570b34a22b290f5ee817497aacfd63475779da004
-  requires_dist:
-  - numpy
 - pypi: https://files.pythonhosted.org/packages/90/91/2b767766af8dc7bf7dec23994c147a98ee611f82f28f24ce0173a730f6f4/h5netcdf-1.8.0-py3-none-any.whl
   name: h5netcdf
   version: 1.8.0

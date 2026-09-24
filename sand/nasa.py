@@ -44,7 +44,7 @@ class DownloadNASA(BaseDownload):
         name: Name | None = None,
         cloudcover_thres: int | None = None,
         api_collection: str | None = None,
-    ):
+    ) -> SandQuery:
         self._login()
 
         # Retrieve api collections based on SAND collections
@@ -94,7 +94,9 @@ class DownloadNASA(BaseDownload):
             data["page_size"] = 1000
             url = "https://cmr.earthdata.nasa.gov/search/granules"
             url_encode = url + "?" + urlencode(data)
-            response = self.session.post(url_encode, headers=headers, verify=True)
+            response = self.session.post(
+                url_encode, headers=headers, verify=True, timeout=self.TIMEOUT
+            )
             if len(response.json()["feed"]["entry"]) == data["page_size"]:
                 log.warning(
                     "The number of matches has reached the API limit on the maximum "
@@ -147,7 +149,9 @@ class DownloadNASA(BaseDownload):
                 data["collection_concept_id"] = collec
                 data["producer_granule_id"] = drop_extension(product_id)
                 url_encode = url + "?" + urlencode(data)
-                response = self.session.post(url_encode, headers=headers, verify=True)
+                response = self.session.post(
+                    url_encode, headers=headers, verify=True, timeout=self.TIMEOUT
+                )
                 response = response.json()["feed"]["entry"]
                 if len(response) == 0:
                     continue
@@ -189,16 +193,8 @@ class DownloadNASA(BaseDownload):
         """
 
         # Try to request server
-        niter = 0
-        response = self.session.get(url, allow_redirects=False)
         log.debug(f"Requesting server for {target.name}")
-        while response.status_code in (301, 302, 303, 307) and niter < 5:
-            log.debug(f"Download content [Try {niter + 1}/5]")
-            if "Location" not in response.headers:
-                raise ValueError(f"status code : [{response.status_code}]")
-            url = response.headers["Location"]
-            response = self.session.get(url, verify=True, allow_redirects=True)
-            niter += 1
+        response = self._get_with_redirects(url)
         raise_api_error(response)
 
         # Download file
@@ -222,7 +218,7 @@ class DownloadNASA(BaseDownload):
 
         links = product.metadata["links"]
         req = self._get(links, product.product_id + ".*.xml")
-        meta = self.session.get(req).text
+        meta = self.session.get(req, timeout=self.TIMEOUT).text
 
         assert len(meta) > 0
         with TemporaryDirectory() as tmpdir:

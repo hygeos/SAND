@@ -42,7 +42,7 @@ class DownloadUSGS(BaseDownload):
         if not hasattr(self, "API_key"):
             try:
                 url = "https://m2m.cr.usgs.gov/api/api/json/stable/login-token"
-                r = self.session.post(url, json=data)
+                r = self.session.post(url, json=data, timeout=self.TIMEOUT)
                 r.raise_for_status()
                 assert r.json()["errorCode"] == None
                 self.API_key = {"X-Auth-Token": r.json()["data"]}
@@ -127,7 +127,7 @@ class DownloadUSGS(BaseDownload):
         # Request API for each dataset
         url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
         self.session.headers.update(self.API_key)
-        response = self.session.post(url, json=params)
+        response = self.session.post(url, json=params, timeout=self.TIMEOUT)
         if response.json() is not None:
             check_too_many_matches(
                 response.json(), ["data", "recordsReturned"], ["data", "totalHits"]
@@ -180,7 +180,7 @@ class DownloadUSGS(BaseDownload):
             url_data = "https://m2m.cr.usgs.gov/api/api/json/stable/dataset-filters"
             params = {"datasetName": self.api_collection}
             self.session.headers.update(self.API_key)
-            r = self.session.get(url_data, json=params)
+            r = self.session.get(url_data, json=params, timeout=self.TIMEOUT)
             raise_api_error(r)
 
             filterid = None
@@ -208,7 +208,7 @@ class DownloadUSGS(BaseDownload):
 
             # Request API for each dataset
             url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-search"
-            response = self.session.get(url, json=params)
+            response = self.session.get(url, json=params, timeout=self.TIMEOUT)
             raise_api_error(response)
             r = response.json()
 
@@ -303,15 +303,8 @@ class DownloadUSGS(BaseDownload):
         self.session.headers.update(self.API_key)
 
         # Try to request server
-        niter = 0
-        response = self.session.get(url, allow_redirects=False)
         log.debug(f"Requesting server for {target.name}")
-        while response.status_code in (301, 302, 303, 307) and niter < 5:
-            if "Location" not in response.headers:
-                raise ValueError(f"status code : [{response.status_code}]")
-            url = response.headers["Location"]
-            response = self.session.get(url, verify=True, allow_redirects=True)
-            niter += 1
+        response = self._get_with_redirects(url)
 
         # Download file
         write(response, dl_target, self.verbose)
@@ -380,13 +373,13 @@ class DownloadUSGS(BaseDownload):
                 "entityId": display_id,
             }
             self.session.headers.update(self.API_key)
-            response = self.session.get(url, json=params)
+            response = self.session.get(url, json=params, timeout=self.TIMEOUT)
             raise_api_error(response)
 
             # Get the scene list to retrieve entity ID
             url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-get"
             params = {"listId": list_id}
-            response = self.session.get(url, json=params)
+            response = self.session.get(url, json=params, timeout=self.TIMEOUT)
             raise_api_error(response)
 
             scenes = response.json().get("data", [])
@@ -402,7 +395,7 @@ class DownloadUSGS(BaseDownload):
             try:
                 url = "https://m2m.cr.usgs.gov/api/api/json/stable/scene-list-remove"
                 params = {"listId": list_id}
-                self.session.get(url, json=params)
+                self.session.get(url, json=params, timeout=self.TIMEOUT)
             except:
                 pass  # Ignore cleanup errors
 
@@ -426,7 +419,7 @@ class DownloadUSGS(BaseDownload):
         params = {"entityIds": product.index, "datasetName": self.api_collection}
         params.update(includeSecondaryFileGroups=True)
         self.session.headers.update(self.API_key)
-        dl_opt = self.session.get(url, json=params)
+        dl_opt = self.session.get(url, json=params, timeout=self.TIMEOUT)
         raise_api_error(dl_opt)
         return dl_opt
 
@@ -442,7 +435,7 @@ class DownloadUSGS(BaseDownload):
         )  # Customized label using date time
         downloads = [{"entityId": product["entityId"], "productId": product["id"]}]
         params = {"label": label, "downloads": downloads}
-        dl = self.session.get(url, json=params)
+        dl = self.session.get(url, json=params, timeout=self.TIMEOUT)
         dl = dl.json()["data"]
 
         # Collect url for download

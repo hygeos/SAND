@@ -59,7 +59,7 @@ class DownloadEumDAC(BaseDownload):
         name: Name | None = None,
         cloudcover_thres: int | None = None,
         api_collection: str | None = None,
-    ):
+    ) -> SandQuery:
         self._login()
 
         # Retrieve api collections based on SAND collections
@@ -197,16 +197,8 @@ class DownloadEumDAC(BaseDownload):
             self.session.headers.update({"Authorization": f"Bearer {self.tokens}"})
 
             # Try to request server
-            niter = 0
-            response = self.session.get(url, allow_redirects=False)
             log.debug(f"Requesting server for {target.name}")
-            while response.status_code in (301, 302, 303, 307) and niter < 5:
-                log.debug(f"Download content [Try {niter + 1}/5]")
-                if "Location" not in response.headers:
-                    raise ValueError(f"status code : [{response.status_code}]")
-                url = response.headers["Location"]
-                response = self.session.get(url, verify=True, allow_redirects=True)
-                niter += 1
+            response = self._get_with_redirects(url)
             raise_api_error(response)
 
             # Download file
@@ -223,7 +215,7 @@ class DownloadEumDAC(BaseDownload):
 
         meta_url = product.metadata.metadata["properties"]["links"]["alternates"]
         req = meta_url[0]["href"]
-        meta = requests.get(req).text
+        meta = requests.get(req, timeout=self.TIMEOUT).text
 
         assert len(meta) > 0
         with TemporaryDirectory() as tmpdir:
