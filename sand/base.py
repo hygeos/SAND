@@ -40,7 +40,7 @@ class BaseDownload:
         """
         Login to API server with credentials stored in .netrc file.
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def query(
         self,
@@ -67,7 +67,7 @@ class BaseDownload:
         Returns:
             SandQuery: Query results containing matching products
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def download(
         self,
@@ -85,7 +85,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded product file
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def quicklook(self, product: SandProduct, dir: Path | str) -> Path:
         """
@@ -98,7 +98,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded quicklook image
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def metadata(self, product: SandProduct) -> dict:
         """
@@ -112,7 +112,7 @@ class BaseDownload:
                 - attributes: Product attributes (e.g., cloud cover, quality flags)
                 - assets: Available product assets (e.g., bands, ancillary data)
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def download_file(
         self, product_id: str, dir: Path | str, api_collection: str | None = None
@@ -130,7 +130,7 @@ class BaseDownload:
         Returns:
             Path: Path to the downloaded file
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     # Visible functions already implemented
     def download_all(
@@ -224,12 +224,7 @@ class BaseDownload:
         collecs = properties[properties["SAND_name"] == collection]
 
         # Try to find specific level
-        try:
-            self.sand_props = collecs[collecs["level"] == level]
-        except AssertionError:
-            log.error(
-                f"Level{level} products are not available for {collection}", e=KeyError
-            )
+        self.sand_props = collecs[collecs["level"] == level]
 
         if len(self.sand_props) == 0:
             raise ReferenceError(
@@ -323,7 +318,7 @@ def check_too_many_matches(
     returned = reduce(lambda x, k: x[k], returned_tag, response)
     matches = reduce(lambda x, k: x[k], hit_tag, response)
 
-    if returned > matches:
+    if matches > returned:
         log.warning(
             f"The query returned too many matches ({matches}) "
             f"and exceeded the limit ({returned}) set by the provider."

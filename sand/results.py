@@ -70,7 +70,10 @@ class SandQuery(Iterable):
     """
 
     def __init__(self, json_values: list[SandProduct]):
-        self.products = sorted(json_values, key=lambda p: p.index)
+        # Sort by index; products without an index are placed last instead of raising
+        self.products = sorted(
+            json_values, key=lambda p: (p.index is None, p.index or "")
+        )
 
     def print(self):
         # If no product returns empty pandas DataFrame
